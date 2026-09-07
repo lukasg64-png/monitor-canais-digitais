@@ -562,6 +562,7 @@ def process_analytics():
 
     top_detratores_sem_estoque = [s for s in level_skus["detratores_top"] if s.get("causa_tipo") in ["RUPTURA_ZERO", "RUPTURA_CAPILAR", "ESTOQUE_RESTRITO"]]
     qtd_top_desabastecidos = len(top_detratores_sem_estoque)
+    densidade_media_desab = (sum(s.get("un_por_loja", 0) for s in top_detratores_sem_estoque) / len(top_detratores_sem_estoque)) if top_detratores_sem_estoque else 0
 
     estoque_impacto = {
         "total_lojas_rede": TOTAL_LOJAS_REDE,
@@ -573,7 +574,8 @@ def process_analytics():
         "perda_comercial_abastecida_rs": round(perda_comercial, 2),
         "pct_comercial": round(pct_comercial, 1),
         "qtd_top_desabastecidos": qtd_top_desabastecidos,
-        "total_top_avaliados": len(level_skus["detratores_top"])
+        "total_top_avaliados": len(level_skus["detratores_top"]),
+        "densidade_media_desabastecidos": round(densidade_media_desab, 2)
     }
 
     # Nível 2: Grupos

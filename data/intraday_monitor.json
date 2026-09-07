@@ -12,7 +12,7 @@
       "APP",
       "MKP"
     ],
-    "gerado_em": "2026-09-07 18:47:15"
+    "gerado_em": "2026-09-07 18:49:48"
   },
   "kpis": {
     "Total": {
@@ -202,7 +202,8 @@
     "perda_comercial_abastecida_rs": 60917.33,
     "pct_comercial": 33.2,
     "qtd_top_desabastecidos": 13,
-    "total_top_avaliados": 30
+    "total_top_avaliados": 30,
+    "densidade_media_desabastecidos": 0.36
   },
   "mix_canais": {
     "Total": {
