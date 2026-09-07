@@ -7,28 +7,28 @@ async def main():
         browser = await p.chromium.launch()
         page = await browser.new_page(viewport={'width': 1920, 'height': 1080})
         await page.goto('http://localhost:3000/index.html')
-        await page.wait_for_timeout(2000)
+        await page.wait_for_timeout(2500)
         
-        # Screenshot top diagnostico
-        await page.screenshot(path='screenshot_diagnostico_stock.png')
-        
-        # Click skus
-        await page.click('[data-level="skus"]')
+        # Scroll to Cockpit de Ruptura
+        await page.evaluate('window.scrollTo(0, 1800)')
         await page.wait_for_timeout(1000)
+        await page.screenshot(path='screenshot_stock_cockpit_rendered.png')
         
         # Scroll to table
-        el = await page.query_selector('.matrix-container')
-        if el:
-            await el.scroll_into_view_if_needed()
-            await page.wait_for_timeout(500)
-            await page.screenshot(path='screenshot_skus_stock_table.png')
-            
+        await page.evaluate('window.scrollTo(0, 2400)')
+        await page.wait_for_timeout(1000)
+        await page.screenshot(path='screenshot_table_capilaridade_rendered.png')
+        
         diag = await page.inner_text('#story-estoque')
-        print('DIAGNOSTICO ESTOQUE:', diag)
+        print('DIAGNOSTICO ESTOQUE:\n', diag)
+        
+        kpi_rup = await page.inner_text('#kpi-est-perda-ruptura')
+        kpi_com = await page.inner_text('#kpi-est-perda-comercial')
+        print(f'\nKPIS: Ruptura={kpi_rup} | Comercial={kpi_com}')
         
         rows = await page.query_selector_all('#table-body-rows tr')
-        print(f'Total rows rendered: {len(rows)}')
-        for r in rows[:4]:
+        print(f'\nTotal rows: {len(rows)}')
+        for r in rows[:6]:
             t = await r.inner_text()
             print('ROW:', t.replace('\n', ' | '))
             
