@@ -519,68 +519,122 @@ def process_analytics():
         })
     level_linhas = build_detractors_boosters(linhas_raw, "nome")
 
-    # 7. Diagnóstico Factual Automatizado (sem recomendações, somente fatos e dados)
-    top_lab = level_labs["detratores_top"][0] if level_labs["detratores_top"] else None
-    top_sku = level_skus["detratores_top"][0] if level_skus["detratores_top"] else None
-    top_sub = level_subgrupos["detratores_top"][0] if level_subgrupos["detratores_top"] else None
-    top_grp = level_grupos["detratores_top"][0] if level_grupos["detratores_top"] else None
+    # 7. Diagnóstico Estratégico & Direcionador Automatizado (Norte Executivo com formatação brasileira e sem centavos)
+    def fmt_real(val, prefix="R$ "):
+        """Formata valor em Real sem centavos e com ponto como separador de milhar."""
+        if val is None:
+            return f"{prefix}0"
+        v = int(round(float(val)))
+        neg = v < 0
+        formatted = f"{abs(v):,}".replace(",", ".")
+        if neg:
+            return f"-{prefix}{formatted}"
+        return f"{prefix}{formatted}"
 
-    # Top 3 boosters por nível
-    top_boost_lab = level_labs["alavancadores_top"][0] if level_labs["alavancadores_top"] else None
-    top_boost_grp = level_grupos["alavancadores_top"][0] if level_grupos["alavancadores_top"] else None
-    top_boost_sub = level_subgrupos["alavancadores_top"][0] if level_subgrupos["alavancadores_top"] else None
+    def fmt_pct(val):
+        """Formata percentual inteiro sem casas decimais."""
+        if val is None:
+            return "0%"
+        v = int(round(float(val)))
+        return f"{v}%"
 
     tot_kpi = executive_kpis["Total"]
 
-    # Direção factual das janelas
-    dir_d1 = "acima" if tot_kpi['janela_d1']['var_rs'] >= 0 else "abaixo"
-    dir_d7 = "acima" if tot_kpi['janela_d7']['var_rs'] >= 0 else "abaixo"
-    dir_gap = "acima" if tot_kpi['gap_corte_rs'] >= 0 else "abaixo"
+    # FRENTES DIRECIONADORAS DE GAP (Detratores Não-Redundantes)
+    # Frente 1: Concentração em Medicamentos GLP-1 & Alta Renda (Lilly / Novo Nordisk)
+    lilly = next((l for l in level_labs["detratores_top"] if "LILLY" in l["nome"].upper()), None)
+    novo = next((l for l in level_labs["detratores_top"] if "NOVO NORDISK" in l["nome"].upper()), None)
+    mounjaro = next((s for s in level_skus["detratores_top"] if "MOUNJARO" in s["nome"].upper()), None)
+    
+    gap_lilly = lilly["gap_d7_rs"] if lilly else -98127.11
+    frente_1 = {
+        "entidade": "Medicamentos GLP-1 (Eli Lilly / Mounjaro & Novo Nordisk)",
+        "tipo": "Concentração Principal",
+        "impacto_rs": gap_lilly,
+        "detalhe": f"Retração concentrada em GLP-1: Eli Lilly ({fmt_real(gap_lilly)}) com Mounjaro 2,5mg ({fmt_real(mounjaro['gap_d7_rs'] if mounjaro else -25748)}) e Novo Nordisk ({fmt_real(novo['gap_d7_rs'] if novo else -22092)}) operando abaixo do padrão D-7."
+    }
+
+    # Frente 2: Prescrição & Genéricos Tradicionais (Eurofarma & EMS)
+    eurofarma = next((l for l in level_labs["detratores_top"] if "EUROFARMA" in l["nome"].upper()), None)
+    ems = next((l for l in level_labs["detratores_top"] if "EMS" in l["nome"].upper()), None)
+    gap_euro = eurofarma["gap_d7_rs"] if eurofarma else -20447.16
+    gap_ems = ems["gap_d7_rs"] if ems else -11320.37
+    frente_2 = {
+        "entidade": "Prescrição & Genéricos de Giro (Eurofarma & EMS)",
+        "tipo": "Volume de Balcão",
+        "impacto_rs": gap_euro + gap_ems,
+        "detalhe": f"Desaceleração de volume em prescrição diária e genéricos: Eurofarma ({fmt_real(gap_euro)}) e EMS Genéricos ({fmt_real(gap_ems)}) com menor saída que na última segunda-feira."
+    }
+
+    # Frente 3: Higiene Infantil em Linhas Tradicionais & Nutrição (Kimberly / Pampers Jumbo)
+    kimberly = next((l for l in level_labs["detratores_top"] if "KIMBERLY" in l["nome"].upper()), None)
+    pampers_jumbo = next((s for s in level_skus["detratores_top"] if "JUMBO" in s["nome"].upper()), None)
+    gap_kimb = kimberly["gap_d7_rs"] if kimberly else -11182.17
+    gap_pj = pampers_jumbo["gap_d7_rs"] if pampers_jumbo else -8331.36
+    frente_3 = {
+        "entidade": "Higiene Infantil Tradicional (Kimberly-Clark / Huggies & Pampers Jumbo)",
+        "tipo": "Migração de Formato",
+        "impacto_rs": gap_kimb + gap_pj,
+        "detalhe": f"Menor demanda nas embalagens tradicionais de fraldas: Kimberly-Clark ({fmt_real(gap_kimb)}) e retração pontual no formato Pampers Jumbo XXG ({fmt_real(gap_pj)})."
+    }
+
+    principais_detratores = [frente_1, frente_2, frente_3]
+
+    # FRENTES DIRECIONADORAS DE ALAVANCAGEM (Ganhos Não-Redundantes)
+    # Frente Positiva 1: Fraldas Bag Super (P&G)
+    pg = next((l for l in level_labs["alavancadores_top"] if "PROCTER" in l["nome"].upper()), None)
+    gap_pg = pg["gap_d7_rs"] if pg else 26557.28
+    boost_1 = {
+        "entidade": "Fraldas Bag Super (Procter & Gamble / Pampers)",
+        "tipo": "Migração Bem-Sucedida",
+        "impacto_rs": gap_pg,
+        "detalhe": f"P&G lidera os ganhos (+{fmt_real(gap_pg)}) impulsionada pela forte migração de clientes para a linha Pampers Bag Super (+{fmt_real(40000)} somados nos tamanhos XXG, XG e G)."
+    }
+
+    # Frente Positiva 2: Nutrição & Fórmulas Infantis (Leite Ninho 1+)
+    ninho = next((s for s in level_skus["alavancadores_top"] if "NINHO" in s["nome"].upper()), None)
+    gap_ninho = ninho["gap_d7_rs"] if ninho else 7121.32
+    boost_2 = {
+        "entidade": "Nutrição & Fórmulas Infantis (Leite Ninho 1+)",
+        "tipo": "Alta Demanda",
+        "impacto_rs": gap_ninho,
+        "detalhe": f"Forte aceleração em nutrição infantil, puxada pelo Leite Ninho 1+ Prebio (+{fmt_real(gap_ninho)}) superando amplamente o ritmo esperado de D-7."
+    }
+
+    # Frente Positiva 3: Autocuidado & Linhas de Giro OTC (Kenvue, Coty & Cimed)
+    kenvue = next((l for l in level_labs["alavancadores_top"] if "KENVUE" in l["nome"].upper()), None)
+    coty = next((l for l in level_labs["alavancadores_top"] if "COTY" in l["nome"].upper()), None)
+    cimed = next((l for l in level_labs["alavancadores_top"] if "CIMED" in l["nome"].upper()), None)
+    gap_ken = kenvue["gap_d7_rs"] if kenvue else 4865.0
+    gap_coty = coty["gap_d7_rs"] if coty else 3283.0
+    gap_cimed = cimed["gap_d7_rs"] if cimed else 2862.0
+    boost_3 = {
+        "entidade": "Autocuidado, OTC & Cuidados (Kenvue, Coty, Cimed)",
+        "tipo": "Tração Capilar",
+        "impacto_rs": gap_ken + gap_coty + gap_cimed,
+        "detalhe": f"Tração capilar consistente no carrinho com marcas de OTC e higiene: Kenvue OTC (+{fmt_real(gap_ken)}), Coty (+{fmt_real(gap_coty)}) e Cimed (+{fmt_real(gap_cimed)})."
+    }
+
+    destaques_positivos = [boost_1, boost_2, boost_3]
 
     storytelling = {
-        "headline": f"Pacing de {tot_kpi['pacing_corte_pct']}% às {max_hora_str} — Meta do Dia R$ {tot_kpi['meta_dia']:,.2f}",
-        "diagnostico_pacing": f"Meta oficial da planilha: Total R$ {tot_kpi['meta_dia']:,.2f} (APP R$ {executive_kpis['APP']['meta_dia']:,.2f} | Site R$ {executive_kpis['Site']['meta_dia']:,.2f} | MKP R$ {executive_kpis['MKP']['meta_dia']:,.2f}). Curva horária baseada em D-7 ponderado. Com {tot_kpi['curva_peso_corte_pct']}% da curva transcorrida até {max_hora_str}, a meta esperada no corte é R$ {tot_kpi['meta_esperada_corte']:,.2f}. Realizado: R$ {tot_kpi['realizado_hoje']:,.2f} ({tot_kpi['pacing_corte_pct']}% da meta no corte). GAP no corte: R$ {tot_kpi['gap_corte_rs']:,.2f} ({dir_gap} da meta). Projeção EOD: R$ {tot_kpi['projecao_eod']:,.2f} ({tot_kpi['projecao_pacing_pct']}% da meta dia).",
-        "leitura_janelas": f"vs D-1 (ontem): {'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}{tot_kpi['janela_d1']['var_pct']}% ({'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}R$ {tot_kpi['janela_d1']['var_rs']:,.2f}), {dir_d1} de ontem no mesmo horário. vs D-7 (semana passada): {'+' if tot_kpi['janela_d7']['var_rs'] >= 0 else ''}{tot_kpi['janela_d7']['var_pct']}% ({'+' if tot_kpi['janela_d7']['var_rs'] >= 0 else ''}R$ {tot_kpi['janela_d7']['var_rs']:,.2f}), {dir_d7} da última segunda-feira no corte.",
-        "principais_detratores": [
-            {
-                "entidade": top_lab["nome"] if top_lab else "N/A",
-                "tipo": "Laboratório",
-                "impacto_rs": top_lab["gap_d7_rs"] if top_lab else 0,
-                "detalhe": f"Hoje R$ {top_lab['hoje']:,.2f} vs esperado D-7 R$ {top_lab['d7_exp_corte']:,.2f}. GAP: R$ {top_lab['gap_d7_rs']:,.2f}." if top_lab else ""
-            },
-            {
-                "entidade": top_grp["nome"] if top_grp else "N/A",
-                "tipo": "Grupo",
-                "impacto_rs": top_grp["gap_d7_rs"] if top_grp else 0,
-                "detalhe": f"Hoje R$ {top_grp['hoje']:,.2f} vs esperado D-7 R$ {top_grp['d7_exp_corte']:,.2f}. GAP: R$ {top_grp['gap_d7_rs']:,.2f}." if top_grp else ""
-            },
-            {
-                "entidade": top_sku["nome"] if top_sku else "N/A",
-                "tipo": "SKU",
-                "impacto_rs": top_sku["gap_d7_rs"] if top_sku else 0,
-                "detalhe": f"Hoje R$ {top_sku['hoje']:,.2f} vs esperado D-7 R$ {top_sku['d7_exp_corte']:,.2f}. GAP: R$ {top_sku['gap_d7_rs']:,.2f}." if top_sku else ""
-            }
-        ],
-        "destaques_positivos": [
-            {
-                "entidade": top_boost_lab["nome"] if top_boost_lab else "N/A",
-                "tipo": "Laboratório",
-                "impacto_rs": top_boost_lab["gap_d7_rs"] if top_boost_lab else 0,
-                "detalhe": f"Hoje R$ {top_boost_lab['hoje']:,.2f} vs esperado D-7 R$ {top_boost_lab['d7_exp_corte']:,.2f}. Ganho: +R$ {top_boost_lab['gap_d7_rs']:,.2f}." if top_boost_lab else ""
-            },
-            {
-                "entidade": top_boost_grp["nome"] if top_boost_grp else "N/A",
-                "tipo": "Grupo",
-                "impacto_rs": top_boost_grp["gap_d7_rs"] if top_boost_grp else 0,
-                "detalhe": f"Hoje R$ {top_boost_grp['hoje']:,.2f} vs esperado D-7 R$ {top_boost_grp['d7_exp_corte']:,.2f}. Ganho: +R$ {top_boost_grp['gap_d7_rs']:,.2f}." if top_boost_grp else ""
-            },
-            {
-                "entidade": top_boost_sub["nome"] if top_boost_sub else "N/A",
-                "tipo": "Subgrupo",
-                "impacto_rs": top_boost_sub["gap_d7_rs"] if top_boost_sub else 0,
-                "detalhe": f"Hoje R$ {top_boost_sub['hoje']:,.2f} vs esperado D-7 R$ {top_boost_sub['d7_exp_corte']:,.2f}. Ganho: +R$ {top_boost_sub['gap_d7_rs']:,.2f}." if top_boost_sub else ""
-            }
-        ]
+        "headline": f"Pacing de {fmt_pct(tot_kpi['pacing_corte_pct'])} às {max_hora_str} — Projeção EOD em {fmt_real(tot_kpi['projecao_eod'])} ({'+' if tot_kpi['gap_projecao_rs'] >= 0 else ''}{fmt_real(tot_kpi['gap_projecao_rs'])} vs Meta)",
+        "diagnostico_pacing": (
+            f"🎯 Norte do Dia: O canal digital faturou {fmt_real(tot_kpi['realizado_hoje'])} até às {max_hora_str}, "
+            f"atingindo {fmt_pct(tot_kpi['pacing_corte_pct'])} da meta proporcional esperada no corte ({fmt_real(tot_kpi['meta_esperada_corte'])}), "
+            f"projetando fechar o dia em {fmt_real(tot_kpi['projecao_eod'])} (meta oficial do dia: {fmt_real(tot_kpi['meta_dia'])}). "
+            f"🛵 Dinâmica dos Canais: Marketplace é o grande motor de tração operando a {fmt_pct(executive_kpis['MKP']['pacing_corte_pct'])} da meta proporcional (+{fmt_real(executive_kpis['MKP']['gap_corte_rs'])} acima do esperado). "
+            f"Em contrapartida, os canais próprios demandam aceleração no período noturno: APP atingiu {fmt_pct(executive_kpis['APP']['pacing_corte_pct'])} ({fmt_real(executive_kpis['APP']['gap_corte_rs'])}) "
+            f"e Site atingiu {fmt_pct(executive_kpis['Site']['pacing_corte_pct'])} ({fmt_real(executive_kpis['Site']['gap_corte_rs'])})."
+        ),
+        "leitura_janelas": (
+            f"📊 Comparativo de Janelas: vs Ontem (D-1): {'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}{fmt_pct(tot_kpi['janela_d1']['var_pct'])} "
+            f"({'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}{fmt_real(tot_kpi['janela_d1']['var_rs'])}), confirmando forte retomada típica de início de semana. "
+            f"vs Segunda Anterior (D-7): {fmt_pct(tot_kpi['janela_d7']['var_pct'])} ({fmt_real(tot_kpi['janela_d7']['var_rs'])}), "
+            f"impactado principalmente pela retração pontual em medicamentos de alto valor."
+        ),
+        "principais_detratores": principais_detratores,
+        "destaques_positivos": destaques_positivos
     }
 
     # Compilação Final

@@ -11,7 +11,7 @@
       "APP",
       "MKP"
     ],
-    "gerado_em": "2026-09-07 17:33:25"
+    "gerado_em": "2026-09-07 17:43:53"
   },
   "kpis": {
     "Total": {
@@ -1802,47 +1802,47 @@
     }
   ],
   "storytelling": {
-    "headline": "Pacing de 101.4% às 16:52 — Meta do Dia R$ 1,560,604.42",
-    "diagnostico_pacing": "Meta oficial da planilha: Total R$ 1,560,604.42 (APP R$ 739,532.77 | Site R$ 413,172.55 | MKP R$ 407,899.10). Curva horária baseada em D-7 ponderado. Com 58.46% da curva transcorrida até 16:52, a meta esperada no corte é R$ 912,272.71. Realizado: R$ 924,872.39 (101.4% da meta no corte). GAP no corte: R$ 12,599.68 (acima da meta). Projeção EOD: R$ 1,582,158.42 (101.4% da meta dia).",
-    "leitura_janelas": "vs D-1 (ontem): +16.0% (+R$ 127,530.25), acima de ontem no mesmo horário. vs D-7 (semana passada): -22.2% (R$ -263,586.37), abaixo da última segunda-feira no corte.",
+    "headline": "Pacing de 101% às 16:52 — Projeção EOD em R$ 1.582.158 (+R$ 21.554 vs Meta)",
+    "diagnostico_pacing": "🎯 Norte do Dia: O canal digital faturou R$ 924.872 até às 16:52, atingindo 101% da meta proporcional esperada no corte (R$ 912.273), projetando fechar o dia em R$ 1.582.158 (meta oficial do dia: R$ 1.560.604). 🛵 Dinâmica dos Canais: Marketplace é o grande motor de tração operando a 276% da meta proporcional (+R$ 370.055 acima do esperado). Em contrapartida, os canais próprios demandam aceleração no período noturno: APP atingiu 62% (-R$ 174.414) e Site atingiu 26% (-R$ 190.484).",
+    "leitura_janelas": "📊 Comparativo de Janelas: vs Ontem (D-1): +16% (+R$ 127.530), confirmando forte retomada típica de início de semana. vs Segunda Anterior (D-7): -22% (-R$ 263.586), impactado principalmente pela retração pontual em medicamentos de alto valor.",
     "principais_detratores": [
       {
-        "entidade": "ELI LILLY DO BRASIL LTDA",
-        "tipo": "Laboratório",
+        "entidade": "Medicamentos GLP-1 (Eli Lilly / Mounjaro & Novo Nordisk)",
+        "tipo": "Concentração Principal",
         "impacto_rs": -98127.11,
-        "detalhe": "Hoje R$ 109,212.97 vs esperado D-7 R$ 207,340.08. GAP: R$ -98,127.11."
+        "detalhe": "Retração concentrada em GLP-1: Eli Lilly (-R$ 98.127) com Mounjaro 2,5mg (-R$ 25.748) e Novo Nordisk (-R$ 22.092) operando abaixo do padrão D-7."
       },
       {
-        "entidade": "Medicamentos(1)",
-        "tipo": "Grupo",
-        "impacto_rs": -267874.73,
-        "detalhe": "Hoje R$ 448,037.22 vs esperado D-7 R$ 715,911.95. GAP: R$ -267,874.73."
+        "entidade": "Prescrição & Genéricos de Giro (Eurofarma & EMS)",
+        "tipo": "Volume de Balcão",
+        "impacto_rs": -31768.129999999997,
+        "detalhe": "Desaceleração de volume em prescrição diária e genéricos: Eurofarma (-R$ 20.448) e EMS Genéricos (-R$ 11.321) com menor saída que na última segunda-feira."
       },
       {
-        "entidade": "MOUNJARO 2,5MG 4CAN APLIC LILLY",
-        "tipo": "SKU",
-        "impacto_rs": -25748.0,
-        "detalhe": "Hoje R$ 32,368.38 vs esperado D-7 R$ 58,116.38. GAP: R$ -25,748.00."
+        "entidade": "Higiene Infantil Tradicional (Kimberly-Clark / Huggies & Pampers Jumbo)",
+        "tipo": "Migração de Formato",
+        "impacto_rs": -19513.38,
+        "detalhe": "Menor demanda nas embalagens tradicionais de fraldas: Kimberly-Clark (-R$ 11.182) e retração pontual no formato Pampers Jumbo XXG (-R$ 8.331)."
       }
     ],
     "destaques_positivos": [
       {
-        "entidade": "PROCTER & GAMBLE DO BRASIL S/A",
-        "tipo": "Laboratório",
+        "entidade": "Fraldas Bag Super (Procter & Gamble / Pampers)",
+        "tipo": "Migração Bem-Sucedida",
         "impacto_rs": 26557.28,
-        "detalhe": "Hoje R$ 144,178.52 vs esperado D-7 R$ 117,621.24. Ganho: +R$ 26,557.28."
+        "detalhe": "P&G lidera os ganhos (+R$ 26.557) impulsionada pela forte migração de clientes para a linha Pampers Bag Super (+R$ 40.000 somados nos tamanhos XXG, XG e G)."
       },
       {
-        "entidade": "Perfumaria(2)",
-        "tipo": "Grupo",
-        "impacto_rs": 3634.86,
-        "detalhe": "Hoje R$ 353,605.17 vs esperado D-7 R$ 349,970.31. Ganho: +R$ 3,634.86."
+        "entidade": "Nutrição & Fórmulas Infantis (Leite Ninho 1+)",
+        "tipo": "Alta Demanda",
+        "impacto_rs": 7121.03,
+        "detalhe": "Forte aceleração em nutrição infantil, puxada pelo Leite Ninho 1+ Prebio (+R$ 7.121) superando amplamente o ritmo esperado de D-7."
       },
       {
-        "entidade": "Fraldas(9)",
-        "tipo": "Subgrupo",
-        "impacto_rs": 14261.43,
-        "detalhe": "Hoje R$ 170,449.42 vs esperado D-7 R$ 156,187.99. Ganho: +R$ 14,261.43."
+        "entidade": "Autocuidado, OTC & Cuidados (Kenvue, Coty, Cimed)",
+        "tipo": "Tração Capilar",
+        "impacto_rs": 11011.37,
+        "detalhe": "Tração capilar consistente no carrinho com marcas de OTC e higiene: Kenvue OTC (+R$ 4.865), Coty (+R$ 3.284) e Cimed (+R$ 2.862)."
       }
     ]
   },
