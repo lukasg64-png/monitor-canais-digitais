@@ -23,7 +23,7 @@ if errorlevel 1 goto :erro
 
 echo.
 echo [3/3] Publicando no GitHub Pages (Online para Diretoria)...
-git add index.html data/*.json data/*.js *.py .github/workflows/*.yml >nul 2>&1
+git add index.html data/*.json data/*.js *.py >nul 2>&1
 git diff --staged --quiet
 if errorlevel 1 (
     git commit -m "Auto-sync Qlik Sense Intraday (%date% %time%)" >> "%LOG%" 2>&1

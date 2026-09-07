@@ -519,47 +519,67 @@ def process_analytics():
         })
     level_linhas = build_detractors_boosters(linhas_raw, "nome")
 
-    # 7. Storytelling Executivo Estratégico (Skill: data-storytelling-executivo)
+    # 7. Diagnóstico Factual Automatizado (sem recomendações, somente fatos e dados)
     top_lab = level_labs["detratores_top"][0] if level_labs["detratores_top"] else None
     top_sku = level_skus["detratores_top"][0] if level_skus["detratores_top"] else None
     top_sub = level_subgrupos["detratores_top"][0] if level_subgrupos["detratores_top"] else None
-    top_booster = level_labs["alavancadores_top"][0] if level_labs["alavancadores_top"] else None
+    top_grp = level_grupos["detratores_top"][0] if level_grupos["detratores_top"] else None
+
+    # Top 3 boosters por nível
+    top_boost_lab = level_labs["alavancadores_top"][0] if level_labs["alavancadores_top"] else None
+    top_boost_grp = level_grupos["alavancadores_top"][0] if level_grupos["alavancadores_top"] else None
+    top_boost_sub = level_subgrupos["alavancadores_top"][0] if level_subgrupos["alavancadores_top"] else None
 
     tot_kpi = executive_kpis["Total"]
+
+    # Direção factual das janelas
+    dir_d1 = "acima" if tot_kpi['janela_d1']['var_rs'] >= 0 else "abaixo"
+    dir_d7 = "acima" if tot_kpi['janela_d7']['var_rs'] >= 0 else "abaixo"
+    dir_gap = "acima" if tot_kpi['gap_corte_rs'] >= 0 else "abaixo"
+
     storytelling = {
-        "headline": f"Meta Oficial do Dia em R$ {tot_kpi['meta_dia']:,.2f} distribuída na curva horária de Segunda-feira. Pacing de {tot_kpi['pacing_corte_pct']}% às {max_hora_str}.",
-        "diagnostico_pacing": f"A meta do dia por canal é estritamente a oficial da planilha (Total: R$ {tot_kpi['meta_dia']:,.2f} — APP: R$ {executive_kpis['APP']['meta_dia']:,.2f}, Site: R$ {executive_kpis['Site']['meta_dia']:,.2f}, MKP: R$ {executive_kpis['MKP']['meta_dia']:,.2f}) e é distribuída hora a hora conforme a curva empírica de Segunda-feira (D-7 ponderado). Com {tot_kpi['curva_peso_corte_pct']}% da curva transcorrida até às {max_hora_str}, a meta esperada no corte é de R$ {tot_kpi['meta_esperada_corte']:,.2f}. O faturamento de R$ {tot_kpi['realizado_hoje']:,.2f} atinge {tot_kpi['pacing_corte_pct']}% da meta no corte (GAP de apenas R$ {tot_kpi['gap_corte_rs']:,.2f}), com projeção EOD de R$ {tot_kpi['projecao_eod']:,.2f} ({tot_kpi['projecao_pacing_pct']}% da meta).",
-        "leitura_janelas": f"Na comparação contra ontem (D-1), o resultado cresce +{tot_kpi['janela_d1']['var_pct']}% (+R$ {tot_kpi['janela_d1']['var_rs']:,.2f}), confirmando recuperação típica de início de semana. Em relação à última segunda-feira (D-7), observa-se retração de {tot_kpi['janela_d7']['var_pct']}% (-R$ {abs(tot_kpi['janela_d7']['var_rs']):,.2f}), explicada por poucos laboratórios de alta receita.",
+        "headline": f"Pacing de {tot_kpi['pacing_corte_pct']}% às {max_hora_str} — Meta do Dia R$ {tot_kpi['meta_dia']:,.2f}",
+        "diagnostico_pacing": f"Meta oficial da planilha: Total R$ {tot_kpi['meta_dia']:,.2f} (APP R$ {executive_kpis['APP']['meta_dia']:,.2f} | Site R$ {executive_kpis['Site']['meta_dia']:,.2f} | MKP R$ {executive_kpis['MKP']['meta_dia']:,.2f}). Curva horária baseada em D-7 ponderado. Com {tot_kpi['curva_peso_corte_pct']}% da curva transcorrida até {max_hora_str}, a meta esperada no corte é R$ {tot_kpi['meta_esperada_corte']:,.2f}. Realizado: R$ {tot_kpi['realizado_hoje']:,.2f} ({tot_kpi['pacing_corte_pct']}% da meta no corte). GAP no corte: R$ {tot_kpi['gap_corte_rs']:,.2f} ({dir_gap} da meta). Projeção EOD: R$ {tot_kpi['projecao_eod']:,.2f} ({tot_kpi['projecao_pacing_pct']}% da meta dia).",
+        "leitura_janelas": f"vs D-1 (ontem): {'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}{tot_kpi['janela_d1']['var_pct']}% ({'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}R$ {tot_kpi['janela_d1']['var_rs']:,.2f}), {dir_d1} de ontem no mesmo horário. vs D-7 (semana passada): {'+' if tot_kpi['janela_d7']['var_rs'] >= 0 else ''}{tot_kpi['janela_d7']['var_pct']}% ({'+' if tot_kpi['janela_d7']['var_rs'] >= 0 else ''}R$ {tot_kpi['janela_d7']['var_rs']:,.2f}), {dir_d7} da última segunda-feira no corte.",
         "principais_detratores": [
             {
                 "entidade": top_lab["nome"] if top_lab else "N/A",
                 "tipo": "Laboratório",
                 "impacto_rs": top_lab["gap_d7_rs"] if top_lab else 0,
-                "detalhe": f"Queda de R$ {abs(top_lab['gap_d7_rs']):,.2f} vs padrão D-7 (Hoje: R$ {top_lab['hoje']:,.2f} vs Esperado: R$ {top_lab['d7_exp_corte']:,.2f})."
+                "detalhe": f"Hoje R$ {top_lab['hoje']:,.2f} vs esperado D-7 R$ {top_lab['d7_exp_corte']:,.2f}. GAP: R$ {top_lab['gap_d7_rs']:,.2f}." if top_lab else ""
             },
             {
-                "entidade": top_sub["nome"] if top_sub else "N/A",
-                "tipo": "Subgrupo",
-                "impacto_rs": top_sub["gap_d7_rs"] if top_sub else 0,
-                "detalhe": f"Desaceleração de R$ {abs(top_sub['gap_d7_rs']):,.2f} em {top_sub.get('grupo', '')}."
+                "entidade": top_grp["nome"] if top_grp else "N/A",
+                "tipo": "Grupo",
+                "impacto_rs": top_grp["gap_d7_rs"] if top_grp else 0,
+                "detalhe": f"Hoje R$ {top_grp['hoje']:,.2f} vs esperado D-7 R$ {top_grp['d7_exp_corte']:,.2f}. GAP: R$ {top_grp['gap_d7_rs']:,.2f}." if top_grp else ""
             },
             {
                 "entidade": top_sku["nome"] if top_sku else "N/A",
                 "tipo": "SKU",
                 "impacto_rs": top_sku["gap_d7_rs"] if top_sku else 0,
-                "detalhe": f"Déficit de R$ {abs(top_sku['gap_d7_rs']):,.2f} com canibalização por embalagens maiores."
+                "detalhe": f"Hoje R$ {top_sku['hoje']:,.2f} vs esperado D-7 R$ {top_sku['d7_exp_corte']:,.2f}. GAP: R$ {top_sku['gap_d7_rs']:,.2f}." if top_sku else ""
             }
         ],
-        "destaque_positivo": {
-            "entidade": top_booster["nome"] if top_booster else "N/A",
-            "impacto_rs": top_booster["gap_d7_rs"] if top_booster else 0,
-            "detalhe": f"Alavancagem de +R$ {top_booster['gap_d7_rs']:,.2f} acima da expectativa horária (Hoje R$ {top_booster['hoje']:,.2f})."
-        },
-        "plano_reversao_imediato": [
-            "1. Disparo de push marketing no APP para categorias de higiene, perfumaria e OTCs com cupom relâmpago de tarde.",
-            "2. Verificação imediata de rupture/estoque das lojas que atendem raios de 10km nos medicamentos de alta receita.",
-            "3. Destacar nas homepages do App e Site as fraldas Bag Super para aproveitar o fluxo de migração dos pacotes Jumbo.",
-            "4. Acompanhar a cada 30 minutos o run-rate das 17h às 21h (pico do tráfego noturno)."
+        "destaques_positivos": [
+            {
+                "entidade": top_boost_lab["nome"] if top_boost_lab else "N/A",
+                "tipo": "Laboratório",
+                "impacto_rs": top_boost_lab["gap_d7_rs"] if top_boost_lab else 0,
+                "detalhe": f"Hoje R$ {top_boost_lab['hoje']:,.2f} vs esperado D-7 R$ {top_boost_lab['d7_exp_corte']:,.2f}. Ganho: +R$ {top_boost_lab['gap_d7_rs']:,.2f}." if top_boost_lab else ""
+            },
+            {
+                "entidade": top_boost_grp["nome"] if top_boost_grp else "N/A",
+                "tipo": "Grupo",
+                "impacto_rs": top_boost_grp["gap_d7_rs"] if top_boost_grp else 0,
+                "detalhe": f"Hoje R$ {top_boost_grp['hoje']:,.2f} vs esperado D-7 R$ {top_boost_grp['d7_exp_corte']:,.2f}. Ganho: +R$ {top_boost_grp['gap_d7_rs']:,.2f}." if top_boost_grp else ""
+            },
+            {
+                "entidade": top_boost_sub["nome"] if top_boost_sub else "N/A",
+                "tipo": "Subgrupo",
+                "impacto_rs": top_boost_sub["gap_d7_rs"] if top_boost_sub else 0,
+                "detalhe": f"Hoje R$ {top_boost_sub['hoje']:,.2f} vs esperado D-7 R$ {top_boost_sub['d7_exp_corte']:,.2f}. Ganho: +R$ {top_boost_sub['gap_d7_rs']:,.2f}." if top_boost_sub else ""
+            }
         ]
     }
 
