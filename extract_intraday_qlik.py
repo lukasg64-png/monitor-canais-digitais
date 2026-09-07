@@ -254,7 +254,7 @@ JS_TEMPLATE = """async () => {
                 const totLin = lLin.result.qLayout.qHyperCube.qSize.qcy;
                 resData.rowsLinhas = await fetchAllHyperCubeRows(hLin, totLin, 4, 1500);
 
-                // 10. Top SKUs / Itens (Hoje vs Ontem vs D-7)
+                // 10. Top SKUs / Itens (Hoje vs Ontem vs D-7 + Saldo de Estoque)
                 const cSKU = await send("CreateSessionObject", docHandle, [{
                     "qInfo": { "qType": "q_top_skus" },
                     "qHyperCubeDef": {
@@ -265,16 +265,17 @@ JS_TEMPLATE = """async () => {
                         "qMeasures": [
                             { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
                             { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": "Sum({1} [Quantidade Saldo])" } }
                         ],
-                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 5 }],
+                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 6 }],
                         "qSuppressZero": true
                     }
                 }]);
                 const hSKU = cSKU.result.qReturn.qHandle;
                 const lSKU = await send("GetLayout", hSKU, []);
                 const totSKU = lSKU.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsSKUs = await fetchAllHyperCubeRows(hSKU, Math.min(2500, totSKU), 5, 1500);
+                resData.rowsSKUs = await fetchAllHyperCubeRows(hSKU, Math.min(2500, totSKU), 6, 1500);
 
                 ws.close();
                 resolve(resData);
