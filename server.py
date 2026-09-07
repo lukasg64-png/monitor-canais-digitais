@@ -85,7 +85,7 @@ def run_sync():
         
         # 3. Publica automaticamente no GitHub Pages se configurado
         try:
-            subprocess.run(["git", "add", "index.html", "data/*.json", "data/*.js", "*.py"], cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15)
+            subprocess.run(["git", "add", "index.html", "data", "process_intraday_analytics.py", "extract_intraday_qlik.py"], cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15)
             diff_chk = subprocess.run(["git", "diff", "--staged", "--quiet"], cwd=BASE_DIR)
             if diff_chk.returncode != 0:
                 now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
