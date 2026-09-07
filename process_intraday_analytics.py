@@ -647,11 +647,12 @@ def process_analytics():
             return f"-{prefix}{formatted}"
         return f"{prefix}{formatted}"
 
-    def fmt_pct(val):
+    def fmt_pct(val, show_sign=False):
         if val is None:
-            return "0%"
-        v = int(round(float(val)))
-        return f"{v}%"
+            return "0,0%"
+        v = float(val)
+        sign = "+" if (show_sign and v > 0) else ""
+        return f"{sign}{v:.1f}%".replace(".", ",")
 
     tot_kpi = executive_kpis["Total"]
 
@@ -737,9 +738,9 @@ def process_analytics():
             f"e Site atingiu {fmt_pct(executive_kpis['Site']['pacing_corte_pct'])} ({fmt_real(executive_kpis['Site']['gap_corte_rs'])})."
         ),
         "leitura_janelas": (
-            f"📊 Comparativo de Janelas: vs Ontem (D-1): {'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}{fmt_pct(tot_kpi['janela_d1']['var_pct'])} "
+            f"📊 Comparativo de Janelas: vs Ontem (D-1): {fmt_pct(tot_kpi['janela_d1']['var_pct'], show_sign=True)} "
             f"({'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}{fmt_real(tot_kpi['janela_d1']['var_rs'])}), confirmando forte retomada típica de início de semana. "
-            f"vs {dow_nome} Anterior (D-7): {fmt_pct(tot_kpi['janela_d7']['var_pct'])} ({fmt_real(tot_kpi['janela_d7']['var_rs'])}), "
+            f"vs {dow_nome} Anterior (D-7): {fmt_pct(tot_kpi['janela_d7']['var_pct'], show_sign=True)} ({fmt_real(tot_kpi['janela_d7']['var_rs'])}), "
             f"impactado principalmente pela retração pontual em medicamentos de alto valor."
         ),
         "auditoria_estoque": (

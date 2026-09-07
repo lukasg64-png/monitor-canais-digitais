@@ -12,7 +12,7 @@
       "APP",
       "MKP"
     ],
-    "gerado_em": "2026-09-07 19:08:28"
+    "gerado_em": "2026-09-07 19:18:56"
   },
   "kpis": {
     "Total": {
@@ -1853,10 +1853,10 @@
     }
   ],
   "storytelling": {
-    "headline": "Pacing de 101% às 17:53 — Projeção EOD em R$ 1.573.222 (+R$ 12.617 vs Meta)",
-    "diagnostico_pacing": "🎯 Norte do Dia: O canal digital faturou R$ 1.047.638 até às 17:53, atingindo 101% da meta proporcional esperada no corte (R$ 1.039.236), projetando fechar o dia em R$ 1.573.222 (meta oficial do dia: R$ 1.560.604). 🛵 Dinâmica dos Canais: Marketplace é o grande motor de tração operando a 166% da meta proporcional (+R$ 157.544 acima do esperado). Em contrapartida, os canais próprios demandam aceleração no período noturno: APP atingiu 100% (R$ 1.616) e Site atingiu 46% (-R$ 157.455).",
-    "leitura_janelas": "📊 Comparativo de Janelas: vs Ontem (D-1): +15% (+R$ 139.414), confirmando forte retomada típica de início de semana. vs Segunda-feira Anterior (D-7): -23% (-R$ 306.278), impactado principalmente pela retração pontual em medicamentos de alto valor.",
-    "auditoria_estoque": "📦 Auditoria de Causa-Raiz (Rede 1.147 Lojas): Dos -R$ 183.359 de retração nos itens detratores vs D-7, 67% (-R$ 122.441) foi puxado por severa restrição de estoque (<1,5 un/loja), com destaque para Mounjaro 2,5mg (361 un = 0,31 un/lj) e Pampers Jumbo (1.113 un = 0,97 un/lj) provocando indisponibilidade de entrega no APP/Site em mais de 70% das lojas. Apenas 33% (-R$ 60.917) decorre de desaquecimento comercial em itens plenamente abastecidos.",
+    "headline": "Pacing de 100,8% às 17:53 — Projeção EOD em R$ 1.573.222 (+R$ 12.617 vs Meta)",
+    "diagnostico_pacing": "🎯 Norte do Dia: O canal digital faturou R$ 1.047.638 até às 17:53, atingindo 100,8% da meta proporcional esperada no corte (R$ 1.039.236), projetando fechar o dia em R$ 1.573.222 (meta oficial do dia: R$ 1.560.604). 🛵 Dinâmica dos Canais: Marketplace é o grande motor de tração operando a 166,5% da meta proporcional (+R$ 157.544 acima do esperado). Em contrapartida, os canais próprios demandam aceleração no período noturno: APP atingiu 100,3% (R$ 1.616) e Site atingiu 45,6% (-R$ 157.455).",
+    "leitura_janelas": "📊 Comparativo de Janelas: vs Ontem (D-1): +15,4% (+R$ 139.414), confirmando forte retomada típica de início de semana. vs Segunda-feira Anterior (D-7): -22,6% (-R$ 306.278), impactado principalmente pela retração pontual em medicamentos de alto valor.",
+    "auditoria_estoque": "📦 Auditoria de Causa-Raiz (Rede 1.147 Lojas): Dos -R$ 183.359 de retração nos itens detratores vs D-7, 66,8% (-R$ 122.441) foi puxado por severa restrição de estoque (<1,5 un/loja), com destaque para Mounjaro 2,5mg (361 un = 0,31 un/lj) e Pampers Jumbo (1.113 un = 0,97 un/lj) provocando indisponibilidade de entrega no APP/Site em mais de 70% das lojas. Apenas 33,2% (-R$ 60.917) decorre de desaquecimento comercial em itens plenamente abastecidos.",
     "principais_detratores": [
       {
         "entidade": "Medicamentos GLP-1 (Eli Lilly / Mounjaro & Novo Nordisk)",
