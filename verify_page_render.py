@@ -9,10 +9,15 @@ async def main():
         await page.goto('http://localhost:3000/index.html')
         await page.wait_for_timeout(2500)
         
-        # Scroll to Cockpit de Ruptura
-        await page.evaluate('window.scrollTo(0, 1800)')
+        # Screenshot 1: Top of page (Hero + Cockpit)
+        await page.evaluate('window.scrollTo(0, 0)')
         await page.wait_for_timeout(1000)
-        await page.screenshot(path='screenshot_stock_cockpit_rendered.png')
+        await page.screenshot(path='screenshot_top_with_stock_cockpit.png')
+
+        # Screenshot 2: Scroll slightly to see Cockpit in full
+        await page.evaluate('window.scrollTo(0, 600)')
+        await page.wait_for_timeout(1000)
+        await page.screenshot(path='screenshot_stock_cockpit_relocated.png')
         
         # Scroll to table
         await page.evaluate('window.scrollTo(0, 2400)')
