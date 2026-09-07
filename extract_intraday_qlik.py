@@ -4,12 +4,15 @@ do Qlik Sense Enterprise (sense.farmaciassaojoao.com.br).
 
 App: E-Commerce x Rede (671fa4f4-eb7d-418f-b4c9-936e87d8011d)
 Extrai com precisão minuto a minuto:
-1. Timestamp mais recente do dia de hoje (maxHora, maxDataHora)
-2. Vendas Canal x Hora de Hoje (Dia 07), Ontem (Dia 06) e D-7 (Segunda 31/08)
-3. Vendas Canal x Hora dos dias 01 a 06 de Setembro (para cálculo da Curva Científica e Média 7D)
+1. Timestamp mais recente do dia atual (maxHora, maxDataHora)
+2. Vendas Canal x Hora de Hoje, Ontem (D-1) e D-7 (mesmo dia da semana passada)
+3. Histórico dos canais para cálculo da Curva Científica e Média 7D
 4. Detratores e Propulsores por Grupo, Subgrupo, Laboratório, Linha e Top SKUs
+Totalmente dinâmico para qualquer dia do mês e do ano sem dados hardcoded.
 """
 import os, sys, time, json, asyncio
+from datetime import datetime, timedelta
+
 if hasattr(sys.stdout, 'reconfigure'): sys.stdout.reconfigure(encoding='utf-8')
 if hasattr(sys.stderr, 'reconfigure'): sys.stderr.reconfigure(encoding='utf-8')
 
@@ -68,19 +71,22 @@ JS_TEMPLATE = """async () => {
                 const docHandle = openRes.result.qReturn.qHandle;
                 const resData = {};
 
-                // 1. Timestamp mais recente do dia atual (Dia 07)
-                const eMaxHora = await send("Evaluate", docHandle, ["MaxString({1<[Ano-Mes]={'2026-09'}, Dia={'07'}>} Hora)"]);
-                const eMaxDataHora = await send("Evaluate", docHandle, ["MaxString({1<[Ano-Mes]={'2026-09'}, Dia={'07'}>} [Data e Hora])"]);
-                const eMaxData = await send("Evaluate", docHandle, ["MaxString({1<[Ano-Mes]={'2026-09'}, Dia={'07'}>} Data)"]);
+                // 1. Timestamp mais recente do dia atual
+                const eMaxHora = await send("Evaluate", docHandle, ["MaxString({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}>} Hora)"]);
+                const eMaxDataHora = await send("Evaluate", docHandle, ["MaxString({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}>} [Data e Hora])"]);
+                const eMaxData = await send("Evaluate", docHandle, ["MaxString({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}>} Data)"]);
                 
-                resData.maxHora = eMaxHora.result?.qReturn || "12:52";
-                resData.maxDataHora = eMaxDataHora.result?.qReturn || "07/09/2026 12:52:59";
-                resData.dataHoje = eMaxData.result?.qReturn || "07/09/2026";
-                resData.diaHoje = "07";
-                resData.diaOntem = "06";
-                resData.diaD7 = "31"; // Segunda-feira anterior (31/08/2026)
+                resData.maxHora = (eMaxHora.result?.qReturn && eMaxHora.result.qReturn !== '-') ? eMaxHora.result.qReturn : "%%DEFAULT_HORA%%";
+                resData.maxDataHora = (eMaxDataHora.result?.qReturn && eMaxDataHora.result.qReturn !== '-') ? eMaxDataHora.result.qReturn : "%%DEFAULT_DATA_HORA%%";
+                resData.dataHoje = (eMaxData.result?.qReturn && eMaxData.result.qReturn !== '-') ? eMaxData.result.qReturn : "%%DEFAULT_DATA%%";
+                resData.diaHoje = "%%DIA_HOJE%%";
+                resData.diaOntem = "%%DIA_ONTEM%%";
+                resData.diaD7 = "%%DIA_D7%%";
+                resData.anoMesHoje = "%%ANO_MES_HOJE%%";
+                resData.anoMesOntem = "%%ANO_MES_ONTEM%%";
+                resData.anoMesD7 = "%%ANO_MES_D7%%";
 
-                // 2. Vendas Hoje (Dia 07) - Canal x Hora
+                // 2. Vendas Hoje - Canal x Hora
                 const cH = await send("CreateSessionObject", docHandle, [{
                     "qInfo": { "qType": "q_hoje_hora" },
                     "qHyperCubeDef": {
@@ -89,8 +95,8 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qFieldDefs": ["Hora"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'07'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'07'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 2500, "qWidth": 4 }],
                         "qSuppressZero": true
@@ -101,7 +107,7 @@ JS_TEMPLATE = """async () => {
                 const totH = lH.result.qLayout.qHyperCube.qSize.qcy;
                 resData.rowsHoje = await fetchAllHyperCubeRows(hH, totH, 4, 2500);
 
-                // 3. Vendas Ontem (Dia 06) - Canal x Hora
+                // 3. Vendas Ontem (D-1) - Canal x Hora
                 const cO = await send("CreateSessionObject", docHandle, [{
                     "qInfo": { "qType": "q_ontem_hora" },
                     "qHyperCubeDef": {
@@ -110,8 +116,8 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qFieldDefs": ["Hora"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'06'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'06'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 2500, "qWidth": 4 }],
                         "qSuppressZero": true
@@ -122,7 +128,7 @@ JS_TEMPLATE = """async () => {
                 const totO = lO.result.qLayout.qHyperCube.qSize.qcy;
                 resData.rowsOntem = await fetchAllHyperCubeRows(hO, totO, 4, 2500);
 
-                // 4. Vendas D-7 (31/08) - Canal x Hora
+                // 4. Vendas D-7 - Canal x Hora
                 const c7 = await send("CreateSessionObject", docHandle, [{
                     "qInfo": { "qType": "q_d7_hora" },
                     "qHyperCubeDef": {
@@ -131,8 +137,8 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qFieldDefs": ["Hora"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-08'}, Dia={'31'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-08'}, Dia={'31'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 2500, "qWidth": 4 }],
                         "qSuppressZero": true
@@ -143,7 +149,7 @@ JS_TEMPLATE = """async () => {
                 const tot7 = l7.result.qLayout.qHyperCube.qSize.qcy;
                 resData.rowsD7 = await fetchAllHyperCubeRows(h7, tot7, 4, 2500);
 
-                // 5. Histórico de Setembro/2026 por Dia e Canal (para totais e curva)
+                // 5. Histórico por Dia e Canal (Mês Atual e Mês Anterior para Janela Móvel 7D)
                 const cHist = await send("CreateSessionObject", docHandle, [{
                     "qInfo": { "qType": "q_hist_canais_dia" },
                     "qHyperCubeDef": {
@@ -152,8 +158,8 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qFieldDefs": ["Dia"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-08'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ANTERIOR%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 500, "qWidth": 4 }],
                         "qSuppressZero": true
@@ -172,9 +178,9 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qFieldDefs": ["Desc_Grupo"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'07'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'06'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-08'}, Dia={'31'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 500, "qWidth": 5 }],
                         "qSuppressZero": true
@@ -193,9 +199,9 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qFieldDefs": ["Desc_Subgrupo"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'07'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'06'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-08'}, Dia={'31'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 5 }],
                         "qSuppressZero": true
@@ -214,9 +220,9 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qFieldDefs": ["Laboratorio"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'07'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'06'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-08'}, Dia={'31'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 4 }],
                         "qSuppressZero": true
@@ -235,9 +241,9 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qFieldDefs": ["Desc_Linha"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'07'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'06'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-08'}, Dia={'31'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 4 }],
                         "qSuppressZero": true
@@ -257,9 +263,9 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qFieldDefs": ["Desc_Produto"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'07'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-09'}, Dia={'06'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'2026-08'}, Dia={'31'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 5 }],
                         "qSuppressZero": true
@@ -295,10 +301,44 @@ JS_TEMPLATE = """async () => {
     });
 };"""
 
-async def fetch_intraday_data():
+def compute_date_replacements(target_dt=None):
+    """Calcula dinamicamente as datas do dia atual, ontem (D-1) e D-7."""
+    if target_dt is None:
+        target_dt = datetime.now()
+
+    dt_ontem = target_dt - timedelta(days=1)
+    dt_d7 = target_dt - timedelta(days=7)
+    dt_mes_ant = target_dt.replace(day=1) - timedelta(days=1)
+
+    return {
+        "%%DIGITAL_CHANNELS%%": DIGITAL_CHANNELS,
+        "%%DIA_HOJE%%": f"{target_dt.day:02d}",
+        "%%ANO_MES_HOJE%%": f"{target_dt.year}-{target_dt.month:02d}",
+        "%%DEFAULT_DATA%%": target_dt.strftime("%d/%m/%Y"),
+        "%%DEFAULT_HORA%%": target_dt.strftime("%H:%M"),
+        "%%DEFAULT_DATA_HORA%%": target_dt.strftime("%d/%m/%Y %H:%M:00"),
+
+        "%%DIA_ONTEM%%": f"{dt_ontem.day:02d}",
+        "%%ANO_MES_ONTEM%%": f"{dt_ontem.year}-{dt_ontem.month:02d}",
+
+        "%%DIA_D7%%": f"{dt_d7.day:02d}",
+        "%%ANO_MES_D7%%": f"{dt_d7.year}-{dt_d7.month:02d}",
+
+        "%%ANO_MES_ANTERIOR%%": f"{dt_mes_ant.year}-{dt_mes_ant.month:02d}"
+    }
+
+async def fetch_intraday_data(target_dt=None):
     t0 = time.time()
+    if target_dt is None:
+        target_dt = datetime.now()
+
+    replacements = compute_date_replacements(target_dt)
+    dia_str = replacements["%%DIA_HOJE%%"]
+    mes_str = replacements["%%ANO_MES_HOJE%%"]
+
     print("=" * 75)
-    print("  EXTRAÇÃO INTRADAY ONLINE — CANAIS DIGITAIS (QLIK SENSE)")
+    print(f"  EXTRAÇÃO INTRADAY ONLINE — CANAIS DIGITAIS (QLIK SENSE)")
+    print(f"  Data Alvo: {dia_str}/{mes_str} | Ontem: {replacements['%%DIA_ONTEM%%']} | D-7: {replacements['%%DIA_D7%%']}")
     print("=" * 75)
 
     async with async_playwright() as p:
@@ -317,7 +357,10 @@ async def fetch_intraday_data():
             await page.wait_for_timeout(4000)
 
         print("2/4 Sessão autenticada! Executando consultas no QIX Engine via WebSocket...", flush=True)
-        js_script = JS_TEMPLATE.replace("%%DIGITAL_CHANNELS%%", DIGITAL_CHANNELS)
+        js_script = JS_TEMPLATE
+        for k, v in replacements.items():
+            js_script = js_script.replace(k, v)
+
         raw_data = await page.evaluate(js_script)
         await browser.close()
 
@@ -330,7 +373,7 @@ async def fetch_intraday_data():
 
     elapsed = time.time() - t0
     print("\n" + "=" * 75)
-    print(f"✅ EXTRAÇÃO CONCLUÍDA COM SUCESSO EM {elapsed:.1f}s!")
+    print(f"EXTRAÇÃO CONCLUÍDA COM SUCESSO EM {elapsed:.1f}s!")
     print(f"   Arquivo gerado: {RAW_FILE}")
     print(f"   Corte Atual: {raw_data.get('maxDataHora')} (Minuto: {raw_data.get('maxHora')})")
     print(f"   Linhas Hoje: {len(raw_data.get('rowsHoje', []))} | Ontem: {len(raw_data.get('rowsOntem', []))} | D-7: {len(raw_data.get('rowsD7', []))}")

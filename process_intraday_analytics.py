@@ -8,14 +8,19 @@ Canais estritamente monitorados:
   - Marketplace: 'e_Commerce', 'iFood'
 Calcula comparativos em 3 janelas idênticas no mesmo minuto de corte (D-1, D-7, Média 7D),
 curva empírica de distribuição da meta hora a hora, projeção EOD em múltiplos cenários,
+mix de canais (share realizado vs orçado), ticket médio por item, radar do horário nobre (18h-22h),
 matriz de detratores/alavancadores em 5 níveis hierárquicos e storytelling executivo.
 """
 
 import os
+import sys
 import json
 import openpyxl
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
+
+if hasattr(sys.stdout, 'reconfigure'): sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'): sys.stderr.reconfigure(encoding='utf-8')
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -53,7 +58,8 @@ def get_minute_of_day(val):
     return 0
 
 def load_metas(dia_alvo=7):
-    """Lê metas da planilha de diarização para o dia alvo estritamente para os canais definidos"""
+    """Lê metas da planilha oficial de diarização para o dia alvo estritamente para os canais definidos"""
+    dia_int = int(dia_alvo)
     metas = {
         "Total": 1560604.42,
         "APP": 739532.77,
@@ -66,16 +72,20 @@ def load_metas(dia_alvo=7):
     try:
         wb = openpyxl.load_workbook(EXCEL_META, data_only=True)
         ws = wb["Planilha2"] if "Planilha2" in wb.sheetnames else wb.active
+        found = False
         for row in ws.iter_rows(min_row=2, values_only=True):
-            if row[0] == dia_alvo:
+            if row[0] is not None and int(row[0]) == dia_int:
                 # Cols: Dia, DOW, Data, Meta Dia, % Mes, APP, Site, MKP
                 metas["APP"] = float(row[5] or 0)
                 metas["Site"] = float(row[6] or 0)
                 metas["MKP"] = float(row[7] or 0)
                 metas["Total"] = metas["APP"] + metas["Site"] + metas["MKP"]
+                found = True
                 break
+        if not found:
+            print(f"Aviso: Dia {dia_int} não localizado na planilha de metas. Mantendo padrão.")
     except Exception as e:
-        print(f"Aviso ao ler metas do Excel: {e}. Usando valores padrão do dia 07.")
+        print(f"Aviso ao ler metas do Excel: {e}. Usando valores padrão do dia {dia_int}.")
     return metas
 
 def process_analytics():
@@ -92,18 +102,29 @@ def process_analytics():
 
     max_hora_str = raw.get("maxHora", "12:52")
     max_data_hora = raw.get("maxDataHora", f"07/09/2026 {max_hora_str}:00")
-    dia_hoje = raw.get("diaHoje", 7)
+    dia_hoje = int(raw.get("diaHoje", 7))
+    data_hoje_str = raw.get("dataHoje", datetime.now().strftime("%d/%m/%Y"))
+
+    try:
+        dt_ref = datetime.strptime(data_hoje_str, "%d/%m/%Y")
+    except Exception:
+        dt_ref = datetime.now()
+
+    DIAS_SEMANA = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+    dow_nome = DIAS_SEMANA[dt_ref.weekday()]
+
     max_minute = get_minute_of_day(max_hora_str)
     curr_hour = max_minute // 60
     curr_min = max_minute % 60
     elapsed_hours = max(0.1, max_minute / 60.0)
     remaining_hours = max(0.01, 24.0 - elapsed_hours)
 
-    print(f"Horário de corte: {max_data_hora} ({max_minute} min = {curr_hour:02d}:{curr_min:02d})")
+    print(f"Horário de corte: {max_data_hora} ({max_minute} min = {curr_hour:02d}:{curr_min:02d}) [{dow_nome}]")
     print(f"Horas decorridas: {elapsed_hours:.2f}h | Horas restantes: {remaining_hours:.2f}h")
 
     metas = load_metas(dia_hoje)
-    print(f"Metas do Dia {dia_hoje}: Total=R$ {metas['Total']:,.2f} | APP=R$ {metas['APP']:,.2f} | Site=R$ {metas['Site']:,.2f} | MKP=R$ {metas['MKP']:,.2f}")
+    metas_excel = metas
+    print(f"Metas Oficiais do Dia {dia_hoje}: Total=R$ {metas['Total']:,.2f} | APP=R$ {metas['APP']:,.2f} | Site=R$ {metas['Site']:,.2f} | MKP=R$ {metas['MKP']:,.2f}")
 
     # 1. Totalizadores Hoje, Ontem e D-7 por Canal (no corte e totais)
     hoje_cut = defaultdict(float)
@@ -161,21 +182,34 @@ def process_analytics():
             d7_qtd_cut[c] += qtd
             d7_qtd_cut["Total"] += qtd
 
-    # 2. Histórico dos últimos 7 dias completos (para cálculo da Média 7D)
+    # 2. Histórico dos últimos 7 dias completos (TOTALMENTE DINÂMICO PARA QUALQUER DIA)
+    ano_mes_ref = f"{dt_ref.year}-{dt_ref.month:02d}"
+    dt_prev_month = dt_ref.replace(day=1) - timedelta(days=1)
+    ano_mes_prev = f"{dt_prev_month.year}-{dt_prev_month.month:02d}"
+
+    # Gera conjunto de tuplas (dia, ano-mes) dos 7 dias imediatamente anteriores
+    dias_anteriores = {}
+    for i in range(1, 8):
+        d = dt_ref - timedelta(days=i)
+        dias_anteriores[(d.day, f"{d.year}-{d.month:02d}")] = d.strftime("%Y-%m-%d")
+
     hist_days = defaultdict(lambda: defaultdict(float))
     for r in raw.get("rowsHistDia", []):
         c = norm_canal(r[0])
         if not c:
             continue
-        dia = int(r[1])
-        val_sep = float(r[2] or 0)
-        val_ago = float(r[3] or 0)
-        if dia in [1, 2, 3, 4, 5, 6]:
-            hist_days[f"Sep_{dia:02d}"][c] += val_sep
-            hist_days[f"Sep_{dia:02d}"]["Total"] += val_sep
-        if dia == 31:
-            hist_days["Aug_31_D7"][c] += val_ago
-            hist_days["Aug_31_D7"]["Total"] += val_ago
+        dia_num = int(r[1])
+        val_curr = float(r[2] or 0)
+        val_prev = float(r[3] or 0) if len(r) > 3 else 0.0
+
+        if (dia_num, ano_mes_ref) in dias_anteriores:
+            day_key = f"{ano_mes_ref}_{dia_num:02d}"
+            hist_days[day_key][c] += val_curr
+            hist_days[day_key]["Total"] += val_curr
+        elif (dia_num, ano_mes_prev) in dias_anteriores:
+            day_key = f"{ano_mes_prev}_{dia_num:02d}"
+            hist_days[day_key][c] += val_prev
+            hist_days[day_key]["Total"] += val_prev
 
     media_7d_full = defaultdict(float)
     n_dias_hist = max(1, len(hist_days))
@@ -183,38 +217,28 @@ def process_analytics():
         for ch, v in day_data.items():
             media_7d_full[ch] += v / n_dias_hist
 
-    # Média dos últimos dias de Setembro (dias 1 a 6)
     media_recentes_full = defaultdict(float)
-    n_recentes = max(1, len([d for d in hist_days if d.startswith("Sep_")]))
+    recentes_days = [d for d in hist_days if d.startswith(ano_mes_ref)]
+    n_recentes = max(1, len(recentes_days))
     for day_id, day_data in hist_days.items():
-        if day_id.startswith("Sep_"):
+        if day_id.startswith(ano_mes_ref):
             for ch, v in day_data.items():
                 media_recentes_full[ch] += v / n_recentes
 
-    # 3. Metas do Dia: A meta do dia por canal vem estritamente da planilha oficial (Diarização Setembro 2026.xlsx)
-    # Regra estrita: Essa meta NUNCA muda (já está no Excel).
-    # O que é distribuído cientificamente no hora a hora é a curva de distribuição do dia (D-7 Segunda-feira).
-    metas_excel = load_metas(dia_hoje)
-    metas = metas_excel  # Meta oficial do dia imutável
-
     metas_ponderadas = {}
     for ch in ["APP", "Site", "MKP"]:
-        metas_ponderadas[ch] = round(0.70 * d7_full[ch] + 0.30 * media_recentes_full[ch], 2)
+        metas_ponderadas[ch] = round(0.70 * d7_full[ch] + 0.30 * (media_recentes_full[ch] or d7_full[ch]), 2)
     metas_ponderadas["Total"] = round(metas_ponderadas["APP"] + metas_ponderadas["Site"] + metas_ponderadas["MKP"], 2)
 
-    print(f"Meta Oficial Excel (Imutável): Total=R$ {metas['Total']:,.2f} | APP=R$ {metas['APP']:,.2f} | Site=R$ {metas['Site']:,.2f} | MKP=R$ {metas['MKP']:,.2f}")
-    print(f"Referência D-7 Ponderado: Total=R$ {metas_ponderadas['Total']:,.2f} | APP=R$ {metas_ponderadas['APP']:,.2f} | Site=R$ {metas_ponderadas['Site']:,.2f} | MKP=R$ {metas_ponderadas['MKP']:,.2f}")
-
     # 4. Pesos e Curva Científica de Distribuição Horária
-    # Usamos D-7 (mesmo dia da semana - Segunda, peso 70%) e Ontem/Média recente (peso 30%)
     curve_weights_cut = {}
     for ch in ["Total", "APP", "Site", "MKP"]:
         w_d7 = (d7_cut[ch] / d7_full[ch]) if d7_full[ch] > 0 else 0
         w_ontem = (ontem_cut[ch] / ontem_full[ch]) if ontem_full[ch] > 0 else 0
         w_blend = (w_d7 * 0.7 + w_ontem * 0.3) if (w_d7 > 0 and w_ontem > 0) else (w_d7 or w_ontem or (elapsed_hours / 24.0))
-        curve_weights_cut[ch] = w_blend
+        # Garantia de piso seguro para início da manhã
+        curve_weights_cut[ch] = max(0.005, min(1.0, w_blend))
 
-    # Média 7D no corte
     media_7d_cut = defaultdict(float)
     for ch in ["Total", "APP", "Site", "MKP"]:
         media_7d_cut[ch] = media_7d_full[ch] * curve_weights_cut[ch]
@@ -256,6 +280,7 @@ def process_analytics():
     accum_ontem = defaultdict(float)
     accum_proj_base = defaultdict(float)
 
+    peso_horario_nobre = 0.0
     for h in range(24):
         w_h = {}
         for ch in ["Total", "APP", "Site", "MKP"]:
@@ -264,6 +289,9 @@ def process_analytics():
             w_d7_h = hourly_d7[h][ch] / tot_d7
             w_ont_h = hourly_ontem[h][ch] / tot_ont
             w_h[ch] = 0.70 * w_d7_h + 0.30 * w_ont_h
+
+        if h in [18, 19, 20, 21]:
+            peso_horario_nobre += w_h["Total"]
 
         row_h = {
             "hora": f"{h:02d}:00",
@@ -286,8 +314,8 @@ def process_analytics():
                 accum_hoje[ch] += hourly_hoje[h][ch]
                 accum_proj_base[ch] = accum_hoje[ch]
             else:
-                # Projeção das horas futuras baseada no pacing atual x curva D-7
                 pacing_atual = (hoje_cut[ch] / (metas[ch] * curve_weights_cut[ch])) if (metas[ch] * curve_weights_cut[ch]) > 0 else 1.0
+                pacing_atual = max(0.2, min(3.0, pacing_atual))
                 accum_proj_base[ch] += metas[ch] * w_h[ch] * pacing_atual
 
         row_h["accum_hoje"] = {ch: round(accum_hoje[ch], 2) for ch in accum_hoje}
@@ -297,7 +325,7 @@ def process_analytics():
         row_h["accum_proj_base"] = {ch: round(accum_proj_base[ch], 2) for ch in accum_proj_base}
         hourly_curve_table.append(row_h)
 
-    # 5. Indicadores Executivos, 3 Janelas e Cenários de Projeção
+    # 5. Indicadores Executivos, 3 Janelas e Cenários de Projeção com Proteção Matinal
     executive_kpis = {}
     for ch in ["Total", "APP", "Site", "MKP"]:
         real = hoje_cut[ch]
@@ -307,34 +335,36 @@ def process_analytics():
         gap_corte = real - m_exp
         pacing_pct = (real / m_exp * 100.0) if m_exp > 0 else 0.0
 
-        # Múltiplos Cenários de Projeção EOD
-        # 1. Base (Run-Rate Empírico Curva)
-        proj_base = (real / w_cut) if w_cut > 0 else real
-        # 2. Conservador (Desaceleração natural tarde/noite -5%)
+        # Amortecimento Bayesiano na Projeção EOD para o início da manhã (evita distorções por vendas únicas na madrugada)
+        if w_cut < 0.15:
+            blend_factor = max(0.0, w_cut / 0.15)
+            raw_proj = (real / w_cut) if w_cut > 0.001 else real
+            proj_base = blend_factor * raw_proj + (1.0 - blend_factor) * m_dia
+        else:
+            proj_base = (real / w_cut) if w_cut > 0 else real
+
         proj_conservadora = real + max(0.0, (proj_base - real)) * 0.94
-        # 3. Otimista / Reversão (Realizado atual + 100% da meta restante)
         proj_reversao = real + max(0.0, (m_dia - m_exp))
 
         gap_proj_base = proj_base - m_dia
         proj_pacing_pct = (proj_base / m_dia * 100.0) if m_dia > 0 else 0.0
 
-        # Run-rate horário
         run_rate_atual_hora = real / elapsed_hours
         run_rate_necessario_hora = max(0.0, (m_dia - real)) / remaining_hours
 
-        # Janela 1: vs Ontem (D-1) no corte e dia cheio
+        # Janela 1: vs Ontem (D-1)
         ont_c = ontem_cut[ch]
         ont_f = ontem_full[ch]
         var_ontem_rs = real - ont_c
         var_ontem_pct = ((real - ont_c) / ont_c * 100.0) if ont_c > 0 else 0.0
 
-        # Janela 2: vs D-7 (Segunda passada 31/08) no corte e dia cheio
+        # Janela 2: vs D-7 (mesmo dia da semana passada)
         d7_c = d7_cut[ch]
         d7_f = d7_full[ch]
         var_d7_rs = real - d7_c
         var_d7_pct = ((real - d7_c) / d7_c * 100.0) if d7_c > 0 else 0.0
 
-        # Janela 3: vs Média 7D no corte e dia cheio
+        # Janela 3: vs Média 7D
         m7_c = media_7d_cut[ch]
         m7_f = media_7d_full[ch]
         var_m7_rs = real - m7_c
@@ -385,7 +415,39 @@ def process_analytics():
             }
         }
 
-    # 6. Matriz de Detratores e Alavancadores em 5 Níveis
+    # 6. Mix de Canais & Eficiência de Carrinho (Retail Analytics)
+    tot_real = hoje_cut["Total"]
+    tot_meta = metas["Total"]
+    mix_canais = {}
+    for ch in ["Total", "APP", "Site", "MKP"]:
+        real_ch = hoje_cut[ch]
+        meta_ch = metas[ch]
+        qtd_ch = hoje_qtd[ch]
+        share_real = (real_ch / tot_real * 100.0) if tot_real > 0 else 0.0
+        share_meta = (meta_ch / tot_meta * 100.0) if tot_meta > 0 else 0.0
+        desvio_mix = share_real - share_meta
+        ticket_item = (real_ch / qtd_ch) if qtd_ch > 0 else 0.0
+
+        mix_canais[ch] = {
+            "share_realizado_pct": round(share_real, 1),
+            "share_meta_pct": round(share_meta, 1),
+            "desvio_mix_pp": round(desvio_mix, 1),
+            "ticket_medio_item": round(ticket_item, 2),
+            "qtd_itens": int(qtd_ch)
+        }
+
+    # 7. Radar do Horário Nobre (18h às 22h)
+    venda_esperada_nobre = metas["Total"] * peso_horario_nobre
+    meta_restante_dia = max(0.0, metas["Total"] - hoje_cut["Total"])
+    horario_nobre = {
+        "peso_curva_pct": round(peso_horario_nobre * 100.0, 1),
+        "venda_esperada_rs": round(venda_esperada_nobre, 2),
+        "meta_restante_rs": round(meta_restante_dia, 2),
+        "horas_restantes": round(remaining_hours, 1),
+        "run_rate_necessario_hora": round(executive_kpis["Total"]["run_rate_necessario_hora"], 2)
+    }
+
+    # 8. Matriz de Detratores e Alavancadores em 5 Níveis
     w_d7_tot = curve_weights_cut["Total"]
     w_ontem_tot = (ontem_cut["Total"] / ontem_full["Total"]) if ontem_full["Total"] > 0 else w_d7_tot
 
@@ -461,7 +523,7 @@ def process_analytics():
         })
     level_skus = build_detractors_boosters(skus_raw, "nome", extra_keys=["sku_id"])
 
-    # Nível 2: Grupos (Consolidado total sem necessidade de canal)
+    # Nível 2: Grupos
     grupos_agg = defaultdict(lambda: {"hoje": 0.0, "ontem": 0.0, "d7": 0.0})
     for r in raw.get("rowsGrupos", []):
         c_mapped = norm_canal(r[0])
@@ -519,9 +581,8 @@ def process_analytics():
         })
     level_linhas = build_detractors_boosters(linhas_raw, "nome")
 
-    # 7. Diagnóstico Estratégico & Direcionador Automatizado (Norte Executivo com formatação brasileira e sem centavos)
+    # 9. Diagnóstico Estratégico & Direcionador Automatizado (Norte Executivo sem centavos)
     def fmt_real(val, prefix="R$ "):
-        """Formata valor em Real sem centavos e com ponto como separador de milhar."""
         if val is None:
             return f"{prefix}0"
         v = int(round(float(val)))
@@ -532,7 +593,6 @@ def process_analytics():
         return f"{prefix}{formatted}"
 
     def fmt_pct(val):
-        """Formata percentual inteiro sem casas decimais."""
         if val is None:
             return "0%"
         v = int(round(float(val)))
@@ -541,7 +601,6 @@ def process_analytics():
     tot_kpi = executive_kpis["Total"]
 
     # FRENTES DIRECIONADORAS DE GAP (Detratores Não-Redundantes)
-    # Frente 1: Concentração em Medicamentos GLP-1 & Alta Renda (Lilly / Novo Nordisk)
     lilly = next((l for l in level_labs["detratores_top"] if "LILLY" in l["nome"].upper()), None)
     novo = next((l for l in level_labs["detratores_top"] if "NOVO NORDISK" in l["nome"].upper()), None)
     mounjaro = next((s for s in level_skus["detratores_top"] if "MOUNJARO" in s["nome"].upper()), None)
@@ -554,7 +613,6 @@ def process_analytics():
         "detalhe": f"Retração concentrada em GLP-1: Eli Lilly ({fmt_real(gap_lilly)}) com Mounjaro 2,5mg ({fmt_real(mounjaro['gap_d7_rs'] if mounjaro else -25748)}) e Novo Nordisk ({fmt_real(novo['gap_d7_rs'] if novo else -22092)}) operando abaixo do padrão D-7."
     }
 
-    # Frente 2: Prescrição & Genéricos Tradicionais (Eurofarma & EMS)
     eurofarma = next((l for l in level_labs["detratores_top"] if "EUROFARMA" in l["nome"].upper()), None)
     ems = next((l for l in level_labs["detratores_top"] if "EMS" in l["nome"].upper()), None)
     gap_euro = eurofarma["gap_d7_rs"] if eurofarma else -20447.16
@@ -563,10 +621,9 @@ def process_analytics():
         "entidade": "Prescrição & Genéricos de Giro (Eurofarma & EMS)",
         "tipo": "Volume de Balcão",
         "impacto_rs": gap_euro + gap_ems,
-        "detalhe": f"Desaceleração de volume em prescrição diária e genéricos: Eurofarma ({fmt_real(gap_euro)}) e EMS Genéricos ({fmt_real(gap_ems)}) com menor saída que na última segunda-feira."
+        "detalhe": f"Desaceleração de volume em prescrição diária e genéricos: Eurofarma ({fmt_real(gap_euro)}) e EMS Genéricos ({fmt_real(gap_ems)}) com menor saída que no padrão D-7."
     }
 
-    # Frente 3: Higiene Infantil em Linhas Tradicionais & Nutrição (Kimberly / Pampers Jumbo)
     kimberly = next((l for l in level_labs["detratores_top"] if "KIMBERLY" in l["nome"].upper()), None)
     pampers_jumbo = next((s for s in level_skus["detratores_top"] if "JUMBO" in s["nome"].upper()), None)
     gap_kimb = kimberly["gap_d7_rs"] if kimberly else -11182.17
@@ -580,8 +637,7 @@ def process_analytics():
 
     principais_detratores = [frente_1, frente_2, frente_3]
 
-    # FRENTES DIRECIONADORAS DE ALAVANCAGEM (Ganhos Não-Redundantes)
-    # Frente Positiva 1: Fraldas Bag Super (P&G)
+    # FRENTES DIRECIONADORAS DE ALAVANCAGEM
     pg = next((l for l in level_labs["alavancadores_top"] if "PROCTER" in l["nome"].upper()), None)
     gap_pg = pg["gap_d7_rs"] if pg else 26557.28
     boost_1 = {
@@ -591,7 +647,6 @@ def process_analytics():
         "detalhe": f"P&G lidera os ganhos (+{fmt_real(gap_pg)}) impulsionada pela forte migração de clientes para a linha Pampers Bag Super (+{fmt_real(40000)} somados nos tamanhos XXG, XG e G)."
     }
 
-    # Frente Positiva 2: Nutrição & Fórmulas Infantis (Leite Ninho 1+)
     ninho = next((s for s in level_skus["alavancadores_top"] if "NINHO" in s["nome"].upper()), None)
     gap_ninho = ninho["gap_d7_rs"] if ninho else 7121.32
     boost_2 = {
@@ -601,7 +656,6 @@ def process_analytics():
         "detalhe": f"Forte aceleração em nutrição infantil, puxada pelo Leite Ninho 1+ Prebio (+{fmt_real(gap_ninho)}) superando amplamente o ritmo esperado de D-7."
     }
 
-    # Frente Positiva 3: Autocuidado & Linhas de Giro OTC (Kenvue, Coty & Cimed)
     kenvue = next((l for l in level_labs["alavancadores_top"] if "KENVUE" in l["nome"].upper()), None)
     coty = next((l for l in level_labs["alavancadores_top"] if "COTY" in l["nome"].upper()), None)
     cimed = next((l for l in level_labs["alavancadores_top"] if "CIMED" in l["nome"].upper()), None)
@@ -630,7 +684,7 @@ def process_analytics():
         "leitura_janelas": (
             f"📊 Comparativo de Janelas: vs Ontem (D-1): {'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}{fmt_pct(tot_kpi['janela_d1']['var_pct'])} "
             f"({'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}{fmt_real(tot_kpi['janela_d1']['var_rs'])}), confirmando forte retomada típica de início de semana. "
-            f"vs Segunda Anterior (D-7): {fmt_pct(tot_kpi['janela_d7']['var_pct'])} ({fmt_real(tot_kpi['janela_d7']['var_rs'])}), "
+            f"vs {dow_nome} Anterior (D-7): {fmt_pct(tot_kpi['janela_d7']['var_pct'])} ({fmt_real(tot_kpi['janela_d7']['var_rs'])}), "
             f"impactado principalmente pela retração pontual em medicamentos de alto valor."
         ),
         "principais_detratores": principais_detratores,
@@ -646,10 +700,13 @@ def process_analytics():
             "horas_decorridas": round(elapsed_hours, 2),
             "horas_restantes": round(remaining_hours, 2),
             "dia_hoje": dia_hoje,
+            "dia_semana": dow_nome,
             "canais_monitorados": ["Site", "APP", "MKP"],
             "gerado_em": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         },
         "kpis": executive_kpis,
+        "mix_canais": mix_canais,
+        "horario_nobre": horario_nobre,
         "hourly_curve": hourly_curve_table,
         "storytelling": storytelling,
         "detratores_alavancadores": {
@@ -684,13 +741,15 @@ def process_analytics():
         except Exception as e_html:
             print(f"   Aviso ao embutir dados no HTML: {e_html}")
 
-    print(f"\n[OK] PROCESSAMENTO CONCLUIDO COM SUCESSO!")
+    print(f"\n[OK] PROCESSAMENTO CONCLUÍDO COM SUCESSO!")
     print(f"   Arquivo JSON: {OUTPUT_FILE}")
     print(f"   Arquivo JS:   {OUTPUT_JS}")
     print(f"   Realizado Hoje: R$ {tot_kpi['realizado_hoje']:,.2f}")
-    print(f"   Meta Dia: R$ {tot_kpi['meta_dia']:,.2f} | Meta Esperada ate {max_hora_str}: R$ {tot_kpi['meta_esperada_corte']:,.2f}")
+    print(f"   Meta Dia: R$ {tot_kpi['meta_dia']:,.2f} | Meta Esperada até {max_hora_str}: R$ {tot_kpi['meta_esperada_corte']:,.2f}")
     print(f"   Pacing no Corte: {tot_kpi['pacing_corte_pct']}% | GAP: R$ {tot_kpi['gap_corte_rs']:,.2f}")
-    print(f"   Projecao EOD: R$ {tot_kpi['projecao_eod']:,.2f} ({tot_kpi['projecao_pacing_pct']}%)")
+    print(f"   Projeção EOD: R$ {tot_kpi['projecao_eod']:,.2f} ({tot_kpi['projecao_pacing_pct']}%)")
+    print(f"   Mix Canais: MKP={mix_canais['MKP']['share_realizado_pct']}% (Meta {mix_canais['MKP']['share_meta_pct']}%) | APP={mix_canais['APP']['share_realizado_pct']}% (Meta {mix_canais['APP']['share_meta_pct']}%) | Site={mix_canais['Site']['share_realizado_pct']}% (Meta {mix_canais['Site']['share_meta_pct']}%)")
+    print(f"   Ticket Médio/Item: Total=R$ {mix_canais['Total']['ticket_medio_item']:.2f} | APP=R$ {mix_canais['APP']['ticket_medio_item']:.2f} | Site=R$ {mix_canais['Site']['ticket_medio_item']:.2f} | MKP=R$ {mix_canais['MKP']['ticket_medio_item']:.2f}")
     print(f"   Detratores mapeados: {len(level_skus['detratores_top'])} SKUs, {len(level_labs['detratores_top'])} Labs, {len(level_subgrupos['detratores_top'])} Subgrupos")
     print("=" * 70)
 

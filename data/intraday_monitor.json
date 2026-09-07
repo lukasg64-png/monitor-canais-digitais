@@ -5,13 +5,14 @@
     "corte_minuto_dia": 1012,
     "horas_decorridas": 16.87,
     "horas_restantes": 7.13,
-    "dia_hoje": "07",
+    "dia_hoje": 7,
+    "dia_semana": "Segunda-feira",
     "canais_monitorados": [
       "Site",
       "APP",
       "MKP"
     ],
-    "gerado_em": "2026-09-07 17:54:26"
+    "gerado_em": "2026-09-07 17:59:05"
   },
   "kpis": {
     "Total": {
@@ -31,11 +32,11 @@
       "gap_excel_rs": 12599.68,
       "projecao_eod": 1582158.42,
       "projecao_pacing_pct": 101.4,
-      "gap_projecao_rs": 21554.0,
+      "gap_projecao_rs": 21553.99,
       "cenarios_projecao": {
         "base": 1582158.42,
         "conservador": 1542721.26,
-        "reversao_meta": 1573204.1
+        "reversao_meta": 1573204.11
       },
       "run_rate_atual_hora": 54834.33,
       "run_rate_necessario_hora": 89121.31,
@@ -75,7 +76,7 @@
       "gap_excel_rs": -174414.49,
       "projecao_eod": 454985.5,
       "projecao_pacing_pct": 61.5,
-      "gap_projecao_rs": -284547.27,
+      "gap_projecao_rs": -284547.28,
       "cenarios_projecao": {
         "base": 454985.5,
         "conservador": 444419.49,
@@ -190,6 +191,43 @@
         "var_pct": 98.3
       }
     }
+  },
+  "mix_canais": {
+    "Total": {
+      "share_realizado_pct": 100.0,
+      "share_meta_pct": 100.0,
+      "desvio_mix_pp": 0.0,
+      "ticket_medio_item": 31.6,
+      "qtd_itens": 29270
+    },
+    "APP": {
+      "share_realizado_pct": 30.2,
+      "share_meta_pct": 47.4,
+      "desvio_mix_pp": -17.2,
+      "ticket_medio_item": 34.77,
+      "qtd_itens": 8020
+    },
+    "Site": {
+      "share_realizado_pct": 7.1,
+      "share_meta_pct": 26.5,
+      "desvio_mix_pp": -19.3,
+      "ticket_medio_item": 38.42,
+      "qtd_itens": 1719
+    },
+    "MKP": {
+      "share_realizado_pct": 62.7,
+      "share_meta_pct": 26.1,
+      "desvio_mix_pp": 36.6,
+      "ticket_medio_item": 29.69,
+      "qtd_itens": 19531
+    }
+  },
+  "horario_nobre": {
+    "peso_curva_pct": 29.4,
+    "venda_esperada_rs": 458453.62,
+    "meta_restante_rs": 635732.03,
+    "horas_restantes": 7.1,
+    "run_rate_necessario_hora": 89121.31
   },
   "hourly_curve": [
     {
@@ -851,7 +889,7 @@
       },
       "accum_meta_exp": {
         "Total": 178792.65,
-        "APP": 91959.19,
+        "APP": 91959.2,
         "Site": 49235.71,
         "MKP": 40057.36
       },
@@ -1119,7 +1157,7 @@
       },
       "accum_meta_exp": {
         "Total": 601007.68,
-        "APP": 303792.16,
+        "APP": 303792.17,
         "Site": 167127.48,
         "MKP": 136168.9
       },
@@ -1454,7 +1492,7 @@
       },
       "accum_meta_exp": {
         "Total": 1175167.74,
-        "APP": 579822.81,
+        "APP": 579822.82,
         "Site": 328239.22,
         "MKP": 274665.65
       },
@@ -1587,8 +1625,8 @@
         "MKP": 493474.46
       },
       "accum_meta_exp": {
-        "Total": 1427534.93,
-        "APP": 684790.53,
+        "Total": 1427534.94,
+        "APP": 684790.54,
         "Site": 387539.0,
         "MKP": 360551.07
       },
@@ -1631,7 +1669,7 @@
       },
       "meta_esperada_hora": {
         "Total": 81791.05,
-        "APP": 33598.41,
+        "APP": 33598.42,
         "Site": 16114.56,
         "MKP": 29405.03
       },
@@ -1722,8 +1760,8 @@
       },
       "accum_meta_exp": {
         "Total": 1550504.92,
-        "APP": 735764.02,
-        "Site": 411910.95,
+        "APP": 735764.03,
+        "Site": 411910.94,
         "MKP": 403609.25
       },
       "accum_proj_base": {
@@ -1804,7 +1842,7 @@
   "storytelling": {
     "headline": "Pacing de 101% às 16:52 — Projeção EOD em R$ 1.582.158 (+R$ 21.554 vs Meta)",
     "diagnostico_pacing": "🎯 Norte do Dia: O canal digital faturou R$ 924.872 até às 16:52, atingindo 101% da meta proporcional esperada no corte (R$ 912.273), projetando fechar o dia em R$ 1.582.158 (meta oficial do dia: R$ 1.560.604). 🛵 Dinâmica dos Canais: Marketplace é o grande motor de tração operando a 276% da meta proporcional (+R$ 370.055 acima do esperado). Em contrapartida, os canais próprios demandam aceleração no período noturno: APP atingiu 62% (-R$ 174.414) e Site atingiu 26% (-R$ 190.484).",
-    "leitura_janelas": "📊 Comparativo de Janelas: vs Ontem (D-1): +16% (+R$ 127.530), confirmando forte retomada típica de início de semana. vs Segunda Anterior (D-7): -22% (-R$ 263.586), impactado principalmente pela retração pontual em medicamentos de alto valor.",
+    "leitura_janelas": "📊 Comparativo de Janelas: vs Ontem (D-1): +16% (+R$ 127.530), confirmando forte retomada típica de início de semana. vs Segunda-feira Anterior (D-7): -22% (-R$ 263.586), impactado principalmente pela retração pontual em medicamentos de alto valor.",
     "principais_detratores": [
       {
         "entidade": "Medicamentos GLP-1 (Eli Lilly / Mounjaro & Novo Nordisk)",
@@ -1816,7 +1854,7 @@
         "entidade": "Prescrição & Genéricos de Giro (Eurofarma & EMS)",
         "tipo": "Volume de Balcão",
         "impacto_rs": -31768.129999999997,
-        "detalhe": "Desaceleração de volume em prescrição diária e genéricos: Eurofarma (-R$ 20.448) e EMS Genéricos (-R$ 11.321) com menor saída que na última segunda-feira."
+        "detalhe": "Desaceleração de volume em prescrição diária e genéricos: Eurofarma (-R$ 20.448) e EMS Genéricos (-R$ 11.321) com menor saída que no padrão D-7."
       },
       {
         "entidade": "Higiene Infantil Tradicional (Kimberly-Clark / Huggies & Pampers Jumbo)",
