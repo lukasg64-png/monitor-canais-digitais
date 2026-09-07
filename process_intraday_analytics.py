@@ -461,20 +461,29 @@ def process_analytics():
         })
     level_skus = build_detractors_boosters(skus_raw, "nome", extra_keys=["sku_id"])
 
-    # Nível 2: Grupos
-    grupos_raw = []
+    # Nível 2: Grupos (Consolidado total sem necessidade de canal)
+    grupos_agg = defaultdict(lambda: {"hoje": 0.0, "ontem": 0.0, "d7": 0.0})
     for r in raw.get("rowsGrupos", []):
         c_mapped = norm_canal(r[0])
         if not c_mapped:
             continue
-        grupos_raw.append({
-            "canal": c_mapped,
-            "nome": r[1],
-            "hoje": r[2],
-            "ontem": r[3],
-            "d7": r[4]
-        })
-    level_grupos = build_detractors_boosters(grupos_raw, "nome", extra_keys=["canal"])
+        grp_nome = str(r[1] or "").strip()
+        if not grp_nome or grp_nome in ["None", "0", ""]:
+            continue
+        grupos_agg[grp_nome]["hoje"] += float(r[2] or 0)
+        grupos_agg[grp_nome]["ontem"] += float(r[3] or 0)
+        grupos_agg[grp_nome]["d7"] += float(r[4] or 0)
+
+    grupos_raw = [
+        {
+            "nome": grp,
+            "hoje": vals["hoje"],
+            "ontem": vals["ontem"],
+            "d7": vals["d7"]
+        }
+        for grp, vals in grupos_agg.items()
+    ]
+    level_grupos = build_detractors_boosters(grupos_raw, "nome")
 
     # Nível 3: Subgrupos
     subgrupos_raw = []
