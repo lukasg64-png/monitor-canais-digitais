@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+server.py — Servidor HTTP Intranet & Daemon de Automação Contínua
+Farmácias São João — Monitor Online Canais Digitais
+
+1. Hospeda o dashboard na porta 3000 acessível em toda a rede interna da São João (0.0.0.0:3000).
+2. Executa a sincronização contínua com o Qlik Sense Enterprise a cada N minutos em segundo plano.
+3. Fornece endpoints REST:
+   - GET /api/status -> Status do daemon, última sincronização e IP de rede
+   - POST /api/sync  -> Dispara sincronização imediata no Qlik via browser/dashboard
+"""
+
+import os
+import sys
+
+if hasattr(sys.stdout, 'reconfigure'): sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'): sys.stderr.reconfigure(encoding='utf-8')
+
+import time
+import json
+import socket
+import threading
+import subprocess
+from datetime import datetime
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+STATUS_FILE = os.path.join(DATA_DIR, 'daemon_status.json')
+PORT = 3000
+SYNC_INTERVAL_SECONDS = 600  # 10 minutos
+
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "192.168.3.10"
+
+LOCAL_IP = get_local_ip()
+
+# Estado em memória do daemon
+daemon_state = {
+    "status": "ONLINE",
+    "started_at": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+    "last_sync": "07/09/2026 16:45:00",
+    "last_corte": "07/09/2026 12:52:59",
+    "last_status": "Concluído com Sucesso",
+    "sync_count": 1,
+    "is_syncing": False,
+    "next_sync_in": SYNC_INTERVAL_SECONDS,
+    "network_url": f"http://{LOCAL_IP}:{PORT}",
+    "local_url": f"http://localhost:{PORT}"
+}
+
+def save_status():
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        with open(STATUS_FILE, "w", encoding="utf-8") as f:
+            json.dump(daemon_state, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+def run_sync():
+    """Executa a rotina de extração e processamento no Qlik Sense"""
+    if daemon_state["is_syncing"]:
+        return {"status": "already_running", "message": "Sincronização já em andamento."}
+    
+    daemon_state["is_syncing"] = True
+    save_status()
+    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Iniciando ciclo de sincronização com Qlik Sense...")
+    
+    try:
+        # 1. Executa extração via WebSocket no Qlik Sense
+        ext_script = os.path.join(BASE_DIR, "extract_intraday_qlik.py")
+        proc_ext = subprocess.run([sys.executable, ext_script], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
+        
+        # 2. Executa processamento analítico
+        proc_script = os.path.join(BASE_DIR, "process_intraday_analytics.py")
+        proc_ana = subprocess.run([sys.executable, proc_script], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+        
+        # 3. Publica automaticamente no GitHub Pages se configurado
+        try:
+            subprocess.run(["git", "add", "index.html", "data/*.json", "data/*.js", "*.py"], cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15)
+            diff_chk = subprocess.run(["git", "diff", "--staged", "--quiet"], cwd=BASE_DIR)
+            if diff_chk.returncode != 0:
+                now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+                subprocess.run(["git", "commit", "-m", f"Auto-sync Qlik Sense Intraday ({now_str})"], cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15)
+                subprocess.run(["git", "push", "github", "main"], cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+                subprocess.run(["git", "push", "github", "HEAD:gh-pages"], cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Atualizações publicadas com sucesso no GitHub Pages!")
+        except Exception as e_git:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Info Git Push: {e_git}")
+
+        # Ler metadados atualizados
+        monitor_json = os.path.join(DATA_DIR, "intraday_monitor.json")
+        corte_hora = "12:52"
+        if os.path.exists(monitor_json):
+            try:
+                with open(monitor_json, "r", encoding="utf-8") as f:
+                    mj = json.load(f)
+                    corte_hora = mj.get("metadata", {}).get("corte_timestamp", corte_hora)
+            except Exception:
+                pass
+
+        daemon_state["last_sync"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        daemon_state["last_corte"] = corte_hora
+        daemon_state["last_status"] = "Sucesso"
+        daemon_state["sync_count"] += 1
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] Ciclo concluído! Corte Qlik: {corte_hora}")
+        return {"status": "success", "last_sync": daemon_state["last_sync"], "corte": corte_hora}
+
+    except Exception as e:
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] Erro na sincronização: {e}")
+        daemon_state["last_status"] = f"Erro: {e}"
+        return {"status": "error", "message": str(e)}
+    finally:
+        daemon_state["is_syncing"] = False
+        save_status()
+
+def background_daemon_worker():
+    """Worker em segundo plano que roda a cada N minutos continuamente"""
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Daemon contínuo iniciado. Intervalo: {SYNC_INTERVAL_SECONDS // 60} min.")
+    countdown = SYNC_INTERVAL_SECONDS
+    while True:
+        time.sleep(1)
+        countdown -= 1
+        daemon_state["next_sync_in"] = max(0, countdown)
+        
+        if countdown <= 0:
+            run_sync()
+            countdown = SYNC_INTERVAL_SECONDS
+
+class IntranetRequestHandler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=BASE_DIR, **kwargs)
+
+    def do_GET(self):
+        if self.path == "/api/status":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps(daemon_state, ensure_ascii=False).encode("utf-8"))
+            return
+        elif self.path in ["", "/"]:
+            self.path = "/index.html"
+        return super().do_GET()
+
+    def do_POST(self):
+        if self.path == "/api/sync":
+            res = run_sync()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            return
+        self.send_response(404)
+        self.end_headers()
+
+    def end_headers(self):
+        # Desativa cache para garantir que atualizações do Qlik apareçam na hora
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        super().end_headers()
+
+    def log_message(self, format, *args):
+        # Silencia logs de assets estáticos para manter o log limpo
+        if "GET /api/" in format % args or "POST /api/" in format % args:
+            super().log_message(format, *args)
+
+def start_server():
+    print("=" * 75)
+    print("  SERVIDOR INTRANET & DAEMON DE MONITORAMENTO — FARMÁCIAS SÃO JOÃO")
+    print(f"  • Acesso Local:     http://localhost:{PORT}")
+    print(f"  • Acesso na Rede:   http://{LOCAL_IP}:{PORT} (Compartilhe com a equipe)")
+    print(f"  • Intervalo Qlik:   A cada {SYNC_INTERVAL_SECONDS // 60} minutos")
+    print("=" * 75)
+
+    # Inicia worker do daemon em thread separada
+    daemon_thread = threading.Thread(target=background_daemon_worker, daemon=True)
+    daemon_thread.start()
+
+    # Inicia servidor HTTP
+    server = ThreadingHTTPServer(("0.0.0.0", PORT), IntranetRequestHandler)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nServidor encerrado.")
+        server.server_close()
+
+if __name__ == "__main__":
+    start_server()

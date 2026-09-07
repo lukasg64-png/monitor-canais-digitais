@@ -1,0 +1,7 @@
+# .gitignore
+__pycache__/
+*.pyc
+*.pyo
+logs/
+*.log
+monitor-canais-digitais.zip
