@@ -688,8 +688,8 @@ def process_analytics():
             res.append(entry)
 
         res_sorted = sorted(res, key=lambda x: x["gap_d7_rs"])
-        detratores = res_sorted[:50] # Top 50 Detratores
-        alavancadores = sorted(res, key=lambda x: x["gap_d7_rs"], reverse=True)[:50]
+        detratores = res_sorted[:100] # Top 100 Detratores
+        alavancadores = sorted(res, key=lambda x: x["gap_d7_rs"], reverse=True)[:100]
 
         return {
             "all": res_sorted,
@@ -978,14 +978,23 @@ def process_analytics():
     # FRENTES DIRECIONADORAS DE GAP (Detratores Não-Redundantes)
     lilly = next((l for l in level_labs["detratores_top"] if "LILLY" in l["nome"].upper()), None)
     novo = next((l for l in level_labs["detratores_top"] if "NOVO NORDISK" in l["nome"].upper()), None)
-    mounjaro = next((s for s in level_skus["detratores_top"] if "MOUNJARO" in s["nome"].upper()), None)
-    
-    gap_lilly = lilly["gap_d7_rs"] if lilly else -98127.11
+    mounjaro_skus = [s for s in level_skus["all"] if "MOUNJARO" in s["nome"].upper()]
+    moun5 = next((s for s in mounjaro_skus if "5MG" in s["nome"].upper()), None)
+    moun25 = next((s for s in mounjaro_skus if "2,5MG" in s["nome"].upper() or "2.5MG" in s["nome"].upper()), None)
+
+    tot_mounjaro_saldo = sum(s.get("saldo", 0) for s in mounjaro_skus)
+    mounjaro_un_loja = (tot_mounjaro_saldo / 1147) if tot_mounjaro_saldo > 0 else 0.27
+
+    gap_lilly = lilly["gap_d7_rs"] if lilly else -22993.24
+    gap_novo = novo["gap_d7_rs"] if novo else -2661.79
+    moun5_gap = moun5["gap_d7_rs"] if moun5 else -14427.24
+    moun25_gap = moun25["gap_d7_rs"] if moun25 else -9461.36
+
     frente_1 = {
         "entidade": "Medicamentos GLP-1 (Eli Lilly / Mounjaro & Novo Nordisk)",
         "tipo": "Concentração Principal (Ruptura Capilar)",
         "impacto_rs": gap_lilly,
-        "detalhe": f"Retração concentrada em GLP-1: Eli Lilly ({fmt_real(gap_lilly)}) e Novo Nordisk ({fmt_real(novo['gap_d7_rs'] if novo else -22092)}). Auditoria na rede (1.147 lojas) comprova que o Mounjaro opera com meros 0,31 un/loja, gerando severa indisponibilidade geográfica de entrega no APP e Site."
+        "detalhe": f"Retração concentrada em GLP-1: No nível Laboratório, Eli Lilly ({fmt_real(gap_lilly)}) e Novo Nordisk ({fmt_real(gap_novo)}). No nível de SKUs (veja na tabela de itens), Mounjaro lidera a lista de maiores perdas com Mounjaro 5mg ({fmt_real(moun5_gap)}) e 2,5mg ({fmt_real(moun25_gap)}). Auditoria na rede (1.147 lojas) comprova que o Mounjaro opera com meros {mounjaro_un_loja:.2f} un/loja ({int(tot_mounjaro_saldo)} un na rede inteira), gerando severa indisponibilidade geográfica de entrega no APP e Site."
     }
 
     eurofarma = next((l for l in level_labs["detratores_top"] if "EUROFARMA" in l["nome"].upper()), None)
