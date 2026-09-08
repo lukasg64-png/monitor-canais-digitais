@@ -1,24 +1,24 @@
 {
   "summary": {
-    "atualizado_em": "08/09/2026 09:16:38",
+    "atualizado_em": "08/09/2026 09:29:19",
     "total_catalogo_precifica": 9005,
-    "total_produtos_indexados": 759,
-    "total_com_concorrencia_ativa": 688,
-    "qtd_mais_caros": 604,
-    "pct_mais_caros": 87.8,
+    "total_produtos_indexados": 767,
+    "total_com_concorrencia_ativa": 694,
+    "qtd_mais_caros": 608,
+    "pct_mais_caros": 87.6,
     "qtd_mais_baratos": 46,
-    "pct_mais_baratos": 6.7,
-    "qtd_empatados": 38,
-    "pct_empatados": 5.5,
+    "pct_mais_baratos": 6.6,
+    "qtd_empatados": 40,
+    "pct_empatados": 5.8,
     "spread_medio_sobrepreco_pct": 30.1,
     "ranking_agressores": [
       {
         "rede": "farmaciasnissei",
-        "itens_liderados": 215
+        "itens_liderados": 218
       },
       {
         "rede": "precopopular",
-        "itens_liderados": 148
+        "itens_liderados": 149
       },
       {
         "rede": "amazon",
@@ -26,11 +26,11 @@
       },
       {
         "rede": "panvel",
-        "itens_liderados": 110
+        "itens_liderados": 111
       },
       {
         "rede": "drogaraia",
-        "itens_liderados": 87
+        "itens_liderados": 88
       }
     ]
   },
@@ -35239,11 +35239,11 @@
     "100013179": {
       "sku_vtex": "19882",
       "ref_code": "100013179",
-      "title": "UTROGESTAN 200MG 42CAP BESINS",
-      "department": "Medicamentos",
-      "category": "Referencia Onerosos(40)",
-      "brand": "BESINS HEALTHCARE BR COM  DIST MED LTDA(5240)",
-      "ean": "7898948648292",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
       "nosso_preco": 246.91,
       "nosso_disponivel": true,
       "total_concorrentes": 4,
@@ -35282,11 +35282,11 @@
     "19882": {
       "sku_vtex": "19882",
       "ref_code": "100013179",
-      "title": "UTROGESTAN 200MG 42CAP BESINS",
-      "department": "Medicamentos",
-      "category": "Referencia Onerosos(40)",
-      "brand": "BESINS HEALTHCARE BR COM  DIST MED LTDA(5240)",
-      "ean": "7898948648292",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
       "nosso_preco": 246.91,
       "nosso_disponivel": true,
       "total_concorrentes": 4,
@@ -53678,11 +53678,11 @@
     "999697": {
       "sku_vtex": "17703",
       "ref_code": "999697",
-      "title": "EVRA 0,6+6MG 3ADES GEDEON RICHTER",
-      "department": "Medicamentos",
-      "category": "Anticoncepcionais Onerosos(3182)",
-      "brand": "GEDEON RICHTER DO BRASIL IMPORT EXPO DIS(239716013)",
-      "ean": "7898967006141",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
       "nosso_preco": 149.4,
       "nosso_disponivel": true,
       "total_concorrentes": 4,
@@ -53721,11 +53721,11 @@
     "17703": {
       "sku_vtex": "17703",
       "ref_code": "999697",
-      "title": "EVRA 0,6+6MG 3ADES GEDEON RICHTER",
-      "department": "Medicamentos",
-      "category": "Anticoncepcionais Onerosos(3182)",
-      "brand": "GEDEON RICHTER DO BRASIL IMPORT EXPO DIS(239716013)",
-      "ean": "7898967006141",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
       "nosso_preco": 149.4,
       "nosso_disponivel": true,
       "total_concorrentes": 4,
@@ -58195,11 +58195,11 @@
     "10097311": {
       "sku_vtex": "8488",
       "ref_code": "10097311",
-      "title": "Fórmula Infantil Nestogeno 1 Nestlé 0 a 6 Meses 800g",
-      "department": "Infantil E Gestante",
-      "category": "Nutricao Leites(3154)",
-      "brand": "NESTLE NUTRITION(4781)",
-      "ean": "7891000062722",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
       "nosso_preco": 67.99,
       "nosso_disponivel": true,
       "total_concorrentes": 4,
@@ -58238,11 +58238,11 @@
     "8488": {
       "sku_vtex": "8488",
       "ref_code": "10097311",
-      "title": "Fórmula Infantil Nestogeno 1 Nestlé 0 a 6 Meses 800g",
-      "department": "Infantil E Gestante",
-      "category": "Nutricao Leites(3154)",
-      "brand": "NESTLE NUTRITION(4781)",
-      "ean": "7891000062722",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
       "nosso_preco": 67.99,
       "nosso_disponivel": true,
       "total_concorrentes": 4,
@@ -66511,6 +66511,644 @@
         {
           "rede": "panvel",
           "preco": 74.19,
+          "disponivel": true,
+          "sold_by": ""
+        }
+      ]
+    },
+    "10050648": {
+      "sku_vtex": "44515",
+      "ref_code": "10050648",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 988.22,
+      "nosso_disponivel": true,
+      "total_concorrentes": 4,
+      "menor_concorrente_rede": "precopopular",
+      "menor_concorrente_preco": 988.22,
+      "spread_pct": 0.0,
+      "spread_rs": 0.0,
+      "status": "EMPATADO",
+      "concorrentes": [
+        {
+          "rede": "precopopular",
+          "preco": 988.22,
+          "disponivel": true,
+          "sold_by": "CIA LATINO AMERICANA DE MEDICAMENTOS."
+        },
+        {
+          "rede": "panvel",
+          "preco": 988.22,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "drogaraia",
+          "preco": 1000.27,
+          "disponivel": true,
+          "sold_by": "DrogaRaia"
+        },
+        {
+          "rede": "farmaciasnissei",
+          "preco": 1018.91,
+          "disponivel": true,
+          "sold_by": ""
+        }
+      ]
+    },
+    "44515": {
+      "sku_vtex": "44515",
+      "ref_code": "10050648",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 988.22,
+      "nosso_disponivel": true,
+      "total_concorrentes": 4,
+      "menor_concorrente_rede": "precopopular",
+      "menor_concorrente_preco": 988.22,
+      "spread_pct": 0.0,
+      "spread_rs": 0.0,
+      "status": "EMPATADO",
+      "concorrentes": [
+        {
+          "rede": "precopopular",
+          "preco": 988.22,
+          "disponivel": true,
+          "sold_by": "CIA LATINO AMERICANA DE MEDICAMENTOS."
+        },
+        {
+          "rede": "panvel",
+          "preco": 988.22,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "drogaraia",
+          "preco": 1000.27,
+          "disponivel": true,
+          "sold_by": "DrogaRaia"
+        },
+        {
+          "rede": "farmaciasnissei",
+          "preco": 1018.91,
+          "disponivel": true,
+          "sold_by": ""
+        }
+      ]
+    },
+    "10041842": {
+      "sku_vtex": "32975",
+      "ref_code": "10041842",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 59.99,
+      "nosso_disponivel": true,
+      "total_concorrentes": 0,
+      "menor_concorrente_rede": null,
+      "menor_concorrente_preco": null,
+      "spread_pct": null,
+      "spread_rs": null,
+      "status": "SEM_CONCORRENTE",
+      "concorrentes": []
+    },
+    "32975": {
+      "sku_vtex": "32975",
+      "ref_code": "10041842",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 59.99,
+      "nosso_disponivel": true,
+      "total_concorrentes": 0,
+      "menor_concorrente_rede": null,
+      "menor_concorrente_preco": null,
+      "spread_pct": null,
+      "spread_rs": null,
+      "status": "SEM_CONCORRENTE",
+      "concorrentes": []
+    },
+    "10049738": {
+      "sku_vtex": "42237",
+      "ref_code": "10049738",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 866.24,
+      "nosso_disponivel": true,
+      "total_concorrentes": 2,
+      "menor_concorrente_rede": "panvel",
+      "menor_concorrente_preco": 866.24,
+      "spread_pct": 0.0,
+      "spread_rs": 0.0,
+      "status": "EMPATADO",
+      "concorrentes": [
+        {
+          "rede": "panvel",
+          "preco": 866.24,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "farmaciasnissei",
+          "preco": 893.1,
+          "disponivel": true,
+          "sold_by": ""
+        }
+      ]
+    },
+    "42237": {
+      "sku_vtex": "42237",
+      "ref_code": "10049738",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 866.24,
+      "nosso_disponivel": true,
+      "total_concorrentes": 2,
+      "menor_concorrente_rede": "panvel",
+      "menor_concorrente_preco": 866.24,
+      "spread_pct": 0.0,
+      "spread_rs": 0.0,
+      "status": "EMPATADO",
+      "concorrentes": [
+        {
+          "rede": "panvel",
+          "preco": 866.24,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "farmaciasnissei",
+          "preco": 893.1,
+          "disponivel": true,
+          "sold_by": ""
+        }
+      ]
+    },
+    "10039205": {
+      "sku_vtex": "28002",
+      "ref_code": "10039205",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": null,
+      "nosso_disponivel": false,
+      "total_concorrentes": 4,
+      "menor_concorrente_rede": "amazon",
+      "menor_concorrente_preco": 29.89,
+      "spread_pct": null,
+      "spread_rs": null,
+      "status": "SEM_CONCORRENTE",
+      "concorrentes": [
+        {
+          "rede": "amazon",
+          "preco": 29.89,
+          "disponivel": true,
+          "sold_by": "Amazon"
+        },
+        {
+          "rede": "farmaciasnissei",
+          "preco": 29.9,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "panvel",
+          "preco": 29.9,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "drogaraia",
+          "preco": 29.99,
+          "disponivel": true,
+          "sold_by": "DrogaRaia"
+        }
+      ]
+    },
+    "28002": {
+      "sku_vtex": "28002",
+      "ref_code": "10039205",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": null,
+      "nosso_disponivel": false,
+      "total_concorrentes": 4,
+      "menor_concorrente_rede": "amazon",
+      "menor_concorrente_preco": 29.89,
+      "spread_pct": null,
+      "spread_rs": null,
+      "status": "SEM_CONCORRENTE",
+      "concorrentes": [
+        {
+          "rede": "amazon",
+          "preco": 29.89,
+          "disponivel": true,
+          "sold_by": "Amazon"
+        },
+        {
+          "rede": "farmaciasnissei",
+          "preco": 29.9,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "panvel",
+          "preco": 29.9,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "drogaraia",
+          "preco": 29.99,
+          "disponivel": true,
+          "sold_by": "DrogaRaia"
+        }
+      ]
+    },
+    "10005027": {
+      "sku_vtex": "18181",
+      "ref_code": "10005027",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 54.99,
+      "nosso_disponivel": true,
+      "total_concorrentes": 5,
+      "menor_concorrente_rede": "farmaciasnissei",
+      "menor_concorrente_preco": 41.9,
+      "spread_pct": 31.2,
+      "spread_rs": 13.09,
+      "status": "MAIS_CARO",
+      "concorrentes": [
+        {
+          "rede": "farmaciasnissei",
+          "preco": 41.9,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "amazon",
+          "preco": 43.99,
+          "disponivel": true,
+          "sold_by": "Amazon"
+        },
+        {
+          "rede": "precopopular",
+          "preco": 44.99,
+          "disponivel": true,
+          "sold_by": "CIA LATINO AMERICANA DE MEDICAMENTOS."
+        },
+        {
+          "rede": "panvel",
+          "preco": 53.49,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "drogaraia",
+          "preco": 55.99,
+          "disponivel": true,
+          "sold_by": "DrogaRaia"
+        }
+      ]
+    },
+    "18181": {
+      "sku_vtex": "18181",
+      "ref_code": "10005027",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 54.99,
+      "nosso_disponivel": true,
+      "total_concorrentes": 5,
+      "menor_concorrente_rede": "farmaciasnissei",
+      "menor_concorrente_preco": 41.9,
+      "spread_pct": 31.2,
+      "spread_rs": 13.09,
+      "status": "MAIS_CARO",
+      "concorrentes": [
+        {
+          "rede": "farmaciasnissei",
+          "preco": 41.9,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "amazon",
+          "preco": 43.99,
+          "disponivel": true,
+          "sold_by": "Amazon"
+        },
+        {
+          "rede": "precopopular",
+          "preco": 44.99,
+          "disponivel": true,
+          "sold_by": "CIA LATINO AMERICANA DE MEDICAMENTOS."
+        },
+        {
+          "rede": "panvel",
+          "preco": 53.49,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "drogaraia",
+          "preco": 55.99,
+          "disponivel": true,
+          "sold_by": "DrogaRaia"
+        }
+      ]
+    },
+    "10098096": {
+      "sku_vtex": "6998",
+      "ref_code": "10098096",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 30.99,
+      "nosso_disponivel": true,
+      "total_concorrentes": 5,
+      "menor_concorrente_rede": "farmaciasnissei",
+      "menor_concorrente_preco": 24.9,
+      "spread_pct": 24.5,
+      "spread_rs": 6.09,
+      "status": "MAIS_CARO",
+      "concorrentes": [
+        {
+          "rede": "farmaciasnissei",
+          "preco": 24.9,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "amazon",
+          "preco": 29.39,
+          "disponivel": true,
+          "sold_by": "Amazon"
+        },
+        {
+          "rede": "panvel",
+          "preco": 30.99,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "drogaraia",
+          "preco": 31.98,
+          "disponivel": true,
+          "sold_by": "Bisturi"
+        },
+        {
+          "rede": "precopopular",
+          "preco": 37.41,
+          "disponivel": true,
+          "sold_by": "CIA LATINO AMERICANA DE MEDICAMENTOS."
+        }
+      ]
+    },
+    "6998": {
+      "sku_vtex": "6998",
+      "ref_code": "10098096",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 30.99,
+      "nosso_disponivel": true,
+      "total_concorrentes": 5,
+      "menor_concorrente_rede": "farmaciasnissei",
+      "menor_concorrente_preco": 24.9,
+      "spread_pct": 24.5,
+      "spread_rs": 6.09,
+      "status": "MAIS_CARO",
+      "concorrentes": [
+        {
+          "rede": "farmaciasnissei",
+          "preco": 24.9,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "amazon",
+          "preco": 29.39,
+          "disponivel": true,
+          "sold_by": "Amazon"
+        },
+        {
+          "rede": "panvel",
+          "preco": 30.99,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "drogaraia",
+          "preco": 31.98,
+          "disponivel": true,
+          "sold_by": "Bisturi"
+        },
+        {
+          "rede": "precopopular",
+          "preco": 37.41,
+          "disponivel": true,
+          "sold_by": "CIA LATINO AMERICANA DE MEDICAMENTOS."
+        }
+      ]
+    },
+    "10043691": {
+      "sku_vtex": "34816",
+      "ref_code": "10043691",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 182.2,
+      "nosso_disponivel": true,
+      "total_concorrentes": 4,
+      "menor_concorrente_rede": "drogaraia",
+      "menor_concorrente_preco": 152.0,
+      "spread_pct": 19.9,
+      "spread_rs": 30.2,
+      "status": "MAIS_CARO",
+      "concorrentes": [
+        {
+          "rede": "drogaraia",
+          "preco": 152.0,
+          "disponivel": true,
+          "sold_by": "DrogaRaia"
+        },
+        {
+          "rede": "farmaciasnissei",
+          "preco": 159.67,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "precopopular",
+          "preco": 163.8,
+          "disponivel": true,
+          "sold_by": "CIA LATINO AMERICANA DE MEDICAMENTOS."
+        },
+        {
+          "rede": "panvel",
+          "preco": 168.36,
+          "disponivel": true,
+          "sold_by": ""
+        }
+      ]
+    },
+    "34816": {
+      "sku_vtex": "34816",
+      "ref_code": "10043691",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 182.2,
+      "nosso_disponivel": true,
+      "total_concorrentes": 4,
+      "menor_concorrente_rede": "drogaraia",
+      "menor_concorrente_preco": 152.0,
+      "spread_pct": 19.9,
+      "spread_rs": 30.2,
+      "status": "MAIS_CARO",
+      "concorrentes": [
+        {
+          "rede": "drogaraia",
+          "preco": 152.0,
+          "disponivel": true,
+          "sold_by": "DrogaRaia"
+        },
+        {
+          "rede": "farmaciasnissei",
+          "preco": 159.67,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "precopopular",
+          "preco": 163.8,
+          "disponivel": true,
+          "sold_by": "CIA LATINO AMERICANA DE MEDICAMENTOS."
+        },
+        {
+          "rede": "panvel",
+          "preco": 168.36,
+          "disponivel": true,
+          "sold_by": ""
+        }
+      ]
+    },
+    "997520": {
+      "sku_vtex": "3462",
+      "ref_code": "997520",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 22.08,
+      "nosso_disponivel": true,
+      "total_concorrentes": 4,
+      "menor_concorrente_rede": "farmaciasnissei",
+      "menor_concorrente_preco": 15.08,
+      "spread_pct": 46.4,
+      "spread_rs": 7.0,
+      "status": "MAIS_CARO",
+      "concorrentes": [
+        {
+          "rede": "farmaciasnissei",
+          "preco": 15.08,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "drogaraia",
+          "preco": 15.49,
+          "disponivel": true,
+          "sold_by": "DrogaRaia"
+        },
+        {
+          "rede": "precopopular",
+          "preco": 15.91,
+          "disponivel": true,
+          "sold_by": "CIA LATINO AMERICANA DE MEDICAMENTOS."
+        },
+        {
+          "rede": "panvel",
+          "preco": 17.99,
+          "disponivel": true,
+          "sold_by": ""
+        }
+      ]
+    },
+    "3462": {
+      "sku_vtex": "3462",
+      "ref_code": "997520",
+      "title": "",
+      "department": "",
+      "category": "",
+      "brand": "",
+      "ean": "",
+      "nosso_preco": 22.08,
+      "nosso_disponivel": true,
+      "total_concorrentes": 4,
+      "menor_concorrente_rede": "farmaciasnissei",
+      "menor_concorrente_preco": 15.08,
+      "spread_pct": 46.4,
+      "spread_rs": 7.0,
+      "status": "MAIS_CARO",
+      "concorrentes": [
+        {
+          "rede": "farmaciasnissei",
+          "preco": 15.08,
+          "disponivel": true,
+          "sold_by": ""
+        },
+        {
+          "rede": "drogaraia",
+          "preco": 15.49,
+          "disponivel": true,
+          "sold_by": "DrogaRaia"
+        },
+        {
+          "rede": "precopopular",
+          "preco": 15.91,
+          "disponivel": true,
+          "sold_by": "CIA LATINO AMERICANA DE MEDICAMENTOS."
+        },
+        {
+          "rede": "panvel",
+          "preco": 17.99,
           "disponivel": true,
           "sold_by": ""
         }

@@ -12,7 +12,7 @@
       "APP",
       "MKP"
     ],
-    "gerado_em": "2026-09-08 09:23:50"
+    "gerado_em": "2026-09-08 09:29:29"
   },
   "kpis": {
     "Total": {
@@ -199,40 +199,40 @@
     "perda_estoque_restrito_rs": 674.3,
     "impacto_total_estoque_rs": 15867.06,
     "pct_impacto_estoque": 96.0,
-    "perda_preco_desalinhado_rs": 304.53,
-    "pct_preco_desalinhado": 1.8,
-    "perda_comercial_pura_rs": 354.03,
-    "pct_comercial_pura": 2.1,
+    "perda_preco_desalinhado_rs": 368.83,
+    "pct_preco_desalinhado": 2.2,
+    "perda_comercial_pura_rs": 289.73,
+    "pct_comercial_pura": 1.8,
     "perda_comercial_abastecida_rs": 658.56,
     "pct_comercial": 4.0,
     "qtd_top_desabastecidos": 28,
-    "qtd_top_preco_desalinhado": 1,
+    "qtd_top_preco_desalinhado": 2,
     "total_top_avaliados": 30,
     "densidade_media_desabastecidos": 0.13,
     "competitividade_preco": {
-      "total_top_monitorados": 8,
-      "qtd_mais_caros": 8,
-      "spread_medio_sobrepreco_pct": 23.2,
+      "total_top_monitorados": 16,
+      "qtd_mais_caros": 12,
+      "spread_medio_sobrepreco_pct": 25.6,
       "summary_catalogo": {
-        "atualizado_em": "08/09/2026 09:16:38",
+        "atualizado_em": "08/09/2026 09:29:19",
         "total_catalogo_precifica": 9005,
-        "total_produtos_indexados": 759,
-        "total_com_concorrencia_ativa": 688,
-        "qtd_mais_caros": 604,
-        "pct_mais_caros": 87.8,
+        "total_produtos_indexados": 767,
+        "total_com_concorrencia_ativa": 694,
+        "qtd_mais_caros": 608,
+        "pct_mais_caros": 87.6,
         "qtd_mais_baratos": 46,
-        "pct_mais_baratos": 6.7,
-        "qtd_empatados": 38,
-        "pct_empatados": 5.5,
+        "pct_mais_baratos": 6.6,
+        "qtd_empatados": 40,
+        "pct_empatados": 5.8,
         "spread_medio_sobrepreco_pct": 30.1,
         "ranking_agressores": [
           {
             "rede": "farmaciasnissei",
-            "itens_liderados": 215
+            "itens_liderados": 218
           },
           {
             "rede": "precopopular",
-            "itens_liderados": 148
+            "itens_liderados": 149
           },
           {
             "rede": "amazon",
@@ -240,11 +240,11 @@
           },
           {
             "rede": "panvel",
-            "itens_liderados": 110
+            "itens_liderados": 111
           },
           {
             "rede": "drogaraia",
-            "itens_liderados": 87
+            "itens_liderados": 88
           }
         ]
       }
@@ -1901,8 +1901,8 @@
     "headline": "Pacing de 92,2% às 08:53 — Projeção EOD em R$ 2.046.338 (-R$ 72.668 vs Meta)",
     "diagnostico_pacing": "🎯 Norte do Dia: O canal digital faturou R$ 129.472 até às 08:53, atingindo 92,2% da meta proporcional esperada no corte (R$ 140.372), projetando fechar o dia em R$ 2.046.338 (meta oficial do dia: R$ 2.119.006). 🛵 Dinâmica dos Canais: Marketplace é o grande motor de tração operando a 287,7% da meta proporcional (+R$ 61.017 acima do esperado). Em contrapartida, os canais próprios demandam aceleração no período noturno: APP atingiu 40,8% (-R$ 44.242) e Site atingiu 19,0% (-R$ 23.529).",
     "leitura_janelas": "📊 Comparativo de Janelas: vs Ontem (D-1): +89,7% (+R$ 61.235), confirmando forte retomada típica de início de semana. vs Terça-feira Anterior (D-7): -12,7% (-R$ 18.861), impactado principalmente pela retração pontual em medicamentos de alto valor.",
-    "auditoria_estoque": "📦 Auditoria de Causa-Raiz (Rede 1.147 Lojas): Dos -R$ 16.526 de retração nos itens detratores vs D-7, 96,0% (-R$ 15.867) decorre de severa restrição de estoque (<1,5 un/loja), com destaque para Mounjaro 2,5mg (0,31 un/lj) e Pampers Jumbo (0,97 un/lj) provocando indisponibilidade de entrega. Dos 4,0% restantes em itens abastecidos, a auditoria de preços da Precifica revela que 1,8% (-R$ 305) é perda direta de conversão causada por sobrepreço contra a concorrência.",
-    "auditoria_preco": "🏷️ Inteligência de Preço (Precifica): Dos 30 principais detratores, 8 SKUs estratégicos são monitorados em tempo real na Precifica. Em 100% deles (8 itens) a São João está com preço acima da concorrência, operando com spread médio de +23,2%. Casos mais alarmantes: Desodorante Dove (+62,9% vs Nissei R$ 15,90), Nicorette 4mg (+41,1% vs Raia R$ 83,44) e Qlaira (+33,3% vs Preço Popular R$ 55,67).",
+    "auditoria_estoque": "📦 Auditoria de Causa-Raiz (Rede 1.147 Lojas): Dos -R$ 16.526 de retração nos itens detratores vs D-7, 96,0% (-R$ 15.867) decorre de severa restrição de estoque (<1,5 un/loja), com destaque para Mounjaro 2,5mg (0,31 un/lj) e Pampers Jumbo (0,97 un/lj) provocando indisponibilidade de entrega. Dos 4,0% restantes em itens abastecidos, a auditoria de preços da Precifica revela que 2,2% (-R$ 369) é perda direta de conversão causada por sobrepreço contra a concorrência.",
+    "auditoria_preco": "🏷️ Inteligência de Preço (Precifica): Dos 30 principais detratores, 16 SKUs estratégicos são monitorados em tempo real na Precifica. Em 100% deles (12 itens) a São João está com preço acima da concorrência, operando com spread médio de +25,6%. Casos mais alarmantes: Desodorante Dove (+62,9% vs Nissei R$ 15,90), Nicorette 4mg (+41,1% vs Raia R$ 83,44) e Qlaira (+33,3% vs Preço Popular R$ 55,67).",
     "principais_detratores": [
       {
         "entidade": "Medicamentos GLP-1 (Eli Lilly / Mounjaro & Novo Nordisk)",
@@ -2084,12 +2084,12 @@
           "un_por_loja": 0.03,
           "status_estoque": "🚨 Ruptura Severa (0.03 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "precifica_monitorado": true,
+          "nosso_preco": 988.22,
+          "menor_concorrente_preco": 988.22,
+          "menor_concorrente_rede": "precopopular",
+          "spread_pct": 0.0,
+          "preco_status": "EMPATADO"
         },
         {
           "nome": "FR SAO JOAO BABY BAG XXG 56UN",
@@ -2204,12 +2204,12 @@
           "un_por_loja": 0.2,
           "status_estoque": "🚨 Ruptura Severa (0.20 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
+          "precifica_monitorado": true,
+          "nosso_preco": 59.99,
           "menor_concorrente_preco": null,
           "menor_concorrente_rede": null,
           "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "preco_status": "SEM_CONCORRENTE"
         },
         {
           "nome": "OLIRE 6MG/ML 3ML 3APLIC INJ EMS",
@@ -2228,12 +2228,12 @@
           "un_por_loja": 0.01,
           "status_estoque": "🚨 Ruptura Severa (0.01 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "precifica_monitorado": true,
+          "nosso_preco": 866.24,
+          "menor_concorrente_preco": 866.24,
+          "menor_concorrente_rede": "panvel",
+          "spread_pct": 0.0,
+          "preco_status": "EMPATADO"
         },
         {
           "nome": "FR PAMPERS CONFORTSEC BAG MAX XXXG 70UN",
@@ -2396,12 +2396,12 @@
           "un_por_loja": 0.08,
           "status_estoque": "🚨 Ruptura Severa (0.08 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
+          "precifica_monitorado": true,
           "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
+          "menor_concorrente_preco": 29.89,
+          "menor_concorrente_rede": "amazon",
           "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "preco_status": "SEM_CONCORRENTE"
         },
         {
           "nome": "KIT DOVE SH 350+COND 150ML BOND INTENSE REPAIR",
@@ -2444,12 +2444,12 @@
           "un_por_loja": 0.07,
           "status_estoque": "🚨 Ruptura Severa (0.07 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "precifica_monitorado": true,
+          "nosso_preco": 54.99,
+          "menor_concorrente_preco": 41.9,
+          "menor_concorrente_rede": "farmaciasnissei",
+          "spread_pct": 31.2,
+          "preco_status": "MAIS_CARO"
         },
         {
           "nome": "APIXABANA 5MG 60CP REV GEN NATCOFARMA",
@@ -2492,12 +2492,12 @@
           "un_por_loja": 0.0,
           "status_estoque": "🚨 Ruptura Severa (0.00 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "precifica_monitorado": true,
+          "nosso_preco": 30.99,
+          "menor_concorrente_preco": 24.9,
+          "menor_concorrente_rede": "farmaciasnissei",
+          "spread_pct": 24.5,
+          "preco_status": "MAIS_CARO"
         },
         {
           "nome": "FR SAO JOAO BABY BAG G 60UN",
@@ -2540,12 +2540,12 @@
           "un_por_loja": 0.02,
           "status_estoque": "🚨 Ruptura Severa (0.02 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "precifica_monitorado": true,
+          "nosso_preco": 182.2,
+          "menor_concorrente_preco": 152.0,
+          "menor_concorrente_rede": "drogaraia",
+          "spread_pct": 19.9,
+          "preco_status": "MAIS_CARO"
         },
         {
           "nome": "FR PAMPERS RN+ 36UN",
@@ -2658,14 +2658,14 @@
           "sku_id": 997520,
           "saldo": 6912.0,
           "un_por_loja": 6.03,
-          "status_estoque": "📉 Demanda Comercial (6.0 un/lj)",
-          "causa_tipo": "ABASTECIDO",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "status_estoque": "🏷️ Preço +46.4% (Farmaciasnissei)",
+          "causa_tipo": "PRECO_DESALINHADO",
+          "precifica_monitorado": true,
+          "nosso_preco": 22.08,
+          "menor_concorrente_preco": 15.08,
+          "menor_concorrente_rede": "farmaciasnissei",
+          "spread_pct": 46.4,
+          "preco_status": "MAIS_CARO"
         },
         {
           "nome": "FR BABYSEC ULTRA HIPER M 68UN",
@@ -62086,12 +62086,12 @@
           "un_por_loja": 0.03,
           "status_estoque": "🚨 Ruptura Severa (0.03 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "precifica_monitorado": true,
+          "nosso_preco": 988.22,
+          "menor_concorrente_preco": 988.22,
+          "menor_concorrente_rede": "precopopular",
+          "spread_pct": 0.0,
+          "preco_status": "EMPATADO"
         },
         {
           "nome": "FR SAO JOAO BABY BAG XXG 56UN",
@@ -62206,12 +62206,12 @@
           "un_por_loja": 0.2,
           "status_estoque": "🚨 Ruptura Severa (0.20 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
+          "precifica_monitorado": true,
+          "nosso_preco": 59.99,
           "menor_concorrente_preco": null,
           "menor_concorrente_rede": null,
           "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "preco_status": "SEM_CONCORRENTE"
         },
         {
           "nome": "OLIRE 6MG/ML 3ML 3APLIC INJ EMS",
@@ -62230,12 +62230,12 @@
           "un_por_loja": 0.01,
           "status_estoque": "🚨 Ruptura Severa (0.01 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "precifica_monitorado": true,
+          "nosso_preco": 866.24,
+          "menor_concorrente_preco": 866.24,
+          "menor_concorrente_rede": "panvel",
+          "spread_pct": 0.0,
+          "preco_status": "EMPATADO"
         },
         {
           "nome": "FR PAMPERS CONFORTSEC BAG MAX XXXG 70UN",
@@ -62398,12 +62398,12 @@
           "un_por_loja": 0.08,
           "status_estoque": "🚨 Ruptura Severa (0.08 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
+          "precifica_monitorado": true,
           "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
+          "menor_concorrente_preco": 29.89,
+          "menor_concorrente_rede": "amazon",
           "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "preco_status": "SEM_CONCORRENTE"
         },
         {
           "nome": "KIT DOVE SH 350+COND 150ML BOND INTENSE REPAIR",
@@ -62446,12 +62446,12 @@
           "un_por_loja": 0.07,
           "status_estoque": "🚨 Ruptura Severa (0.07 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "precifica_monitorado": true,
+          "nosso_preco": 54.99,
+          "menor_concorrente_preco": 41.9,
+          "menor_concorrente_rede": "farmaciasnissei",
+          "spread_pct": 31.2,
+          "preco_status": "MAIS_CARO"
         },
         {
           "nome": "APIXABANA 5MG 60CP REV GEN NATCOFARMA",
@@ -62494,12 +62494,12 @@
           "un_por_loja": 0.0,
           "status_estoque": "🚨 Ruptura Severa (0.00 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "precifica_monitorado": true,
+          "nosso_preco": 30.99,
+          "menor_concorrente_preco": 24.9,
+          "menor_concorrente_rede": "farmaciasnissei",
+          "spread_pct": 24.5,
+          "preco_status": "MAIS_CARO"
         },
         {
           "nome": "FR SAO JOAO BABY BAG G 60UN",
@@ -62542,12 +62542,12 @@
           "un_por_loja": 0.02,
           "status_estoque": "🚨 Ruptura Severa (0.02 un/lj)",
           "causa_tipo": "RUPTURA_CAPILAR",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "precifica_monitorado": true,
+          "nosso_preco": 182.2,
+          "menor_concorrente_preco": 152.0,
+          "menor_concorrente_rede": "drogaraia",
+          "spread_pct": 19.9,
+          "preco_status": "MAIS_CARO"
         },
         {
           "nome": "FR PAMPERS RN+ 36UN",
@@ -62660,14 +62660,14 @@
           "sku_id": 997520,
           "saldo": 6912.0,
           "un_por_loja": 6.03,
-          "status_estoque": "📉 Demanda Comercial (6.0 un/lj)",
-          "causa_tipo": "ABASTECIDO",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO"
+          "status_estoque": "🏷️ Preço +46.4% (Farmaciasnissei)",
+          "causa_tipo": "PRECO_DESALINHADO",
+          "precifica_monitorado": true,
+          "nosso_preco": 22.08,
+          "menor_concorrente_preco": 15.08,
+          "menor_concorrente_rede": "farmaciasnissei",
+          "spread_pct": 46.4,
+          "preco_status": "MAIS_CARO"
         }
       ],
       "alavancadores_top": [
