@@ -230,18 +230,40 @@ def sync_precifica_cache(max_pages=None, target_skus=None):
 
     # Modo 2: Varredura por catálogo paginado
     else:
-        pages_to_fetch = max_pages or 30  # padrão 30 páginas = 1.500 produtos em ~30s, ou 181 para full
-        print(f"[Precifica] Iniciando varredura de catálogo ({pages_to_fetch} páginas)...")
-        for page in range(1, pages_to_fetch + 1):
+        print("[Precifica] Consultando primeira página para detectar total de páginas do catálogo...")
+        first_res = client.fetch_products_page(1)
+        if not first_res or not first_res.get("success"):
+            raise RuntimeError("Falha ao consultar primeira página da Precifica!")
+
+        data1 = first_res.get("data", {})
+        total_catalog = data1.get("total", 9005)
+        limit = data1.get("limit", 50)
+        calculated_pages = (total_catalog + limit - 1) // limit  # 181 páginas
+
+        pages_to_fetch = max_pages or calculated_pages
+        print(f"[Precifica] Catálogo oficial detectado: {total_catalog:,} produtos ({calculated_pages} páginas).")
+        print(f"[Precifica] Iniciando varredura completa de {pages_to_fetch} páginas...")
+
+        # Processa página 1
+        scan1 = data1.get("scan", [])
+        for item in scan1:
+            parsed = parse_item_pricing(item)
+            if parsed["ref_code"]:
+                cache[parsed["ref_code"]] = parsed
+            if parsed["sku_vtex"]:
+                cache[parsed["sku_vtex"]] = parsed
+
+        for page in range(2, pages_to_fetch + 1):
             time.sleep(1.05)
             res = client.fetch_products_page(page)
             if not res or not res.get("success"):
                 print(f"   [Aviso] Falha na página {page}, pulando...")
                 continue
-            
-            data = res.get("data", {})
-            total_catalog = data.get("total", total_catalog)
-            scan = data.get("scan", [])
+
+            scan = res.get("data", {}).get("scan", [])
+            if not scan:
+                print(f"   Fim dos itens atingido na página {page}.")
+                break
 
             for item in scan:
                 parsed = parse_item_pricing(item)
@@ -250,7 +272,15 @@ def sync_precifica_cache(max_pages=None, target_skus=None):
                 if parsed["sku_vtex"]:
                     cache[parsed["sku_vtex"]] = parsed
 
-            print(f"   Página {page}/{pages_to_fetch} processada ({len(scan)} itens). Total indexado no cache: {len(cache)}")
+            if page % 10 == 0 or page == pages_to_fetch:
+                unique_so_far = len(set(v.get("ref_code") or k for k, v in cache.items()))
+                print(f"   Progresso: Página {page}/{pages_to_fetch} ({page/pages_to_fetch*100:.1f}%) | {unique_so_far} produtos únicos indexados no cache.")
+                # Salva checkpoint intermediário no disco
+                try:
+                    with open(CACHE_FILE, "w", encoding="utf-8") as f_chk:
+                        json.dump({"summary": {"atualizado_em": datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "total_produtos_indexados": unique_so_far}, "items_by_ref": cache}, f_chk, ensure_ascii=False)
+                except Exception:
+                    pass
 
     # Gera estatísticas consolidadas do cache
     unique_items = {}
@@ -313,7 +343,7 @@ def sync_precifica_cache(max_pages=None, target_skus=None):
 
 if __name__ == "__main__":
     # Suporta passar --pages N ou --target-detratores
-    max_p = 20
+    max_p = None  # Padrão: None = busca TODAS as 181 páginas do catálogo completo!
     target = None
 
     if "--pages" in sys.argv:
