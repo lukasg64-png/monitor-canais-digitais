@@ -625,10 +625,49 @@ def process_analytics():
     top_preco = [s for s in top_30 if s.get("causa_tipo") == "PRECO_DESALINHADO"]
     top_demanda = [s for s in top_30 if s.get("causa_tipo") == "DEMANDA_COMERCIAL"]
 
+    # Contagens na base completa de SKUs (2.500 produtos)
+    qtd_total_skus = len(skus_raw)
+    qtd_total_detratores = len(detratores_skus)
+    qtd_total_ruptura_base = len([s for s in detratores_skus if s.get("causa_tipo") == "RUPTURA_LOGISTICA"])
+    qtd_total_duplo_base = len([s for s in detratores_skus if s.get("causa_tipo") == "DUPLO_DETRATOR"])
+    qtd_total_preco_base = len([s for s in detratores_skus if s.get("causa_tipo") == "PRECO_DESALINHADO"])
+    qtd_total_demanda_base = len([s for s in detratores_skus if s.get("causa_tipo") == "DEMANDA_COMERCIAL"])
+
     # Itens monitorados entre os top detratores
     top_detratores_monitorados = [s for s in top_30 if s.get("precifica_monitorado")]
     top_detratores_mais_caros = [s for s in top_detratores_monitorados if s.get("preco_status") == "MAIS_CARO"]
     spread_medio_top = (sum(s.get("spread_pct", 0) for s in top_detratores_mais_caros) / len(top_detratores_mais_caros)) if top_detratores_mais_caros else 0.0
+
+    # Catálogo Completo da Precifica com Concorrência Ativa (para o Monitor de Preços no final da página)
+    precifica_catalogo_full = []
+    unique_prec_refs = set()
+    for k, v in precifica_items.items():
+        ref = str(v.get("ref_code") or k).strip()
+        if not ref or ref in unique_prec_refs:
+            continue
+        unique_prec_refs.add(ref)
+
+        if v.get("status") in ("MAIS_CARO", "MAIS_BARATO", "EMPATADO") and v.get("nosso_preco") is not None and v.get("menor_concorrente_preco") is not None:
+            nosso_p = float(v.get("nosso_preco", 0))
+            menor_p = float(v.get("menor_concorrente_preco", 0))
+            dif_rs = round(nosso_p - menor_p, 2)
+            marca_limpa = str(v.get("brand", "")).split("(")[0].strip() if v.get("brand") else ""
+            
+            precifica_catalogo_full.append({
+                "sku": ref,
+                "nome": v.get("title", ""),
+                "marca": marca_limpa,
+                "categoria": v.get("department", ""),
+                "nosso_preco": nosso_p,
+                "menor_rede": v.get("menor_concorrente_rede", ""),
+                "menor_preco": menor_p,
+                "spread_pct": v.get("spread_pct"),
+                "spread_rs": dif_rs,
+                "status": v.get("status")
+            })
+
+    # Ordenar por maior spread (mais caros no topo)
+    precifica_catalogo_full.sort(key=lambda x: (x.get("spread_pct") if x.get("spread_pct") is not None else -999), reverse=True)
 
     estoque_impacto = {
         "total_lojas_rede": TOTAL_LOJAS_REDE,
@@ -655,6 +694,14 @@ def process_analytics():
         "pct_impacto_preco": round(pct_impacto_preco, 1),
         
         "total_top_avaliados": len(top_30),
+        "base_geral_contagens": {
+            "total_skus": qtd_total_skus,
+            "total_detratores": qtd_total_detratores,
+            "total_ruptura": qtd_total_ruptura_base,
+            "total_duplo": qtd_total_duplo_base,
+            "total_preco": qtd_total_preco_base,
+            "total_demanda": qtd_total_demanda_base
+        },
         "competitividade_preco": {
             "total_top_monitorados": len(top_detratores_monitorados),
             "qtd_mais_caros": len(top_detratores_mais_caros),
@@ -861,6 +908,7 @@ def process_analytics():
         },
         "kpis": executive_kpis,
         "estoque_impacto": estoque_impacto,
+        "precifica_catalogo_full": precifica_catalogo_full,
         "mix_canais": mix_canais,
         "horario_nobre": horario_nobre,
         "hourly_curve": hourly_curve_table,
