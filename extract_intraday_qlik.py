@@ -286,6 +286,83 @@ JS_TEMPLATE = """async () => {
                 resData.rowsSKUs = await fetchAllHyperCubeRows(hSKU, Math.min(5000, totSKU), 6, 1500);
 
                 ws.close();
+
+                // 11. Consulta Oficial de Estoque da Rede no Relatório Estoque Final (936a28fb-245f-4f19-b285-420535685c43)
+                try {
+                    const appIdEstoque = "936a28fb-245f-4f19-b285-420535685c43";
+                    const wsEstoqueUrl = `wss://${window.location.host}/app/${encodeURIComponent(appIdEstoque)}?reloadUri=https://${window.location.host}/`;
+                    const stockMap = await new Promise((resStock) => {
+                        const wsEst = new WebSocket(wsEstoqueUrl);
+                        let idEst = 1;
+                        const pendingEst = {};
+                        wsEst.onmessage = (e) => {
+                            const m = JSON.parse(e.data);
+                            if (m.id && pendingEst[m.id]) {
+                                const { res, rej } = pendingEst[m.id];
+                                delete pendingEst[m.id];
+                                if (m.error) rej(m.error);
+                                else res(m);
+                            }
+                        };
+                        function sendEst(method, handle, params) {
+                            return new Promise((res, rej) => {
+                                const mid = idEst++;
+                                pendingEst[mid] = { res, rej };
+                                wsEst.send(JSON.stringify({ jsonrpc: "2.0", id: mid, method, handle, params }));
+                            });
+                        }
+                        wsEst.onopen = async () => {
+                            try {
+                                const oEst = await sendEst("OpenDoc", -1, [appIdEstoque]);
+                                const docEstHandle = oEst.result.qReturn.qHandle;
+                                const cObjEst = await sendEst("CreateSessionObject", docEstHandle, [{
+                                    "qInfo": { "qType": "q_estoque_rede" },
+                                    "qHyperCubeDef": {
+                                        "qDimensions": [{ "qDef": { "qFieldDefs": ["Produto_ID"] } }],
+                                        "qMeasures": [
+                                            { "qDef": { "qDef": "Sum({1<AnoMes={'%%ANO_MES_HOJE%%'}>} Qt_Estoque)" } },
+                                            { "qDef": { "qDef": "Sum({1<AnoMes={'%%ANO_MES_HOJE%%'}>} Qt_Transito_CDLJ)" } }
+                                        ],
+                                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 2000, "qWidth": 3 }],
+                                        "qSuppressZero": true
+                                    }
+                                }]);
+                                const hEst = cObjEst.result.qReturn.qHandle;
+                                const lEst = await sendEst("GetLayout", hEst, []);
+                                const totEst = lEst.result.qLayout.qHyperCube.qSize.qcy;
+                                const pagesEst = lEst.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || [];
+                                let allEstRows = [...pagesEst];
+                                let curTopEst = 2000;
+                                while (curTopEst < totEst) {
+                                    const pRes = await sendEst("GetHyperCubeData", hEst, ["/qHyperCubeDef", [{ "qTop": curTopEst, "qLeft": 0, "qHeight": 2000, "qWidth": 3 }]]);
+                                    const newP = pRes.result.qDataPages[0]?.qMatrix || [];
+                                    allEstRows.push(...newP);
+                                    curTopEst += 2000;
+                                }
+                                wsEst.close();
+                                const map = {};
+                                for (const row of allEstRows) {
+                                    const pId = row[0]?.qText;
+                                    if (pId) {
+                                        map[pId] = {
+                                            estoqueLoja: row[1]?.qNum || 0,
+                                            transito: row[2]?.qNum || 0
+                                        };
+                                    }
+                                }
+                                resStock(map);
+                            } catch(errEst) {
+                                try { wsEst.close(); } catch(e) {}
+                                resStock({});
+                            }
+                        };
+                        setTimeout(() => { try { wsEst.close(); } catch(e) {}; resStock({}); }, 40000);
+                    });
+                    resData.stockMap = stockMap;
+                } catch(eStock) {
+                    resData.stockMap = {};
+                }
+
                 resolve(resData);
             } catch (e) {
                 ws.close();
@@ -306,7 +383,7 @@ JS_TEMPLATE = """async () => {
         setTimeout(() => {
             try { ws.close(); } catch(e) {}
             resolve(null);
-        }, 75000);
+        }, 90000);
     });
 };"""
 
