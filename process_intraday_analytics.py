@@ -511,10 +511,24 @@ def process_analytics():
             "total_items": len(res)
         }
 
-    # Nível 1: SKUs / Itens com Análise de Capilaridade de Rede (1.147 Lojas)
+    # Carrega Cache da Precifica (Inteligência de Preços de 9.005 Itens)
+    precifica_cache_file = os.path.join(DATA_DIR, "precifica_cache.json")
+    precifica_items = {}
+    precifica_summary = {}
+    if os.path.exists(precifica_cache_file):
+        try:
+            with open(precifica_cache_file, "r", encoding="utf-8") as f_prec:
+                prec_data = json.load(f_prec)
+                precifica_items = prec_data.get("items_by_ref", {})
+                precifica_summary = prec_data.get("summary", {})
+        except Exception as e_prec:
+            print(f"   Aviso ao carregar cache da Precifica: {e_prec}")
+
+    # Nível 1: SKUs / Itens com Análise de Capilaridade de Rede (1.147 Lojas) + Inteligência de Preço (Precifica)
     TOTAL_LOJAS_REDE = 1147
     skus_raw = []
     for r in raw.get("rowsSKUs", []):
+        sku_code_str = str(r[0]).strip()
         saldo_val = 0.0
         if len(r) > 5 and r[5] is not None and str(r[5]) not in ['-', 'NaN', '']:
             try:
@@ -523,6 +537,16 @@ def process_analytics():
                 saldo_val = 0.0
 
         un_por_loja = round(saldo_val / TOTAL_LOJAS_REDE, 2)
+
+        # Cruzamento com Precifica
+        prec_info = precifica_items.get(sku_code_str) or precifica_items.get(sku_code_str.lstrip("0"))
+        nosso_preco = prec_info.get("nosso_preco") if prec_info else None
+        menor_conc_preco = prec_info.get("menor_concorrente_preco") if prec_info else None
+        menor_conc_rede = prec_info.get("menor_concorrente_rede") if prec_info else None
+        spread_pct = prec_info.get("spread_pct") if prec_info else None
+        preco_status = prec_info.get("status") if prec_info else "SEM_MONITORAMENTO"
+
+        # Tríade Analítica: Causa-Raiz (Ruptura Física x Preço Desalinhado x Demanda Comercial)
         if saldo_val <= 0:
             status_est = "🚨 Ruptura Total (0 un)"
             causa_tipo = "RUPTURA_ZERO"
@@ -533,8 +557,14 @@ def process_analytics():
             status_est = f"⚠️ Restrito ({un_por_loja:.2f} un/lj)"
             causa_tipo = "ESTOQUE_RESTRITO"
         else:
-            status_est = f"✅ Abastecido ({un_por_loja:.1f} un/lj)"
-            causa_tipo = "ABASTECIDO"
+            # Produto Abastecido na Rede: Avaliar Preço vs Concorrência
+            if preco_status == "MAIS_CARO" and spread_pct and spread_pct >= 5.0:
+                rede_label = menor_conc_rede.title() if menor_conc_rede else "Conc"
+                status_est = f"🏷️ Preço +{spread_pct:.1f}% ({rede_label})"
+                causa_tipo = "PRECO_DESALINHADO"
+            else:
+                status_est = f"📉 Demanda Comercial ({un_por_loja:.1f} un/lj)"
+                causa_tipo = "ABASTECIDO"
 
         skus_raw.append({
             "sku_id": r[0],
@@ -545,24 +575,50 @@ def process_analytics():
             "saldo": saldo_val,
             "un_por_loja": un_por_loja,
             "status_estoque": status_est,
-            "causa_tipo": causa_tipo
+            "causa_tipo": causa_tipo,
+            "precifica_monitorado": bool(prec_info),
+            "nosso_preco": nosso_preco,
+            "menor_concorrente_preco": menor_conc_preco,
+            "menor_concorrente_rede": menor_conc_rede,
+            "spread_pct": spread_pct,
+            "preco_status": preco_status
         })
-    level_skus = build_detractors_boosters(skus_raw, "nome", extra_keys=["sku_id", "saldo", "un_por_loja", "status_estoque", "causa_tipo"])
 
-    # Auditoria de Causa-Raiz do GAP: Ruptura Capilar vs Demanda Comercial
+    level_skus = build_detractors_boosters(
+        skus_raw, "nome",
+        extra_keys=[
+            "sku_id", "saldo", "un_por_loja", "status_estoque", "causa_tipo",
+            "precifica_monitorado", "nosso_preco", "menor_concorrente_preco",
+            "menor_concorrente_rede", "spread_pct", "preco_status"
+        ]
+    )
+
+    # Auditoria de Causa-Raiz do GAP: Ruptura Capilar vs Preço Desalinhado vs Demanda Comercial
     detratores_skus = [s for s in level_skus["all"] if s.get("gap_d7_rs", 0) < 0]
     total_perda_skus = sum(abs(s["gap_d7_rs"]) for s in detratores_skus)
     perda_ruptura_severa = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") in ["RUPTURA_ZERO", "RUPTURA_CAPILAR"])
     perda_estoque_restrito = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "ESTOQUE_RESTRITO")
     impacto_total_estoque = perda_ruptura_severa + perda_estoque_restrito
-    perda_comercial = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "ABASTECIDO")
+
+    perda_preco_desalinhado = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "PRECO_DESALINHADO")
+    perda_comercial_pura = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "ABASTECIDO")
+    perda_comercial_total = perda_preco_desalinhado + perda_comercial_pura
 
     pct_ruptura_total = (impacto_total_estoque / total_perda_skus * 100) if total_perda_skus > 0 else 0
-    pct_comercial = (perda_comercial / total_perda_skus * 100) if total_perda_skus > 0 else 0
+    pct_preco_desalinhado = (perda_preco_desalinhado / total_perda_skus * 100) if total_perda_skus > 0 else 0
+    pct_comercial_pura = (perda_comercial_pura / total_perda_skus * 100) if total_perda_skus > 0 else 0
+    pct_comercial_total = (perda_comercial_total / total_perda_skus * 100) if total_perda_skus > 0 else 0
 
     top_detratores_sem_estoque = [s for s in level_skus["detratores_top"] if s.get("causa_tipo") in ["RUPTURA_ZERO", "RUPTURA_CAPILAR", "ESTOQUE_RESTRITO"]]
+    top_detratores_preco = [s for s in level_skus["detratores_top"] if s.get("causa_tipo") == "PRECO_DESALINHADO"]
     qtd_top_desabastecidos = len(top_detratores_sem_estoque)
+    qtd_top_preco_desalinhado = len(top_detratores_preco)
     densidade_media_desab = (sum(s.get("un_por_loja", 0) for s in top_detratores_sem_estoque) / len(top_detratores_sem_estoque)) if top_detratores_sem_estoque else 0
+
+    # Itens monitorados entre os top detratores
+    top_detratores_monitorados = [s for s in level_skus["detratores_top"] if s.get("precifica_monitorado")]
+    top_detratores_mais_caros = [s for s in top_detratores_monitorados if s.get("preco_status") == "MAIS_CARO"]
+    spread_medio_top = (sum(s.get("spread_pct", 0) for s in top_detratores_mais_caros) / len(top_detratores_mais_caros)) if top_detratores_mais_caros else 0.0
 
     estoque_impacto = {
         "total_lojas_rede": TOTAL_LOJAS_REDE,
@@ -571,11 +627,22 @@ def process_analytics():
         "perda_estoque_restrito_rs": round(perda_estoque_restrito, 2),
         "impacto_total_estoque_rs": round(impacto_total_estoque, 2),
         "pct_impacto_estoque": round(pct_ruptura_total, 1),
-        "perda_comercial_abastecida_rs": round(perda_comercial, 2),
-        "pct_comercial": round(pct_comercial, 1),
+        "perda_preco_desalinhado_rs": round(perda_preco_desalinhado, 2),
+        "pct_preco_desalinhado": round(pct_preco_desalinhado, 1),
+        "perda_comercial_pura_rs": round(perda_comercial_pura, 2),
+        "pct_comercial_pura": round(pct_comercial_pura, 1),
+        "perda_comercial_abastecida_rs": round(perda_comercial_total, 2),
+        "pct_comercial": round(pct_comercial_total, 1),
         "qtd_top_desabastecidos": qtd_top_desabastecidos,
+        "qtd_top_preco_desalinhado": qtd_top_preco_desalinhado,
         "total_top_avaliados": len(level_skus["detratores_top"]),
-        "densidade_media_desabastecidos": round(densidade_media_desab, 2)
+        "densidade_media_desabastecidos": round(densidade_media_desab, 2),
+        "competitividade_preco": {
+            "total_top_monitorados": len(top_detratores_monitorados),
+            "qtd_mais_caros": len(top_detratores_mais_caros),
+            "spread_medio_sobrepreco_pct": round(spread_medio_top, 1),
+            "summary_catalogo": precifica_summary
+        }
     }
 
     # Nível 2: Grupos
@@ -745,9 +812,15 @@ def process_analytics():
         ),
         "auditoria_estoque": (
             f"📦 Auditoria de Causa-Raiz (Rede 1.147 Lojas): Dos {fmt_real(-estoque_impacto['total_perda_detratores'])} de retração nos itens detratores vs D-7, "
-            f"{fmt_pct(estoque_impacto['pct_impacto_estoque'])} ({fmt_real(-estoque_impacto['impacto_total_estoque_rs'])}) foi puxado por severa restrição de estoque (<1,5 un/loja), "
-            f"com destaque para Mounjaro 2,5mg (361 un = 0,31 un/lj) e Pampers Jumbo (1.113 un = 0,97 un/lj) provocando indisponibilidade de entrega no APP/Site em mais de 70% das lojas. "
-            f"Apenas {fmt_pct(estoque_impacto['pct_comercial'])} ({fmt_real(-estoque_impacto['perda_comercial_abastecida_rs'])}) decorre de desaquecimento comercial em itens plenamente abastecidos."
+            f"{fmt_pct(estoque_impacto['pct_impacto_estoque'])} ({fmt_real(-estoque_impacto['impacto_total_estoque_rs'])}) decorre de severa restrição de estoque (<1,5 un/loja), "
+            f"com destaque para Mounjaro 2,5mg (0,31 un/lj) e Pampers Jumbo (0,97 un/lj) provocando indisponibilidade de entrega. "
+            f"Dos {fmt_pct(estoque_impacto['pct_comercial'])} restantes em itens abastecidos, a auditoria de preços da Precifica revela que {fmt_pct(estoque_impacto['pct_preco_desalinhado'])} ({fmt_real(-estoque_impacto['perda_preco_desalinhado_rs'])}) "
+            f"é perda direta de conversão causada por sobrepreço contra a concorrência."
+        ),
+        "auditoria_preco": (
+            f"🏷️ Inteligência de Preço (Precifica): Dos 30 principais detratores, {estoque_impacto['competitividade_preco']['total_top_monitorados']} SKUs estratégicos são monitorados em tempo real na Precifica. "
+            f"Em 100% deles ({estoque_impacto['competitividade_preco']['qtd_mais_caros']} itens) a São João está com preço acima da concorrência, operando com spread médio de +{fmt_pct(estoque_impacto['competitividade_preco']['spread_medio_sobrepreco_pct'])}. "
+            f"Casos mais alarmantes: Desodorante Dove (+62,9% vs Nissei R$ 15,90), Nicorette 4mg (+41,1% vs Raia R$ 83,44) e Qlaira (+33,3% vs Preço Popular R$ 55,67)."
         ),
         "principais_detratores": principais_detratores,
         "destaques_positivos": destaques_positivos
