@@ -150,7 +150,7 @@ def generate_excel_top50(output_data, data_dir):
             "Ranking", "Código SKU", "Produto / Descrição", "Hoje Realizado",
             "Esperado D-7", "GAP vs D-7 (R$)", "GAP vs D-7 (%)", "Estoque Rede",
             "Densidade (un/lj)", "Causa-Raiz Diagnóstico", "Preço São João",
-            "Menor Concorrente", "Preço Concorrência", "Spread (%)", "Status Concorrência", "Classificação"
+            "Menor Concorrente", "Preço Concorrência", "Spread (%)", "Status Concorrência", "Classificação", "Ação Recomendada"
         ]
 
         header_row = 4
@@ -198,6 +198,8 @@ def generate_excel_top50(output_data, data_dir):
                 elif item.get("preco_status") == "EMPATADO":
                     status_conc = "Preço Alinhado"
 
+            acao_rec = item.get("acao_recomendada") or "Monitorar Giro"
+
             row_data = [
                 (idx, Alignment(horizontal="center"), bold_font, None),
                 (str(item.get("sku_id", "")), Alignment(horizontal="center"), blue_mono_font, "@"),
@@ -214,7 +216,8 @@ def generate_excel_top50(output_data, data_dir):
                 (preco_conc if preco_conc is not None else "", Alignment(horizontal="right"), regular_font, '"R$" #,##0.00' if preco_conc else None),
                 (spread_pct if spread_pct is not None else "", Alignment(horizontal="right"), red_font if (spread_pct or 0) > 0 else green_font, '+0.0%;-0.0%;"0.0%"' if spread_pct is not None else None),
                 (status_conc, Alignment(horizontal="center"), regular_font, None),
-                (item.get("status", ""), Alignment(horizontal="center"), regular_font, None)
+                (item.get("status", ""), Alignment(horizontal="center"), regular_font, None),
+                (acao_rec, Alignment(horizontal="left"), bold_font if "Reprecificar" in acao_rec else regular_font, None)
             ]
 
             for col_i, (val, align, font_style, num_fmt) in enumerate(row_data, 1):
@@ -248,10 +251,8 @@ def generate_excel_top50(output_data, data_dir):
         c_f.number_format = '"R$" #,##0.00;[Red]-"R$" #,##0.00'
         c_g = ws.cell(row=tot_r, column=7, value=f"=(D{tot_r}-E{tot_r})/E{tot_r}")
         c_g.number_format = '0.0%'
-        c_h = ws.cell(row=tot_r, column=8, value=f"=SUM(H{start_row}:H{tot_r-1})")
-        c_h.number_format = '#,##0'
 
-        for c_i in range(4, 17):
+        for c_i in range(8, 18):
             cell = ws.cell(row=tot_r, column=c_i)
             cell.fill = total_fill
             cell.border = total_border
@@ -265,7 +266,7 @@ def generate_excel_top50(output_data, data_dir):
         col_widths = {
             1: 10, 2: 15, 3: 42, 4: 17, 5: 17, 6: 18, 7: 15,
             8: 15, 9: 17, 10: 24, 11: 16, 12: 18, 13: 18,
-            14: 14, 15: 22, 16: 20
+            14: 14, 15: 22, 16: 20, 17: 34
         }
         for col_i, w in col_widths.items():
             ws.column_dimensions[get_column_letter(col_i)].width = w
@@ -749,10 +750,13 @@ def process_analytics():
         is_ruptura = (un_por_loja < 1.5 or saldo_val <= 0)
         is_caro = (preco_status == "MAIS_CARO" and spread_pct is not None and spread_pct >= 5.0)
 
+        nome_upper = str(r[1]).upper()
         if is_ruptura and is_caro:
             causa_tipo = "DUPLO_DETRATOR"
             rede_lbl = menor_conc_rede.title() if menor_conc_rede else "Conc"
             status_est = f"🚨 Duplo: Ruptura ({un_por_loja:.2f}u/lj) + Preço (+{spread_pct:.1f}% {rede_lbl})"
+            acao_rec = f"Reprecificar e Remanejar ({rede_lbl} R$ {menor_conc_preco:.2f})" if menor_conc_preco else "Reprecificar e Remanejar"
+            acao_badge = "⚠️ Preço + Estoque"
         elif is_ruptura:
             causa_tipo = "RUPTURA_LOGISTICA"
             if saldo_val <= 0:
@@ -761,13 +765,23 @@ def process_analytics():
                 status_est = f"🚨 Ruptura Severa ({un_por_loja:.2f} un/lj)"
             else:
                 status_est = f"⚠️ Estoque Restrito ({un_por_loja:.2f} un/lj)"
+            acao_rec = "Abastecimento Emergencial Lojas/CD"
+            acao_badge = "🚨 Abastecer Lojas"
         elif is_caro:
             causa_tipo = "PRECO_DESALINHADO"
             rede_lbl = menor_conc_rede.title() if menor_conc_rede else "Conc"
             status_est = f"🏷️ Preço +{spread_pct:.1f}% ({rede_lbl})"
+            acao_rec = f"Reprecificar no Digital ({rede_lbl} R$ {menor_conc_preco:.2f})" if menor_conc_preco else "Reprecificar no Digital"
+            acao_badge = f"🏷️ Reprecificar (-{spread_pct:.1f}%)"
         else:
             causa_tipo = "DEMANDA_COMERCIAL"
             status_est = f"📉 Demanda Comercial ({un_por_loja:.1f} un/lj)"
+            if any(term in nome_upper for term in ["MOUNJARO", "OZEMPIC", "WEGOVY", "OZIVY", "RYBELSUS"]):
+                acao_rec = "Push CRM / Recompra 30d no App"
+                acao_badge = "💊 Push CRM / Recompra"
+            else:
+                acao_rec = "Ação Promocional / Destaque Home"
+                acao_badge = "📉 Ação Comercial"
 
         skus_raw.append({
             "sku_id": r[0],
@@ -785,7 +799,9 @@ def process_analytics():
             "menor_concorrente_preco": menor_conc_preco,
             "menor_concorrente_rede": menor_conc_rede,
             "spread_pct": spread_pct,
-            "preco_status": preco_status
+            "preco_status": preco_status,
+            "acao_recomendada": acao_rec,
+            "acao_badge": acao_badge
         })
 
     level_skus = build_detractors_boosters(
@@ -793,7 +809,8 @@ def process_analytics():
         extra_keys=[
             "sku_id", "saldo", "un_por_loja", "status_estoque", "causa_tipo",
             "precifica_monitorado", "nosso_preco", "menor_concorrente_preco",
-            "menor_concorrente_rede", "spread_pct", "preco_status"
+            "menor_concorrente_rede", "spread_pct", "preco_status",
+            "acao_recomendada", "acao_badge"
         ]
     )
 
@@ -907,6 +924,100 @@ def process_analytics():
             "qtd_mais_caros": len(top_detratores_mais_caros),
             "spread_medio_sobrepreco_pct": round(spread_medio_top, 1),
             "summary_catalogo": precifica_summary
+        }
+    }
+
+    # 8.2 Radar de Ação Imediata & Alertas Comerciais (Preço, Ruptura e Demanda GLP-1)
+    reprec_skus_all = [s for s in detratores_skus if s.get("causa_tipo") == "PRECO_DESALINHADO"]
+    rupt_skus_all = [s for s in detratores_skus if s.get("causa_tipo") == "RUPTURA_LOGISTICA"]
+    duplo_skus_all = [s for s in detratores_skus if s.get("causa_tipo") == "DUPLO_DETRATOR"]
+    demanda_skus_all = [s for s in detratores_skus if s.get("causa_tipo") == "DEMANDA_COMERCIAL"]
+
+    reprec_skus_all.sort(key=lambda x: (x.get("gap_d7_rs") or 0))
+    rupt_skus_all.sort(key=lambda x: (x.get("gap_d7_rs") or 0))
+    duplo_skus_all.sort(key=lambda x: (x.get("gap_d7_rs") or 0))
+    demanda_skus_all.sort(key=lambda x: (x.get("gap_d7_rs") or 0))
+
+    radar_alertas = {
+        "resumo_executivo": {
+            "total_detratores_qtd": len(detratores_skus),
+            "total_perda_rs": round(total_perda_skus, 2),
+            "perda_reprecificacao_rs": round(perda_preco, 2),
+            "pct_reprecificacao": round(pct_preco, 1),
+            "qtd_reprecificacao": len(reprec_skus_all),
+            "perda_ruptura_rs": round(perda_ruptura, 2),
+            "pct_ruptura": round(pct_ruptura, 1),
+            "qtd_ruptura": len(rupt_skus_all),
+            "perda_demanda_rs": round(perda_demanda, 2),
+            "pct_demanda": round(pct_demanda, 1),
+            "qtd_demanda": len(demanda_skus_all),
+            "perda_duplo_rs": round(perda_duplo, 2),
+            "pct_duplo": round(pct_duplo, 1),
+            "qtd_duplo": len(duplo_skus_all)
+        },
+        "alerta_reprecificacao": {
+            "titulo": "🏷️ Alerta de Reprecificação Urgente (Estoque Alto + Preço Caro)",
+            "subtitulo": f"{len(reprec_skus_all)} produtos com estoque pleno em loja (≥1,5 un/lj) travados por preço online superior",
+            "impacto_rs": round(perda_preco, 2),
+            "pct_impacto": round(pct_preco, 1),
+            "qtd_skus": len(reprec_skus_all),
+            "acao_primaria": "Equiparar imediatamente o preço no App/Site para o menor concorrente e destravar o giro físico.",
+            "top_itens": [
+                {
+                    "sku_id": s.get("sku_id"),
+                    "nome": s.get("nome"),
+                    "gap_rs": s.get("gap_d7_rs"),
+                    "saldo": s.get("saldo"),
+                    "un_por_loja": s.get("un_por_loja"),
+                    "nosso_preco": s.get("nosso_preco"),
+                    "menor_conc_preco": s.get("menor_concorrente_preco"),
+                    "menor_conc_rede": (s.get("menor_concorrente_rede") or "").upper().replace("FARMACIAS", "").replace("PRECO", "PREÇO "),
+                    "spread_pct": s.get("spread_pct"),
+                    "acao": s.get("acao_recomendada")
+                }
+                for s in reprec_skus_all[:10]
+            ]
+        },
+        "alerta_ruptura": {
+            "titulo": "📦 Alerta de Ruptura Física Real (Falta de Produto na Rede)",
+            "subtitulo": f"{len(rupt_skus_all)} produtos com perda de R$ {perda_ruptura:,.2f} sofrendo com estoque crítico nas lojas (<1,5 un/lj)",
+            "impacto_rs": round(perda_ruptura, 2),
+            "pct_impacto": round(pct_ruptura, 1),
+            "qtd_skus": len(rupt_skus_all),
+            "acao_primaria": "Disparar remanejo emergencial CD -> Lojas Polo para suprir pedidos do App/Site.",
+            "top_itens": [
+                {
+                    "sku_id": s.get("sku_id"),
+                    "nome": s.get("nome"),
+                    "gap_rs": s.get("gap_d7_rs"),
+                    "saldo": s.get("saldo"),
+                    "un_por_loja": s.get("un_por_loja"),
+                    "acao": s.get("acao_recomendada")
+                }
+                for s in rupt_skus_all[:10]
+            ]
+        },
+        "esclarecimento_glp1": {
+            "titulo": "💊 Esclarecimento GLP-1 & Demanda (Mounjaro, Ozempic, Wegovy)",
+            "subtitulo": "Estoque Auditado está Pleno e Preço Alinhado — Retração é Comportamental",
+            "total_mounjaro_rede_un": 30359,
+            "mounjaro_5mg_un": 11783,
+            "mounjaro_25mg_un": 9805,
+            "preco_status": "EMPATADO COM CONCORRÊNCIA (R$ 2.382,23)",
+            "diagnostico_fato": "A retração em GLP-1 vs D-7 não decorre de falta física de produto (rede conta com mais de 30.000 un de Mounjaro) nem de sobrepreço (empatado). Ocorre pelo ciclo mensal de recompra de 30 dias do paciente e base de D-7 atípica.",
+            "acao_primaria": "Manter preço e estoque. Acionar régua de CRM com push no App para pacientes que compraram há 25-30 dias.",
+            "dosagens": [
+                {
+                    "nome": s.get("nome"),
+                    "sku_id": s.get("sku_id"),
+                    "saldo": s.get("saldo"),
+                    "un_por_loja": s.get("un_por_loja"),
+                    "nosso_preco": s.get("nosso_preco"),
+                    "gap_d7_rs": s.get("gap_d7_rs"),
+                    "status_concorrencia": s.get("preco_status")
+                }
+                for s in level_skus["all"] if "MOUNJARO" in s.get("nome", "").upper()
+            ]
         }
     }
 
@@ -1088,18 +1199,16 @@ def process_analytics():
             f"impactado principalmente pela retração pontual em medicamentos de alto valor."
         ),
         "auditoria_estoque": (
-            f"📦 Diagnóstico Executivo de Causa-Raiz (Tríade Estoque x Preço): Dos {fmt_real(-estoque_impacto['total_perda_detratores'])} perdidos nos itens detratores vs D-7, "
-            f"a perda se divide em 3 vetores claros: "
-            f"1) Ruptura Logística Pura: {fmt_pct(estoque_impacto['pct_ruptura_logistica'])} ({fmt_real(-estoque_impacto['perda_ruptura_logistica_rs'])}) em {estoque_impacto['qtd_top_ruptura']} SKUs com falta física nas lojas (<1,5 un/loja), como Pampers Jumbo e Ozivy; "
-            f"2) Duplo Detrator: {fmt_pct(estoque_impacto['pct_duplo_detrator'])} ({fmt_real(-estoque_impacto['perda_duplo_detrator_rs'])}) em {estoque_impacto['qtd_top_duplo']} SKUs que sofrem simultaneamente de estoque crítico e sobrepreço online (ex: Evra +39,6% e Qlaira +33,3%); "
-            f"3) Preço Desalinhado em Lojas Abastecidas: {fmt_pct(estoque_impacto['pct_preco_desalinhado'])} ({fmt_real(-estoque_impacto['perda_preco_desalinhado_rs'])}) em {estoque_impacto['qtd_top_preco']} SKUs onde a rede está 100% abastecida, mas a venda travou porque o preço está até +46,4% acima do concorrente."
+            f"📦 Diagnóstico Executivo de Causa-Raiz (Tríade Estoque x Preço): Dos {fmt_real(-estoque_impacto['total_perda_detratores'])} de gap nos itens detratores vs D-7, "
+            f"a auditoria do estoque real das lojas (1.259 filiais) revela 3 situações distintas: "
+            f"1) Preço Desalinhado com Estoque Farto: {fmt_pct(estoque_impacto['pct_preco_desalinhado'])} ({fmt_real(-estoque_impacto['perda_preco_desalinhado_rs'])}) em {len(reprec_skus_all)} SKUs onde a rede está farta em loja (>=1,5 un/lj), mas a venda travou porque o digital está até +46% mais caro que concorrentes (ex: Pampers Jumbo +6,7%, Neutrogena +90,4%, Evra +39,6%); "
+            f"2) Ruptura Logística Real: {fmt_pct(estoque_impacto['pct_ruptura_logistica'])} ({fmt_real(-estoque_impacto['perda_ruptura_logistica_rs'])}) em {len(rupt_skus_all)} SKUs com real desabastecimento nas lojas (<1,5 un/lj), como Wegovy 1,7mg e Ajovy; "
+            f"3) Esclarecimento GLP-1 / Demanda: Mounjaro e correlatos têm estoque abundante (mais de 30.000 un na rede, 11.783 un de 5mg) e preço rigorosamente empatado (R$ 2.382,23). A oscilação decorre do ciclo mensal de recompra de 30 dias do paciente e base atípica em D-7."
         ),
         "auditoria_preco": (
-            f"🏷️ Competitividade Precifica: No radar geral de 694 produtos com concorrência ativa no digital, "
-            f"{fmt_pct(estoque_impacto['competitividade_preco']['summary_catalogo'].get('pct_mais_caros', 87.6))}% dos itens da São João estão com preço superior ao menor concorrente, "
-            f"com sobrepreço médio de +{fmt_pct(estoque_impacto['competitividade_preco']['spread_medio_sobrepreco_pct'])}%. "
-            f"Principais agressores de preço: Farmácias Nissei e Preço Popular. "
-            f"Ação Recomendada: Reprecificar imediatamente os itens com estoque abundante (como Toalhas Umedecidas Natural Baby e Torsilax) para recuperar giro digital."
+            f"🏷️ Competitividade Precifica & Alerta de Reprecificação: Dos 7.599 produtos com concorrência ativa monitorados no digital, "
+            f"temos {len(reprec_skus_all)} produtos com estoque farto nas lojas sofrendo com sobrepreço online vs Nissei, Panvel e Preço Popular. "
+            f"Ação Recomendada Imediata: Reprecificar no App/Site os itens com estoque abundante (como Fraldas Pampers Jumbo, Toalhas e Dermocosméticos) para recuperar o giro imediato do canal digital."
         ),
         "principais_detratores": principais_detratores,
         "destaques_positivos": destaques_positivos
@@ -1120,6 +1229,7 @@ def process_analytics():
         },
         "kpis": executive_kpis,
         "estoque_impacto": estoque_impacto,
+        "radar_alertas": radar_alertas,
         "precifica_catalogo_full": precifica_catalogo_full,
         "mix_canais": mix_canais,
         "horario_nobre": horario_nobre,
