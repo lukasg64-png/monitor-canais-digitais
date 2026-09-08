@@ -1,10 +1,10 @@
 {
   "status": "ONLINE",
   "started_at": "07/09/2026 17:01:44",
-  "last_sync": "07/09/2026 22:19:13",
+  "last_sync": "07/09/2026 22:41:53",
   "last_corte": "07/09/2026 21:52:49",
-  "last_status": "Erro: Command '['C:\\\\Users\\\\lucas.alves6\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python311\\\\python.exe', 'C:\\\\Users\\\\lucas.alves6\\\\OneDrive - Farmácias São João\\\\Documentos\\\\ANTIGRAVITI\\\\Acompanhamento Online Canais Digitais\\\\extract_intraday_qlik.py']' timed out after 120 seconds",
-  "sync_count": 28,
+  "last_status": "Sucesso",
+  "sync_count": 29,
   "is_syncing": true,
   "next_sync_in": 0,
   "network_url": "http://192.168.3.10:3000",
