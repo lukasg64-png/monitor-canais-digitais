@@ -259,7 +259,15 @@ JS_TEMPLATE = """async () => {
                     "qInfo": { "qType": "q_top_skus" },
                     "qHyperCubeDef": {
                         "qDimensions": [
-                            { "qDef": { "qFieldDefs": ["Produto_ID"] } },
+                            { 
+                                "qDef": { 
+                                    "qFieldDefs": ["Produto_ID"],
+                                    "qSortCriterias": [{
+                                        "qSortByExpression": -1,
+                                        "qExpression": { "qv": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida]) + Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` }
+                                    }]
+                                } 
+                            },
                             { "qDef": { "qFieldDefs": ["Desc_Produto"] } }
                         ],
                         "qMeasures": [
@@ -275,7 +283,7 @@ JS_TEMPLATE = """async () => {
                 const hSKU = cSKU.result.qReturn.qHandle;
                 const lSKU = await send("GetLayout", hSKU, []);
                 const totSKU = lSKU.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsSKUs = await fetchAllHyperCubeRows(hSKU, Math.min(2500, totSKU), 6, 1500);
+                resData.rowsSKUs = await fetchAllHyperCubeRows(hSKU, Math.min(5000, totSKU), 6, 1500);
 
                 ws.close();
                 resolve(resData);
