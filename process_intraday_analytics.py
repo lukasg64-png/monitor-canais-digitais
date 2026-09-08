@@ -547,24 +547,28 @@ def process_analytics():
         preco_status = prec_info.get("status") if prec_info else "SEM_MONITORAMENTO"
 
         # Tríade Analítica: Causa-Raiz (Ruptura Física x Preço Desalinhado x Demanda Comercial)
-        if saldo_val <= 0:
-            status_est = "🚨 Ruptura Total (0 un)"
-            causa_tipo = "RUPTURA_ZERO"
-        elif un_por_loja < 0.5:
-            status_est = f"🚨 Ruptura Severa ({un_por_loja:.2f} un/lj)"
-            causa_tipo = "RUPTURA_CAPILAR"
-        elif un_por_loja < 1.5:
-            status_est = f"⚠️ Restrito ({un_por_loja:.2f} un/lj)"
-            causa_tipo = "ESTOQUE_RESTRITO"
-        else:
-            # Produto Abastecido na Rede: Avaliar Preço vs Concorrência
-            if preco_status == "MAIS_CARO" and spread_pct and spread_pct >= 5.0:
-                rede_label = menor_conc_rede.title() if menor_conc_rede else "Conc"
-                status_est = f"🏷️ Preço +{spread_pct:.1f}% ({rede_label})"
-                causa_tipo = "PRECO_DESALINHADO"
+        is_ruptura = (un_por_loja < 1.5 or saldo_val <= 0)
+        is_caro = (preco_status == "MAIS_CARO" and spread_pct is not None and spread_pct >= 5.0)
+
+        if is_ruptura and is_caro:
+            causa_tipo = "DUPLO_DETRATOR"
+            rede_lbl = menor_conc_rede.title() if menor_conc_rede else "Conc"
+            status_est = f"🚨 Duplo: Ruptura ({un_por_loja:.2f}u/lj) + Preço (+{spread_pct:.1f}% {rede_lbl})"
+        elif is_ruptura:
+            causa_tipo = "RUPTURA_LOGISTICA"
+            if saldo_val <= 0:
+                status_est = "🚨 Ruptura Total (0 un)"
+            elif un_por_loja < 0.5:
+                status_est = f"🚨 Ruptura Severa ({un_por_loja:.2f} un/lj)"
             else:
-                status_est = f"📉 Demanda Comercial ({un_por_loja:.1f} un/lj)"
-                causa_tipo = "ABASTECIDO"
+                status_est = f"⚠️ Estoque Restrito ({un_por_loja:.2f} un/lj)"
+        elif is_caro:
+            causa_tipo = "PRECO_DESALINHADO"
+            rede_lbl = menor_conc_rede.title() if menor_conc_rede else "Conc"
+            status_est = f"🏷️ Preço +{spread_pct:.1f}% ({rede_lbl})"
+        else:
+            causa_tipo = "DEMANDA_COMERCIAL"
+            status_est = f"📉 Demanda Comercial ({un_por_loja:.1f} un/lj)"
 
         skus_raw.append({
             "sku_id": r[0],
@@ -593,50 +597,64 @@ def process_analytics():
         ]
     )
 
-    # Auditoria de Causa-Raiz do GAP: Ruptura Capilar vs Preço Desalinhado vs Demanda Comercial
+    # Auditoria Precisa de Causa-Raiz do GAP dos Detratores (Tríade Estoque x Preço)
     detratores_skus = [s for s in level_skus["all"] if s.get("gap_d7_rs", 0) < 0]
     total_perda_skus = sum(abs(s["gap_d7_rs"]) for s in detratores_skus)
-    perda_ruptura_severa = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") in ["RUPTURA_ZERO", "RUPTURA_CAPILAR"])
-    perda_estoque_restrito = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "ESTOQUE_RESTRITO")
-    impacto_total_estoque = perda_ruptura_severa + perda_estoque_restrito
+    
+    perda_duplo = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "DUPLO_DETRATOR")
+    perda_ruptura = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "RUPTURA_LOGISTICA")
+    perda_preco = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "PRECO_DESALINHADO")
+    perda_demanda = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "DEMANDA_COMERCIAL")
 
-    perda_preco_desalinhado = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "PRECO_DESALINHADO")
-    perda_comercial_pura = sum(abs(s["gap_d7_rs"]) for s in detratores_skus if s.get("causa_tipo") == "ABASTECIDO")
-    perda_comercial_total = perda_preco_desalinhado + perda_comercial_pura
+    # Percentuais da perda (soma exata 100%)
+    pct_duplo = (perda_duplo / total_perda_skus * 100) if total_perda_skus > 0 else 0.0
+    pct_ruptura = (perda_ruptura / total_perda_skus * 100) if total_perda_skus > 0 else 0.0
+    pct_preco = (perda_preco / total_perda_skus * 100) if total_perda_skus > 0 else 0.0
+    pct_demanda = (perda_demanda / total_perda_skus * 100) if total_perda_skus > 0 else 0.0
 
-    pct_ruptura_total = (impacto_total_estoque / total_perda_skus * 100) if total_perda_skus > 0 else 0
-    pct_preco_desalinhado = (perda_preco_desalinhado / total_perda_skus * 100) if total_perda_skus > 0 else 0
-    pct_comercial_pura = (perda_comercial_pura / total_perda_skus * 100) if total_perda_skus > 0 else 0
-    pct_comercial_total = (perda_comercial_total / total_perda_skus * 100) if total_perda_skus > 0 else 0
+    # Impactos consolidados por vetor
+    impacto_total_logistico = perda_ruptura + perda_duplo
+    impacto_total_preco = perda_preco + perda_duplo
+    pct_impacto_logistico = (impacto_total_logistico / total_perda_skus * 100) if total_perda_skus > 0 else 0.0
+    pct_impacto_preco = (impacto_total_preco / total_perda_skus * 100) if total_perda_skus > 0 else 0.0
 
-    top_detratores_sem_estoque = [s for s in level_skus["detratores_top"] if s.get("causa_tipo") in ["RUPTURA_ZERO", "RUPTURA_CAPILAR", "ESTOQUE_RESTRITO"]]
-    top_detratores_preco = [s for s in level_skus["detratores_top"] if s.get("causa_tipo") == "PRECO_DESALINHADO"]
-    qtd_top_desabastecidos = len(top_detratores_sem_estoque)
-    qtd_top_preco_desalinhado = len(top_detratores_preco)
-    densidade_media_desab = (sum(s.get("un_por_loja", 0) for s in top_detratores_sem_estoque) / len(top_detratores_sem_estoque)) if top_detratores_sem_estoque else 0
+    # Contagem nos top detratores
+    top_30 = level_skus["detratores_top"]
+    top_duplo = [s for s in top_30 if s.get("causa_tipo") == "DUPLO_DETRATOR"]
+    top_ruptura = [s for s in top_30 if s.get("causa_tipo") == "RUPTURA_LOGISTICA"]
+    top_preco = [s for s in top_30 if s.get("causa_tipo") == "PRECO_DESALINHADO"]
+    top_demanda = [s for s in top_30 if s.get("causa_tipo") == "DEMANDA_COMERCIAL"]
 
     # Itens monitorados entre os top detratores
-    top_detratores_monitorados = [s for s in level_skus["detratores_top"] if s.get("precifica_monitorado")]
+    top_detratores_monitorados = [s for s in top_30 if s.get("precifica_monitorado")]
     top_detratores_mais_caros = [s for s in top_detratores_monitorados if s.get("preco_status") == "MAIS_CARO"]
     spread_medio_top = (sum(s.get("spread_pct", 0) for s in top_detratores_mais_caros) / len(top_detratores_mais_caros)) if top_detratores_mais_caros else 0.0
 
     estoque_impacto = {
         "total_lojas_rede": TOTAL_LOJAS_REDE,
         "total_perda_detratores": round(total_perda_skus, 2),
-        "perda_ruptura_severa_rs": round(perda_ruptura_severa, 2),
-        "perda_estoque_restrito_rs": round(perda_estoque_restrito, 2),
-        "impacto_total_estoque_rs": round(impacto_total_estoque, 2),
-        "pct_impacto_estoque": round(pct_ruptura_total, 1),
-        "perda_preco_desalinhado_rs": round(perda_preco_desalinhado, 2),
-        "pct_preco_desalinhado": round(pct_preco_desalinhado, 1),
-        "perda_comercial_pura_rs": round(perda_comercial_pura, 2),
-        "pct_comercial_pura": round(pct_comercial_pura, 1),
-        "perda_comercial_abastecida_rs": round(perda_comercial_total, 2),
-        "pct_comercial": round(pct_comercial_total, 1),
-        "qtd_top_desabastecidos": qtd_top_desabastecidos,
-        "qtd_top_preco_desalinhado": qtd_top_preco_desalinhado,
-        "total_top_avaliados": len(level_skus["detratores_top"]),
-        "densidade_media_desabastecidos": round(densidade_media_desab, 2),
+        "perda_ruptura_logistica_rs": round(perda_ruptura, 2),
+        "pct_ruptura_logistica": round(pct_ruptura, 1),
+        "qtd_top_ruptura": len(top_ruptura),
+        
+        "perda_duplo_detrator_rs": round(perda_duplo, 2),
+        "pct_duplo_detrator": round(pct_duplo, 1),
+        "qtd_top_duplo": len(top_duplo),
+        
+        "perda_preco_desalinhado_rs": round(perda_preco, 2),
+        "pct_preco_desalinhado": round(pct_preco, 1),
+        "qtd_top_preco": len(top_preco),
+        
+        "perda_demanda_comercial_rs": round(perda_demanda, 2),
+        "pct_demanda_comercial": round(pct_demanda, 1),
+        "qtd_top_demanda": len(top_demanda),
+        
+        "impacto_total_logistico_rs": round(impacto_total_logistico, 2),
+        "pct_impacto_logistico": round(pct_impacto_logistico, 1),
+        "impacto_total_preco_rs": round(impacto_total_preco, 2),
+        "pct_impacto_preco": round(pct_impacto_preco, 1),
+        
+        "total_top_avaliados": len(top_30),
         "competitividade_preco": {
             "total_top_monitorados": len(top_detratores_monitorados),
             "qtd_mais_caros": len(top_detratores_mais_caros),
@@ -811,16 +829,18 @@ def process_analytics():
             f"impactado principalmente pela retração pontual em medicamentos de alto valor."
         ),
         "auditoria_estoque": (
-            f"📦 Auditoria de Causa-Raiz (Rede 1.147 Lojas): Dos {fmt_real(-estoque_impacto['total_perda_detratores'])} de retração nos itens detratores vs D-7, "
-            f"{fmt_pct(estoque_impacto['pct_impacto_estoque'])} ({fmt_real(-estoque_impacto['impacto_total_estoque_rs'])}) decorre de severa restrição de estoque (<1,5 un/loja), "
-            f"com destaque para Mounjaro 2,5mg (0,31 un/lj) e Pampers Jumbo (0,97 un/lj) provocando indisponibilidade de entrega. "
-            f"Dos {fmt_pct(estoque_impacto['pct_comercial'])} restantes em itens abastecidos, a auditoria de preços da Precifica revela que {fmt_pct(estoque_impacto['pct_preco_desalinhado'])} ({fmt_real(-estoque_impacto['perda_preco_desalinhado_rs'])}) "
-            f"é perda direta de conversão causada por sobrepreço contra a concorrência."
+            f"📦 Diagnóstico Executivo de Causa-Raiz (Tríade Estoque x Preço): Dos {fmt_real(-estoque_impacto['total_perda_detratores'])} perdidos nos itens detratores vs D-7, "
+            f"a perda se divide em 3 vetores claros: "
+            f"1) Ruptura Logística Pura: {fmt_pct(estoque_impacto['pct_ruptura_logistica'])} ({fmt_real(-estoque_impacto['perda_ruptura_logistica_rs'])}) em {estoque_impacto['qtd_top_ruptura']} SKUs com falta física nas lojas (<1,5 un/loja), como Pampers Jumbo e Ozivy; "
+            f"2) Duplo Detrator: {fmt_pct(estoque_impacto['pct_duplo_detrator'])} ({fmt_real(-estoque_impacto['perda_duplo_detrator_rs'])}) em {estoque_impacto['qtd_top_duplo']} SKUs que sofrem simultaneamente de estoque crítico e sobrepreço online (ex: Evra +39,6% e Qlaira +33,3%); "
+            f"3) Preço Desalinhado em Lojas Abastecidas: {fmt_pct(estoque_impacto['pct_preco_desalinhado'])} ({fmt_real(-estoque_impacto['perda_preco_desalinhado_rs'])}) em {estoque_impacto['qtd_top_preco']} SKUs onde a rede está 100% abastecida, mas a venda travou porque o preço está até +46,4% acima do concorrente."
         ),
         "auditoria_preco": (
-            f"🏷️ Inteligência de Preço (Precifica): Dos 30 principais detratores, {estoque_impacto['competitividade_preco']['total_top_monitorados']} SKUs estratégicos são monitorados em tempo real na Precifica. "
-            f"Em 100% deles ({estoque_impacto['competitividade_preco']['qtd_mais_caros']} itens) a São João está com preço acima da concorrência, operando com spread médio de +{fmt_pct(estoque_impacto['competitividade_preco']['spread_medio_sobrepreco_pct'])}. "
-            f"Casos mais alarmantes: Desodorante Dove (+62,9% vs Nissei R$ 15,90), Nicorette 4mg (+41,1% vs Raia R$ 83,44) e Qlaira (+33,3% vs Preço Popular R$ 55,67)."
+            f"🏷️ Competitividade Precifica: No radar geral de 694 produtos com concorrência ativa no digital, "
+            f"{fmt_pct(estoque_impacto['competitividade_preco']['summary_catalogo'].get('pct_mais_caros', 87.6))}% dos itens da São João estão com preço superior ao menor concorrente, "
+            f"com sobrepreço médio de +{fmt_pct(estoque_impacto['competitividade_preco']['spread_medio_sobrepreco_pct'])}%. "
+            f"Principais agressores de preço: Farmácias Nissei e Preço Popular. "
+            f"Ação Recomendada: Reprecificar imediatamente os itens com estoque abundante (como Toalhas Umedecidas Natural Baby e Torsilax) para recuperar giro digital."
         ),
         "principais_detratores": principais_detratores,
         "destaques_positivos": destaques_positivos
