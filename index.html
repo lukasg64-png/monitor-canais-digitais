@@ -4124,6 +4124,8 @@
           scales: {
             x: { grid: { color: gridColor }, ticks: { color: textColor } },
             y: {
+              beginAtZero: true,
+              grace: '12%',
               grid: { color: gridColor },
               ticks: { color: textColor, callback: (v) => 'R$ ' + (v / 1000).toFixed(0) + 'k' }
             }
@@ -4198,6 +4200,8 @@
           scales: {
             x: { grid: { color: gridColor }, ticks: { color: textColor } },
             y: {
+              beginAtZero: true,
+              grace: '20%',
               grid: { color: gridColor },
               ticks: { color: textColor, callback: (v) => 'R$ ' + (v / 1000).toFixed(0) + 'k' }
             }
