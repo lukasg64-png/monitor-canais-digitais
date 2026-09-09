@@ -1,10 +1,10 @@
 {
   "status": "ONLINE",
   "started_at": "09/09/2026 10:42:47",
-  "last_sync": "09/09/2026 12:50:29",
-  "last_corte": "09/09/2026 11:53:57",
+  "last_sync": "09/09/2026 13:20:36",
+  "last_corte": "09/09/2026 12:53:53",
   "last_status": "Sucesso",
-  "sync_count": 6,
+  "sync_count": 7,
   "is_syncing": true,
   "next_sync_in": 1,
   "target_minutes": "20 e 50",
