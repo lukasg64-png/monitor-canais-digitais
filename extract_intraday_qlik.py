@@ -413,6 +413,21 @@ def compute_date_replacements(target_dt=None):
         "%%ANO_MES_ANTERIOR%%": f"{dt_mes_ant.year}-{dt_mes_ant.month:02d}"
     }
 
+def check_qlik_connection(timeout_sec=4.0):
+    """Verifica se o Qlik Sense Enterprise responde antes de instanciar o navegador"""
+    import urllib.request
+    import ssl
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    test_url = "https://sense.farmaciassaojoao.com.br/hub/"
+    try:
+        req = urllib.request.Request(test_url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, context=ctx, timeout=timeout_sec) as r:
+            return True, "OK"
+    except Exception as e:
+        return False, str(e)
+
 async def fetch_intraday_data(target_dt=None):
     t0 = time.time()
     if target_dt is None:
@@ -426,6 +441,15 @@ async def fetch_intraday_data(target_dt=None):
     print(f"  EXTRAÇÃO INTRADAY ONLINE — CANAIS DIGITAIS (QLIK SENSE)")
     print(f"  Data Alvo: {dia_str}/{mes_str} | Ontem: {replacements['%%DIA_ONTEM%%']} | D-7: {replacements['%%DIA_D7%%']}")
     print("=" * 75)
+
+    print("0/4 Verificando conectividade de rede com Qlik Sense...", flush=True)
+    is_online, err_msg = check_qlik_connection(timeout_sec=4.0)
+    if not is_online:
+        print(f"❌ AVISO CRÍTICO: Não foi possível conectar a {QLIK_URL} ({err_msg})", flush=True)
+        print("💡 DICA: Se estiver fora do escritório, conecte a VPN corporativa FSJ-VPN (FortiClient)!", flush=True)
+        raise ConnectionError(
+            f"Servidor Qlik Sense ({QLIK_URL}) inacessível. A VPN FSJ-VPN (FortiClient) está desconectada ou a rede corporativa está instável."
+        )
 
     async with async_playwright() as p:
         print("1/4 Conectando ao Qlik Sense Enterprise...", flush=True)
