@@ -3997,6 +3997,11 @@
         dot.style.animation = 'liveReload 0.6s linear infinite';
         label.textContent = 'ATUALIZANDO';
         if (countdown) countdown.textContent = '';
+      } else if (status === 'cloud') {
+        dot.style.background = '#34C759';
+        dot.style.animation = 'livePulse 2s ease-in-out infinite';
+        label.textContent = 'LIVE (NUVEM)';
+        if (countdown) countdown.textContent = '';
       } else if (status === 'offline') {
         dot.style.background = '#FF3B30';
         dot.style.animation = 'none';
@@ -4016,45 +4021,49 @@
 
     async function pollStatus() {
       if (isReloading) return;
+      const isGitHub = window.location.hostname.includes('github.io');
       try {
-        const res = await fetch('/api/status', { cache: 'no-store' });
+        const endpoint = isGitHub ? 'data/daemon_status.json?t=' + Date.now() : '/api/status';
+        const res = await fetch(endpoint, { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         lastPollOk = true;
         pollCount++;
 
-        // Na primeira consulta, guarda o sync atual como referência
         if (lastKnownSync === null) {
           lastKnownSync = data.last_sync;
           console.log('[Auto-Refresh] Referência inicial:', lastKnownSync);
         }
 
-        // Exibe estado de sincronização
-        if (data.is_syncing) {
+        if (data.is_syncing && !isGitHub) {
           updateBadge('syncing');
           return;
         }
 
-        // Detecta novo sync → recarrega a página!
         if (data.last_sync && data.last_sync !== lastKnownSync) {
           console.log('[Auto-Refresh] Novo sync detectado!', lastKnownSync, '→', data.last_sync);
           isReloading = true;
           updateBadge('reloading');
-
-          // Aguarda o server gravar o HTML com os novos dados embutidos
           setTimeout(() => {
             window.location.reload();
           }, RELOAD_DELAY_MS);
           return;
         }
 
-        // Mostra countdown até próximo sync
-        updateBadge('live', data.next_sync_in || 0);
+        if (isGitHub) {
+          updateBadge('cloud');
+        } else {
+          updateBadge('live', data.next_sync_in || 0);
+        }
 
       } catch (err) {
         lastPollOk = false;
-        updateBadge('offline');
-        console.log('[Auto-Refresh] Servidor indisponível:', err.message);
+        if (isGitHub) {
+          updateBadge('cloud');
+        } else {
+          updateBadge('offline');
+        }
+        console.log('[Auto-Refresh] Status:', err.message);
       }
     }
 
