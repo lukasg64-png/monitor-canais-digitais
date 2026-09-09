@@ -74,8 +74,11 @@ def save_status():
     except Exception:
         pass
 
+# Flag para garantir execução 100% invisível em background no Windows (sem abrir janelas de prompt/console)
+CREATE_NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
+
 def run_sync():
-    """Executa a rotina de extração e processamento no Qlik Sense"""
+    """Executa a rotina de extração e processamento no Qlik Sense em segundo plano silencioso"""
     if daemon_state["is_syncing"]:
         return {"status": "already_running", "message": "Sincronização já em andamento."}
     
@@ -84,23 +87,69 @@ def run_sync():
     print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Iniciando ciclo de sincronização com Qlik Sense...")
     
     try:
-        # 1. Executa extração via WebSocket no Qlik Sense
+        # 1. Executa extração via WebSocket no Qlik Sense (100% silencioso / sem janela)
         ext_script = os.path.join(BASE_DIR, "extract_intraday_qlik.py")
-        proc_ext = subprocess.run([sys.executable, ext_script], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
+        proc_ext = subprocess.run(
+            [sys.executable, ext_script],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=120,
+            creationflags=CREATE_NO_WINDOW
+        )
         
-        # 2. Executa processamento analítico
+        # 2. Executa processamento analítico (100% silencioso / sem janela)
         proc_script = os.path.join(BASE_DIR, "process_intraday_analytics.py")
-        proc_ana = subprocess.run([sys.executable, proc_script], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+        proc_ana = subprocess.run(
+            [sys.executable, proc_script],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=60,
+            creationflags=CREATE_NO_WINDOW
+        )
         
-        # 3. Publica automaticamente no GitHub Pages se configurado
+        # 3. Publica automaticamente no GitHub Pages se configurado (100% silencioso / sem janela)
         try:
-            subprocess.run(["git", "add", "index.html", "data", "process_intraday_analytics.py", "extract_intraday_qlik.py"], cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15)
-            diff_chk = subprocess.run(["git", "diff", "--staged", "--quiet"], cwd=BASE_DIR)
+            subprocess.run(
+                ["git", "add", "index.html", "data", "process_intraday_analytics.py", "extract_intraday_qlik.py"],
+                cwd=BASE_DIR,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=15,
+                creationflags=CREATE_NO_WINDOW
+            )
+            diff_chk = subprocess.run(
+                ["git", "diff", "--staged", "--quiet"],
+                cwd=BASE_DIR,
+                creationflags=CREATE_NO_WINDOW
+            )
             if diff_chk.returncode != 0:
                 now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
-                subprocess.run(["git", "commit", "-m", f"Auto-sync Qlik Sense Intraday ({now_str})"], cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15)
-                subprocess.run(["git", "push", "github", "main"], cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
-                subprocess.run(["git", "push", "github", "HEAD:gh-pages"], cwd=BASE_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+                subprocess.run(
+                    ["git", "commit", "-m", f"Auto-sync Qlik Sense Intraday ({now_str})"],
+                    cwd=BASE_DIR,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=15,
+                    creationflags=CREATE_NO_WINDOW
+                )
+                subprocess.run(
+                    ["git", "push", "github", "main:gh-pages"],
+                    cwd=BASE_DIR,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=30,
+                    creationflags=CREATE_NO_WINDOW
+                )
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] Atualizações publicadas com sucesso no GitHub Pages!")
         except Exception as e_git:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] Info Git Push: {e_git}")

@@ -18,7 +18,8 @@ if (-not (Test-Path $BatPath)) {
     exit 1
 }
 
-$Action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c `"$BatPath`"" -WorkingDirectory $ScriptDir
+$VbsPath = Join-Path $ScriptDir "exec_silencioso.vbs"
+$Action = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "//B //Nologo `"$VbsPath`" `"$BatPath`"" -WorkingDirectory $ScriptDir
 $Trigger = New-ScheduledTaskTrigger -Daily -At "06:00"
 $Trigger.Repetition = (New-ScheduledTaskTrigger -Once -At "06:00" -RepetitionInterval (New-TimeSpan -Minutes 15) -RepetitionDuration (New-TimeSpan -Hours 18)).Repetition
 
