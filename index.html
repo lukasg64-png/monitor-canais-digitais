@@ -3292,6 +3292,7 @@
       }
 
       // Charts, Gauges & Tables
+      renderMilestoneWidget();
       renderCharts();
       renderGauges();
       renderMatrixTable();
@@ -3659,6 +3660,371 @@
       }
     }
 
+    // ==========================================
+    // PREVISÃO DE BATER A META & PLUGIN DE MARCADOR NO GRÁFICO
+    // ==========================================
+    function getMetaMilestoneInfo(channel) {
+      if (!globalData || !globalData.kpis || !globalData.hourly_curve) return null;
+      const ch = channel || currentChannel || 'Total';
+      const kpi = globalData.kpis[ch] || globalData.kpis['Total'] || {};
+      const curve = globalData.hourly_curve || [];
+      const meta = globalData.metadata || {};
+
+      const metaDia = kpi.meta_dia || 0;
+      const realizado = kpi.realizado_hoje || 0;
+      const projEod = kpi.projecao_eod || 0;
+      const speedAtual = kpi.run_rate_atual_hora || 0;
+      const speedReq = kpi.run_rate_necessario_hora || 0;
+
+      // Horário do corte em valor decimal (ex: 16:53 -> 16.883)
+      let corteFloat = 16.88;
+      const corteHora = meta.corte_hora || '16:53';
+      if (typeof corteHora === 'string' && corteHora.includes(':')) {
+        const [chH, chM] = corteHora.split(':').map(Number);
+        corteFloat = chH + (chM || 0) / 60.0;
+      } else if (typeof corteHora === 'number') {
+        corteFloat = corteHora;
+      }
+
+      if (metaDia <= 0) {
+        return {
+          status: 'no_target',
+          channel: ch,
+          metaDia, realizado, projEod, speedAtual, speedReq,
+          exactHour: null,
+          timeStr: '--:--',
+          pctMeta: 0
+        };
+      }
+
+      const pctMeta = (realizado / metaDia) * 100;
+
+      // Caso 1: Meta Já Batida no realizado
+      if (realizado >= metaDia) {
+        let exactHour = null;
+        for (let i = 0; i < curve.length; i++) {
+          const acc = (curve[i].accum_hoje && curve[i].accum_hoje[ch] != null) ? curve[i].accum_hoje[ch] : 0;
+          if (acc >= metaDia) {
+            const prev = (i > 0 && curve[i - 1].accum_hoje && curve[i - 1].accum_hoje[ch] != null) ? curve[i - 1].accum_hoje[ch] : 0;
+            const step = acc - prev;
+            const frac = step > 0 ? (metaDia - prev) / step : 0;
+            exactHour = (i > 0 ? (i - 1) : 0) + frac;
+            break;
+          }
+        }
+        if (exactHour === null) exactHour = corteFloat;
+
+        let h = Math.floor(exactHour);
+        let m = Math.round((exactHour - h) * 60);
+        if (m === 60) { h += 1; m = 0; }
+        const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+        return {
+          status: 'reached',
+          channel: ch,
+          metaDia,
+          realizado,
+          projEod,
+          speedAtual,
+          speedReq,
+          exactHour,
+          timeStr,
+          pctMeta,
+          surplus: realizado - metaDia,
+          leadText: `Meta Batida às ${timeStr}! 🎉`,
+          detailText: `Superávit atual de ${fmtBRL(realizado - metaDia)} (${fmtPct(pctMeta)} da meta)`,
+          badgeClass: 'badge-reached',
+          badgeText: '🏆 META DO DIA CONQUISTADA',
+          statusClass: 'status-reached'
+        };
+      }
+
+      // Caso 2: Meta Projetada para Hoje (Run-Rate cruza a Meta do Dia)
+      if (projEod >= metaDia) {
+        let exactHour = null;
+        for (let i = 0; i < curve.length; i++) {
+          const proj = (curve[i].accum_proj_base && curve[i].accum_proj_base[ch] != null) ? curve[i].accum_proj_base[ch] : 0;
+          if (proj >= metaDia) {
+            const prev = (i > 0 && curve[i - 1].accum_proj_base && curve[i - 1].accum_proj_base[ch] != null) ? curve[i - 1].accum_proj_base[ch] : 0;
+            const step = proj - prev;
+            const frac = step > 0 ? (metaDia - prev) / step : 0;
+            exactHour = (i > 0 ? (i - 1) : 0) + frac;
+            break;
+          }
+        }
+        if (exactHour === null) exactHour = 23.99;
+
+        let h = Math.floor(exactHour);
+        let m = Math.round((exactHour - h) * 60);
+        if (m === 60) { h += 1; m = 0; }
+        const timeStr = `~${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+        let remMin = Math.round((exactHour - corteFloat) * 60);
+        if (remMin < 0) remMin = 0;
+        const remH = Math.floor(remMin / 60);
+        const remM = remMin % 60;
+        const tempoRestStr = remH > 0 ? `${remH}h ${String(remM).padStart(2, '0')}min` : `${remM}min`;
+        const gap = metaDia - realizado;
+
+        return {
+          status: 'projected',
+          channel: ch,
+          metaDia,
+          realizado,
+          projEod,
+          speedAtual,
+          speedReq,
+          exactHour,
+          timeStr,
+          pctMeta,
+          remMin,
+          tempoRestStr,
+          gap,
+          leadText: `Previsto em aprox. ${tempoRestStr} (às ${timeStr})`,
+          detailText: `Faltam ${fmtBRL(gap)} para atingir 100% da Meta do Dia`,
+          badgeClass: 'badge-projected',
+          badgeText: '🎯 PREVISÃO DE BATER A META',
+          statusClass: 'status-projected'
+        };
+      }
+
+      // Caso 3: Não atinge hoje no ritmo atual (Déficit projetado)
+      const deficit = metaDia - projEod;
+      const pctProj = (projEod / metaDia) * 100;
+      return {
+        status: 'not_reached',
+        channel: ch,
+        metaDia,
+        realizado,
+        projEod,
+        speedAtual,
+        speedReq,
+        exactHour: null,
+        timeStr: 'Não Previsto',
+        pctMeta,
+        deficit,
+        pctProj,
+        leadText: `Déficit estimado de ${fmtBRL(deficit)} no fechamento`,
+        detailText: `Projeção EOD atinge ${fmtPct(pctProj)} da meta no ritmo atual`,
+        badgeClass: 'badge-not_reached',
+        badgeText: '⚠️ ALERTA DE DÉFICIT NA META',
+        statusClass: 'status-not_reached'
+      };
+    }
+
+    function toggleMilestoneCalc() {
+      const drawer = document.getElementById('milestone-calc-drawer');
+      const btn = document.getElementById('btn-toggle-milestone-calc');
+      if (!drawer) return;
+      const isHidden = drawer.style.display === 'none' || !drawer.style.display;
+      drawer.style.display = isHidden ? 'block' : 'none';
+      if (btn) {
+        btn.classList.toggle('active', isHidden);
+        btn.style.background = isHidden ? 'var(--apple-blue)' : '';
+        btn.style.color = isHidden ? '#fff' : '';
+      }
+    }
+
+    function renderMilestoneWidget() {
+      const container = document.getElementById('milestone-widget-container');
+      if (!container) return;
+
+      const ms = getMetaMilestoneInfo(currentChannel);
+      if (!ms) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let progressBarColor = 'var(--apple-blue)';
+      if (ms.status === 'reached') progressBarColor = '#34C759';
+      else if (ms.status === 'not_reached') progressBarColor = '#FF3B30';
+      else progressBarColor = 'linear-gradient(90deg, #FF9500 0%, #34C759 100%)';
+
+      const isSpeedOk = ms.speedAtual >= ms.speedReq;
+      const speedDiffPct = ms.speedReq > 0 ? Math.round(((ms.speedAtual / ms.speedReq) - 1) * 100) : 0;
+      const speedChipText = ms.status === 'reached'
+        ? '🏆 Meta Batida'
+        : (isSpeedOk
+            ? `⚡ Ritmo Acelerado (+${speedDiffPct}%)`
+            : `🐢 Ritmo Abaixo (${speedDiffPct}%)`);
+      const speedChipClass = (ms.status === 'reached' || isSpeedOk) ? 'tag-alavancador' : 'tag-critico';
+
+      const html = `
+        <div class="milestone-widget ${ms.statusClass}">
+          <div class="milestone-grid">
+            <!-- Coluna 1: Horário Previsto / Batido -->
+            <div class="milestone-col milestone-primary">
+              <div class="milestone-header-row">
+                <span class="milestone-badge ${ms.badgeClass}">
+                  ${ms.badgeText}
+                </span>
+                <span class="milestone-indicator-pill">CANAL: <strong>${ms.channel.toUpperCase()}</strong></span>
+              </div>
+              <div class="milestone-main-row">
+                <div class="milestone-time">${ms.timeStr}</div>
+                <div class="milestone-time-sub">
+                  <span class="ms-time-lead">${ms.leadText}</span>
+                  <span class="ms-time-detail">${ms.detailText}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Coluna 2: Barra de Progresso Realizado -->
+            <div class="milestone-col milestone-progress-col">
+              <div class="ms-progress-top">
+                <span class="ms-prog-label">Progresso Realizado Hoje</span>
+                <span class="ms-prog-value">${fmtBRL(ms.realizado)} (${fmtPct(ms.pctMeta)})</span>
+              </div>
+              <div class="ms-progress-track">
+                <div class="ms-progress-bar" style="width: ${Math.min(100, Math.max(0, ms.pctMeta))}%; background: ${progressBarColor};"></div>
+              </div>
+              <div class="ms-progress-bot">
+                <span>Meta: ${fmtBRL(ms.metaDia)}</span>
+                <span>Projeção EOD: ${fmtBRL(ms.projEod)}</span>
+              </div>
+            </div>
+
+            <!-- Coluna 3: Ritmo de Velocidade Horária -->
+            <div class="milestone-col milestone-speed-col">
+              <div class="ms-speed-row">
+                <span class="ms-speed-label">Velocidade Atual:</span>
+                <span class="ms-speed-val">${fmtBRL(ms.speedAtual)}/h</span>
+              </div>
+              <div class="ms-speed-row">
+                <span class="ms-speed-label">Velocidade Necessária:</span>
+                <span class="ms-speed-val">${fmtBRL(ms.speedReq)}/h</span>
+              </div>
+              <div class="ms-speed-status">
+                <span class="tag-badge ${speedChipClass}" style="font-size: 11px; padding: 2px 8px;">
+                  ${speedChipText}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Plugin Chart.js para Barrinha Vertical de Projeção / Horário de Meta
+    const metaMilestoneLinePlugin = {
+      id: 'metaMilestoneLine',
+      afterDatasetsDraw(chart, args, pluginOptions) {
+        if (!globalData || !chart || !chart.chartArea) return;
+        const ms = getMetaMilestoneInfo(currentChannel);
+        if (!ms || ms.exactHour == null) return;
+
+        const { ctx, chartArea, scales } = chart;
+        const xScale = scales.x;
+        const yScale = scales.y;
+        if (!xScale || !yScale) return;
+
+        // Interpolação precisa de pixel para exactHour (0 a 23)
+        const floorIdx = Math.floor(ms.exactHour);
+        const ceilIdx = Math.min(23, Math.ceil(ms.exactHour));
+        const frac = ms.exactHour - floorIdx;
+        const xFloor = xScale.getPixelForValue(floorIdx);
+        const xCeil = xScale.getPixelForValue(ceilIdx);
+        const xPos = xFloor + (xCeil - xFloor) * frac;
+
+        if (xPos < chartArea.left - 5 || xPos > chartArea.right + 5) return;
+
+        const isReached = ms.status === 'reached';
+        const lineColor = isReached ? '#34C759' : '#FF9500';
+        const bandColor = isReached ? 'rgba(52, 199, 89, 0.12)' : 'rgba(255, 149, 0, 0.14)';
+        const badgeBg = isReached ? '#34C759' : '#FF9500';
+
+        ctx.save();
+
+        // 1. Barrinha vertical translúcida (faixa sutil destacada de projeção)
+        const bandWidth = 14;
+        ctx.fillStyle = bandColor;
+        ctx.fillRect(xPos - bandWidth / 2, chartArea.top, bandWidth, chartArea.bottom - chartArea.top);
+
+        // 2. Linha vertical tracejada central
+        ctx.beginPath();
+        ctx.setLineDash([5, 4]);
+        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = lineColor;
+        ctx.moveTo(xPos, chartArea.top);
+        ctx.lineTo(xPos, chartArea.bottom);
+        ctx.stroke();
+
+        // 3. Nó de Interseção (especialmente no gráfico de curva acumulada onde a meta é cruzada)
+        if (pluginOptions && pluginOptions.isAccumChart && ms.metaDia) {
+          const yMeta = yScale.getPixelForValue(ms.metaDia);
+          if (yMeta >= chartArea.top && yMeta <= chartArea.bottom) {
+            // Halo de brilho
+            ctx.beginPath();
+            ctx.setLineDash([]);
+            ctx.arc(xPos, yMeta, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = isReached ? 'rgba(52, 199, 89, 0.32)' : 'rgba(255, 149, 0, 0.36)';
+            ctx.fill();
+
+            // Ponto central
+            ctx.beginPath();
+            ctx.arc(xPos, yMeta, 4.5, 0, 2 * Math.PI);
+            ctx.fillStyle = lineColor;
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            ctx.fill();
+            ctx.stroke();
+          }
+        }
+
+        // 4. Selo / Badge no topo da barrinha
+        const badgeText = isReached
+          ? `🏆 Meta Batida: ${ms.timeStr}`
+          : `🎯 Meta Prevista: ${ms.timeStr}`;
+
+        ctx.font = 'bold 11px Inter, -apple-system, sans-serif';
+        const textMetrics = ctx.measureText(badgeText);
+        const badgeW = textMetrics.width + 18;
+        const badgeH = 22;
+
+        // Garantir que não estoure as bordas do gráfico
+        let badgeX = xPos - (badgeW / 2);
+        if (badgeX < chartArea.left + 4) badgeX = chartArea.left + 4;
+        if (badgeX + badgeW > chartArea.right - 4) badgeX = chartArea.right - badgeW - 4;
+        const badgeY = chartArea.top + 6;
+
+        // Sombra suave do badge
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.22)';
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetY = 2;
+
+        // Fundo arredondado (pílula)
+        ctx.beginPath();
+        ctx.setLineDash([]);
+        if (ctx.roundRect) {
+          ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 11);
+        } else {
+          ctx.rect(badgeX, badgeY, badgeW, badgeH);
+        }
+        ctx.fillStyle = badgeBg;
+        ctx.fill();
+
+        // Reset shadow para borda e texto
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Borda branca translúcida
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Texto do badge
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
+
+        ctx.restore();
+      }
+    };
+
     function renderCharts() {
       const curveData = globalData.hourly_curve || [];
       const ch = currentChannel;
@@ -3750,7 +4116,8 @@
               callbacks: {
                 label: (ctx) => `${ctx.dataset.label}: ${fmtBRL(ctx.raw)}`
               }
-            }
+            },
+            metaMilestoneLine: { isAccumChart: true }
           },
           scales: {
             x: { grid: { color: gridColor }, ticks: { color: textColor } },
@@ -3759,7 +4126,8 @@
               ticks: { color: textColor, callback: (v) => 'R$ ' + (v / 1000).toFixed(0) + 'k' }
             }
           }
-        }
+        },
+        plugins: [metaMilestoneLinePlugin]
       });
 
       // Chart 2: Ritmo Horario em Linhas (Hoje vs Meta Horaria vs D-7)
@@ -3822,7 +4190,8 @@
               callbacks: {
                 label: (ctx) => `${ctx.dataset.label}: ${fmtBRL(ctx.raw)}`
               }
-            }
+            },
+            metaMilestoneLine: { isAccumChart: false }
           },
           scales: {
             x: { grid: { color: gridColor }, ticks: { color: textColor } },
@@ -3831,7 +4200,8 @@
               ticks: { color: textColor, callback: (v) => 'R$ ' + (v / 1000).toFixed(0) + 'k' }
             }
           }
-        }
+        },
+        plugins: [metaMilestoneLinePlugin]
       });
     }
 
