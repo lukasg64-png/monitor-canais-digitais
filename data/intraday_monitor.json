@@ -12,7 +12,7 @@
       "APP",
       "MKP"
     ],
-    "gerado_em": "2026-09-09 08:52:49"
+    "gerado_em": "2026-09-09 08:58:36"
   },
   "kpis": {
     "Total": {
@@ -501,11 +501,11 @@
     "esclarecimento_glp1": {
       "titulo": "💊 Esclarecimento GLP-1 & Demanda (Mounjaro, Ozempic, Wegovy)",
       "subtitulo": "Estoque Auditado está Pleno e Preço Alinhado — Retração é Comportamental",
-      "total_mounjaro_rede_un": 30359,
-      "mounjaro_5mg_un": 11783,
-      "mounjaro_25mg_un": 9805,
-      "preco_status": "EMPATADO COM CONCORRÊNCIA (R$ 2.382,23)",
-      "diagnostico_fato": "A retração em GLP-1 vs D-7 não decorre de falta física de produto (rede conta com mais de 30.000 un de Mounjaro) nem de sobrepreço (empatado). Ocorre pelo ciclo mensal de recompra de 30 dias do paciente e base de D-7 atípica.",
+      "total_mounjaro_rede_un": 29444,
+      "mounjaro_5mg_un": 11192,
+      "mounjaro_25mg_un": 9353,
+      "preco_status": "EMPATADO COM CONCORRÊNCIA",
+      "diagnostico_fato": "A retração em GLP-1 vs D-7 não decorre de falta física de produto (rede conta com 29,444 un de Mounjaro nas lojas) nem de sobrepreço. Ocorre pelo ciclo mensal de recompra de 30 dias do paciente e base de D-7 atípica.",
       "acao_primaria": "Manter preço e estoque. Acionar régua de CRM com push no App para pacientes que compraram há 25-30 dias.",
       "dosagens": [
         {
@@ -93392,48 +93392,48 @@
   ],
   "storytelling": {
     "headline": "Pacing de 103,7% às 07:54 — Projeção EOD em R$ 2.068.552 (+R$ 15.241 vs Meta)",
-    "diagnostico_pacing": "🎯 Norte do Dia: O canal digital faturou R$ 64.698 até às 07:54, atingindo 103,7% da meta proporcional esperada no corte (R$ 62.412), projetando fechar o dia em R$ 2.068.552 (meta oficial do dia: R$ 2.053.312). 🛵 Dinâmica dos Canais: Marketplace é o grande motor de tração operando a 286,4% da meta proporcional (+R$ 26.528 acima do esperado). Em contrapartida, os canais próprios demandam aceleração no período noturno: APP atingiu 60,1% (-R$ 13.831) e Site atingiu 27,5% (-R$ 8.092).",
-    "leitura_janelas": "📊 Comparativo de Janelas: vs Ontem (D-1): +2,6% (+R$ 1.651), confirmando forte retomada típica de início de semana. vs Quarta-feira Anterior (D-7): +20,1% (R$ 10.837), impactado principalmente pela retração pontual em medicamentos de alto valor.",
-    "auditoria_estoque": "📦 Diagnóstico Executivo de Causa-Raiz (Tríade Estoque x Preço): Dos -R$ 37.759 de gap nos itens detratores vs D-7, a auditoria do estoque real das lojas (1.259 filiais) revela 3 situações distintas: 1) Preço Desalinhado com Estoque Farto: 26,4% (-R$ 9.951) em 1325 SKUs onde a rede está farta em loja (>=1,5 un/lj), mas a venda travou porque o digital está até +46% mais caro que concorrentes (ex: Pampers Jumbo +6,7%, Neutrogena +90,4%, Evra +39,6%); 2) Ruptura Logística Real: 13,6% (-R$ 5.141) em 675 SKUs com real desabastecimento nas lojas (<1,5 un/lj), como Wegovy 1,7mg e Ajovy; 3) Esclarecimento GLP-1 / Demanda: Mounjaro e correlatos têm estoque abundante (mais de 30.000 un na rede, 11.783 un de 5mg) e preço rigorosamente empatado (R$ 2.382,23). A oscilação decorre do ciclo mensal de recompra de 30 dias do paciente e base atípica em D-7.",
-    "auditoria_preco": "🏷️ Competitividade Precifica & Alerta de Reprecificação: Dos 7.599 produtos com concorrência ativa monitorados no digital, temos 1325 produtos com estoque farto nas lojas sofrendo com sobrepreço online vs Nissei, Panvel e Preço Popular. Ação Recomendada Imediata: Reprecificar no App/Site os itens com estoque abundante (como Fraldas Pampers Jumbo, Toalhas e Dermocosméticos) para recuperar o giro imediato do canal digital.",
+    "diagnostico_pacing": "🎯 Norte do Dia: O canal digital faturou R$ 64.698 até às 07:54, atingindo 103,7% da meta proporcional esperada no corte (R$ 62.412), projetando fechar o dia em R$ 2.068.552 (meta oficial do dia: R$ 2.053.312). 🛵 Dinâmica dos Canais: Destaque positivo para MKP (286,4%, +R$ 26.528) operando acima da meta proporcional. Por outro lado, APP (60,1%, -R$ 13.831), Site (27,5%, -R$ 8.092) demandam aceleração nos turnos da tarde e noite.",
+    "leitura_janelas": "📊 Comparativo de Janelas: vs Ontem (Terça-feira): +2,6% (+R$ 1.651), mantendo estabilidade de giro. vs Quarta-feira Anterior (D-7): +20,1% (+R$ 10.837), impulsionado pela expansão de faturamento liderada por PROCTER & GAMBLE DO BRASIL S/A.",
+    "auditoria_estoque": "📦 Diagnóstico Executivo de Causa-Raiz (Tríade Estoque x Preço): Dos -R$ 37.759 de gap nos itens detratores vs D-7, a auditoria do estoque real das lojas (1259 filiais) revela 3 situações distintas: 1) Preço Desalinhado com Estoque Farto: 26,4% (-R$ 9.951) em 1325 SKUs onde a rede está farta em loja (>=1,5 un/lj), mas a venda travou por sobrepreço online vs concorrência (ex: NANLAC COMFOR 3 800G NESTLE (+34.2% vs Precopopular), CREATINA HARDCORE 300G INTEG (+113.2% vs Amazon), APTANUTRI PREMIUM 3 800G DAN (+51.4% vs Amazon)); 2) Ruptura Logística Real: 13,6% (-R$ 5.141) em 675 SKUs com real desabastecimento nas lojas (<1,5 un/lj) (ex: MOUNJARO 15MG 4CAN APLIC LIL (0.8 un/lj), MOUNJARO 12,5MG 4CAN APLIC L (0.4 un/lj), WEGOVY 1,7MG 3ML NOVO NORDIS (1.4 un/lj)); 3) Esclarecimento GLP-1 / Demanda: Medicamentos GLP-1 (Mounjaro, Wegovy, Ozempic) acumulam oscilação de -R$ 6.266 vs D-7. Auditoria no estoque confirma 62,300 un físicas nas lojas (49.5 un/loja), comprovando que a retração reflete ciclo mensal de recompra de 30 dias do paciente e elasticidade digital, e não desabastecimento da rede.",
+    "auditoria_preco": "🏷️ Competitividade Precifica & Alerta de Reprecificação: Dos 7,598 produtos com concorrência ativa monitorados no digital, temos 1325 produtos com estoque farto nas lojas sofrendo com sobrepreço online vs Nissei, Panvel e Preço Popular. Ação Recomendada Imediata: Reprecificar no App/Site os itens prioritários com estoque abundante: NANLAC COMFOR 3 800G NESTL, CREATINA HARDCORE 300G INT, APTANUTRI PREMIUM 3 800G D.",
     "principais_detratores": [
       {
-        "entidade": "Medicamentos GLP-1 (Eli Lilly / Mounjaro & Novo Nordisk)",
-        "tipo": "Comportamento de Compra & Preço",
+        "entidade": "Laboratório ELI LILLY DO BRASIL LTDA",
+        "tipo": "Retração em Fornecedor",
         "impacto_rs": -5955.01,
-        "detalhe": "Retração concentrada em GLP-1: No nível Laboratório, Eli Lilly (-R$ 5.955) e Novo Nordisk (-R$ 2.662). No nível de SKUs, Mounjaro lidera a lista de maiores variações com Mounjaro 5mg (-R$ 4.174) e 2,5mg (-R$ 1.956). Auditoria oficial no Relatório de Estoque Final da rede comprova estoque pleno nas lojas físicas: Mounjaro 5mg conta com 11,192 un (8.9 un/loja) e 2,5mg com 9,353 un (7.4 un/loja). O gap digital decorre da sensibilidade a preço e dinâmica de dispensação online, e não de falta física de produto na rede."
+        "detalhe": "Maior detrator no nível de fornecedor (-R$ 5.955 vs D-7)."
       },
       {
-        "entidade": "Prescrição & Genéricos de Giro (Eurofarma & EMS)",
-        "tipo": "Volume de Balcão",
-        "impacto_rs": -1908.7800000000002,
-        "detalhe": "Desaceleração de volume em prescrição diária e genéricos: Eurofarma (-R$ 902) e EMS Genéricos (-R$ 1.007) com menor saída que no padrão D-7."
+        "entidade": "SKU MOUNJARO 5MG 4CAN APLIC LILLY",
+        "tipo": "Demanda Comercial",
+        "impacto_rs": -4174.46,
+        "detalhe": "Item com maior perda nominal de receita no corte (-R$ 4.174 vs D-7). Estoque rede: 8.9 un/loja. 📉 Demanda Comercial (8.9 un/lj)."
       },
       {
-        "entidade": "Higiene Infantil Tradicional (Kimberly-Clark / Huggies & Pampers Jumbo)",
-        "tipo": "Migração de Formato",
-        "impacto_rs": -11294.99,
-        "detalhe": "Menor demanda nas embalagens tradicionais de fraldas: Kimberly-Clark (-R$ 11.182) e retração pontual no formato Pampers Jumbo XXG (-R$ 113)."
+        "entidade": "Subgrupo PBMs Controlados(22)",
+        "tipo": "Retração em Categoria",
+        "impacto_rs": -7218.04,
+        "detalhe": "Categoria com maior perda agregada (-R$ 7.218 vs D-7)."
       }
     ],
     "destaques_positivos": [
       {
-        "entidade": "Fraldas Bag Super (Procter & Gamble / Pampers)",
-        "tipo": "Migração Bem-Sucedida",
+        "entidade": "Laboratório PROCTER & GAMBLE DO BRASIL S/A",
+        "tipo": "Crescimento em Fornecedor",
         "impacto_rs": 4581.4,
-        "detalhe": "P&G lidera os ganhos (+R$ 4.581) impulsionada pela forte migração de clientes para a linha Pampers Bag Super (+R$ 40.000 somados nos tamanhos XXG, XG e G)."
+        "detalhe": "Liderança de ganhos no nível fornecedor (+R$ 4.581 vs D-7)."
       },
       {
-        "entidade": "Nutrição & Fórmulas Infantis (Leite Ninho 1+)",
-        "tipo": "Alta Demanda",
-        "impacto_rs": 891.84,
-        "detalhe": "Forte aceleração em nutrição infantil, puxada pelo Leite Ninho 1+ Prebio (+R$ 892) superando amplamente o ritmo esperado de D-7."
+        "entidade": "SKU MOUNJARO 7,5MG 4CAN APLIC LILLY",
+        "tipo": "Alta Demanda no Canal",
+        "impacto_rs": 1408.8,
+        "detalhe": "Item com maior ganho nominal de receita no corte (+R$ 1.409 vs D-7, faturando R$ 2.299 hoje)."
       },
       {
-        "entidade": "Autocuidado, OTC & Cuidados (Kenvue, Coty, Cimed)",
-        "tipo": "Tração Capilar",
-        "impacto_rs": 1043.37,
-        "detalhe": "Tração capilar consistente no carrinho com marcas de OTC e higiene: Kenvue OTC (+R$ 258), Coty (+R$ 203) e Cimed (+R$ 582)."
+        "entidade": "Subgrupo Fraldas(9)",
+        "tipo": "Expansão de Categoria",
+        "impacto_rs": 5314.11,
+        "detalhe": "Categoria com maior expansão agregada (+R$ 5.314 vs D-7)."
       }
     ]
   },

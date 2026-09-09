@@ -1000,11 +1000,11 @@ def process_analytics():
         "esclarecimento_glp1": {
             "titulo": "💊 Esclarecimento GLP-1 & Demanda (Mounjaro, Ozempic, Wegovy)",
             "subtitulo": "Estoque Auditado está Pleno e Preço Alinhado — Retração é Comportamental",
-            "total_mounjaro_rede_un": 30359,
-            "mounjaro_5mg_un": 11783,
-            "mounjaro_25mg_un": 9805,
-            "preco_status": "EMPATADO COM CONCORRÊNCIA (R$ 2.382,23)",
-            "diagnostico_fato": "A retração em GLP-1 vs D-7 não decorre de falta física de produto (rede conta com mais de 30.000 un de Mounjaro) nem de sobrepreço (empatado). Ocorre pelo ciclo mensal de recompra de 30 dias do paciente e base de D-7 atípica.",
+            "total_mounjaro_rede_un": int(sum(s.get("saldo", 0) for s in level_skus["all"] if "MOUNJARO" in s.get("nome", "").upper())),
+            "mounjaro_5mg_un": int(next((s.get("saldo", 0) for s in level_skus["all"] if "MOUNJARO" in s.get("nome", "").upper() and "5MG" in s.get("nome", "").upper()), 0)),
+            "mounjaro_25mg_un": int(next((s.get("saldo", 0) for s in level_skus["all"] if "MOUNJARO" in s.get("nome", "").upper() and ("2,5MG" in s.get("nome", "").upper() or "2.5MG" in s.get("nome", "").upper())), 0)),
+            "preco_status": "EMPATADO COM CONCORRÊNCIA",
+            "diagnostico_fato": f"A retração em GLP-1 vs D-7 não decorre de falta física de produto (rede conta com {int(sum(s.get('saldo', 0) for s in level_skus['all'] if 'MOUNJARO' in s.get('nome', '').upper())):,} un de Mounjaro nas lojas) nem de sobrepreço. Ocorre pelo ciclo mensal de recompra de 30 dias do paciente e base de D-7 atípica.",
             "acao_primaria": "Manter preço e estoque. Acionar régua de CRM com push no App para pacientes que compraram há 25-30 dias.",
             "dosagens": [
                 {
@@ -1099,88 +1099,174 @@ def process_analytics():
 
     tot_kpi = executive_kpis["Total"]
 
-    # FRENTES DIRECIONADORAS DE GAP (Detratores Não-Redundantes)
-    lilly = next((l for l in level_labs["detratores_top"] if "LILLY" in l["nome"].upper()), None)
-    novo = next((l for l in level_labs["detratores_top"] if "NOVO NORDISK" in l["nome"].upper()), None)
-    mounjaro_skus = [s for s in level_skus["all"] if "MOUNJARO" in s["nome"].upper()]
-    moun5 = next((s for s in mounjaro_skus if "5MG" in s["nome"].upper()), None)
-    moun25 = next((s for s in mounjaro_skus if "2,5MG" in s["nome"].upper() or "2.5MG" in s["nome"].upper()), None)
+    # FRENTES DIRECIONADORAS & DIAGNÓSTICO ANALÍTICO 100% DINÂMICO
+    # Período dinâmico do dia
+    if curr_hour < 12:
+        periodo_dia = "no período da manhã"
+        acelera_turno = "nos turnos da tarde e noite"
+    elif curr_hour < 18:
+        periodo_dia = "no período da tarde"
+        acelera_turno = "na reta final da noite"
+    else:
+        periodo_dia = "no período noturno"
+        acelera_turno = "no fechamento do dia"
 
-    tot_mounjaro_saldo = sum(s.get("saldo", 0) for s in mounjaro_skus)
-    mounjaro_un_loja = (tot_mounjaro_saldo / TOTAL_LOJAS_REDE) if tot_mounjaro_saldo > 0 else 9.5
+    # Dinâmica dinâmica dos canais
+    canais_acima = []
+    canais_abaixo = []
+    for c_nome in ["MKP", "APP", "Site"]:
+        c_pacing = executive_kpis[c_nome]["pacing_corte_pct"]
+        c_gap = executive_kpis[c_nome]["gap_corte_rs"]
+        if c_pacing >= 100:
+            canais_acima.append(f"{c_nome} ({fmt_pct(c_pacing)}, +{fmt_real(c_gap)})")
+        else:
+            canais_abaixo.append(f"{c_nome} ({fmt_pct(c_pacing)}, {fmt_real(c_gap)})")
 
-    gap_lilly = lilly["gap_d7_rs"] if lilly else -22993.24
-    gap_novo = novo["gap_d7_rs"] if novo else -2661.79
-    moun5_gap = moun5["gap_d7_rs"] if moun5 else -14427.24
-    moun25_gap = moun25["gap_d7_rs"] if moun25 else -9461.36
+    if canais_acima and canais_abaixo:
+        dinamica_canais_str = (
+            f"🛵 Dinâmica dos Canais: Destaque positivo para {', '.join(canais_acima)} operando acima da meta proporcional. "
+            f"Por outro lado, {', '.join(canais_abaixo)} demandam aceleração {acelera_turno}."
+        )
+    elif canais_acima:
+        dinamica_canais_str = (
+            f"🛵 Dinâmica dos Canais: Todos os canais operam acima da meta proporcional neste corte: {', '.join(canais_acima)}."
+        )
+    else:
+        dinamica_canais_str = (
+            f"🛵 Dinâmica dos Canais: Ritmo cauteloso generalizado. Todos os canais demandam recuperação {acelera_turno}: {', '.join(canais_abaixo)}."
+        )
 
-    moun5_saldo = int(moun5["saldo"]) if (moun5 and moun5.get("saldo")) else 11783
-    moun25_saldo = int(moun25["saldo"]) if (moun25 and moun25.get("saldo")) else 9805
+    # Dia da semana anterior (ontem) dinâmico
+    DIAS_SEMANA_COMP = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+    dow_idx = dt_ref.weekday()
+    dia_ontem_idx = (dow_idx - 1) % 7
+    dia_ontem_nome = DIAS_SEMANA_COMP[dia_ontem_idx]
 
-    frente_1 = {
-        "entidade": "Medicamentos GLP-1 (Eli Lilly / Mounjaro & Novo Nordisk)",
-        "tipo": "Comportamento de Compra & Preço",
-        "impacto_rs": gap_lilly,
-        "detalhe": f"Retração concentrada em GLP-1: No nível Laboratório, Eli Lilly ({fmt_real(gap_lilly)}) e Novo Nordisk ({fmt_real(gap_novo)}). No nível de SKUs, Mounjaro lidera a lista de maiores variações com Mounjaro 5mg ({fmt_real(moun5_gap)}) e 2,5mg ({fmt_real(moun25_gap)}). Auditoria oficial no Relatório de Estoque Final da rede comprova estoque pleno nas lojas físicas: Mounjaro 5mg conta com {moun5_saldo:,} un ({moun5_saldo/TOTAL_LOJAS_REDE:.1f} un/loja) e 2,5mg com {moun25_saldo:,} un ({moun25_saldo/TOTAL_LOJAS_REDE:.1f} un/loja). O gap digital decorre da sensibilidade a preço e dinâmica de dispensação online, e não de falta física de produto na rede."
-    }
+    # Comparativo dinâmico de D-1
+    var_d1_pct = tot_kpi['janela_d1']['var_pct']
+    var_d1_rs = tot_kpi['janela_d1']['var_rs']
+    if var_d1_pct > 3:
+        leitura_d1_str = f"vs Ontem ({dia_ontem_nome}): {fmt_pct(var_d1_pct, True)} ({'+' if var_d1_rs >= 0 else ''}{fmt_real(var_d1_rs)}), demonstrando aceleração consistente de faturamento."
+    elif var_d1_pct < -3:
+        leitura_d1_str = f"vs Ontem ({dia_ontem_nome}): {fmt_pct(var_d1_pct, True)} ({fmt_real(var_d1_rs)}), apresentando ritmo inferior ao do dia anterior."
+    else:
+        leitura_d1_str = f"vs Ontem ({dia_ontem_nome}): {fmt_pct(var_d1_pct, True)} ({'+' if var_d1_rs >= 0 else ''}{fmt_real(var_d1_rs)}), mantendo estabilidade de giro."
 
-    eurofarma = next((l for l in level_labs["detratores_top"] if "EUROFARMA" in l["nome"].upper()), None)
-    ems = next((l for l in level_labs["detratores_top"] if "EMS" in l["nome"].upper()), None)
-    gap_euro = eurofarma["gap_d7_rs"] if eurofarma else -20447.16
-    gap_ems = ems["gap_d7_rs"] if ems else -11320.37
-    frente_2 = {
-        "entidade": "Prescrição & Genéricos de Giro (Eurofarma & EMS)",
-        "tipo": "Volume de Balcão",
-        "impacto_rs": gap_euro + gap_ems,
-        "detalhe": f"Desaceleração de volume em prescrição diária e genéricos: Eurofarma ({fmt_real(gap_euro)}) e EMS Genéricos ({fmt_real(gap_ems)}) com menor saída que no padrão D-7."
-    }
+    # Comparativo dinâmico de D-7
+    var_d7_pct = tot_kpi['janela_d7']['var_pct']
+    var_d7_rs = tot_kpi['janela_d7']['var_rs']
+    top_det_lab_nome = level_labs["detratores_top"][0]["nome"] if level_labs["detratores_top"] else "itens específicos"
+    top_bst_lab_nome = level_labs["alavancadores_top"][0]["nome"] if level_labs["alavancadores_top"] else "itens específicos"
 
-    kimberly = next((l for l in level_labs["detratores_top"] if "KIMBERLY" in l["nome"].upper()), None)
-    pampers_jumbo = next((s for s in level_skus["detratores_top"] if "JUMBO" in s["nome"].upper()), None)
-    gap_kimb = kimberly["gap_d7_rs"] if kimberly else -11182.17
-    gap_pj = pampers_jumbo["gap_d7_rs"] if pampers_jumbo else -8331.36
-    frente_3 = {
-        "entidade": "Higiene Infantil Tradicional (Kimberly-Clark / Huggies & Pampers Jumbo)",
-        "tipo": "Migração de Formato",
-        "impacto_rs": gap_kimb + gap_pj,
-        "detalhe": f"Menor demanda nas embalagens tradicionais de fraldas: Kimberly-Clark ({fmt_real(gap_kimb)}) e retração pontual no formato Pampers Jumbo XXG ({fmt_real(gap_pj)})."
-    }
+    if var_d7_pct >= 0:
+        leitura_d7_str = f"vs {dow_nome} Anterior (D-7): {fmt_pct(var_d7_pct, True)} (+{fmt_real(var_d7_rs)}), impulsionado pela expansão de faturamento liderada por {top_bst_lab_nome}."
+    else:
+        leitura_d7_str = f"vs {dow_nome} Anterior (D-7): {fmt_pct(var_d7_pct, True)} ({fmt_real(var_d7_rs)}), impactado principalmente pela retração pontual em {top_det_lab_nome}."
 
-    principais_detratores = [frente_1, frente_2, frente_3]
+    # Diagnóstico dinâmico de Causa-Raiz (Tríade Estoque x Preço)
+    # 1) Top SKUs reais com Preço Desalinhado e Estoque Farto
+    ex_preco_list = []
+    for s in reprec_skus_all[:3]:
+        spread = s.get("spread_pct", 0)
+        s_nome = s.get("nome", "")[:28].strip()
+        rede_conc = (s.get("menor_concorrente_rede") or "concorrência").title()
+        ex_preco_list.append(f"{s_nome} (+{spread:.1f}% vs {rede_conc})")
+    ex_preco_str = f" (ex: {', '.join(ex_preco_list)})" if ex_preco_list else ""
 
-    # FRENTES DIRECIONADORAS DE ALAVANCAGEM
-    pg = next((l for l in level_labs["alavancadores_top"] if "PROCTER" in l["nome"].upper()), None)
-    gap_pg = pg["gap_d7_rs"] if pg else 26557.28
-    boost_1 = {
-        "entidade": "Fraldas Bag Super (Procter & Gamble / Pampers)",
-        "tipo": "Migração Bem-Sucedida",
-        "impacto_rs": gap_pg,
-        "detalhe": f"P&G lidera os ganhos (+{fmt_real(gap_pg)}) impulsionada pela forte migração de clientes para a linha Pampers Bag Super (+{fmt_real(40000)} somados nos tamanhos XXG, XG e G)."
-    }
+    # 2) Top SKUs reais com Ruptura Logística Real (< 1.5 un/loja)
+    ex_rupt_list = []
+    for s in rupt_skus_all[:3]:
+        un_lj = s.get("un_por_loja", 0)
+        s_nome = s.get("nome", "")[:28].strip()
+        ex_rupt_list.append(f"{s_nome} ({un_lj:.1f} un/lj)")
+    ex_rupt_str = f" (ex: {', '.join(ex_rupt_list)})" if ex_rupt_list else ""
 
-    ninho = next((s for s in level_skus["alavancadores_top"] if "NINHO" in s["nome"].upper()), None)
-    gap_ninho = ninho["gap_d7_rs"] if ninho else 7121.32
-    boost_2 = {
-        "entidade": "Nutrição & Fórmulas Infantis (Leite Ninho 1+)",
-        "tipo": "Alta Demanda",
-        "impacto_rs": gap_ninho,
-        "detalhe": f"Forte aceleração em nutrição infantil, puxada pelo Leite Ninho 1+ Prebio (+{fmt_real(gap_ninho)}) superando amplamente o ritmo esperado de D-7."
-    }
+    # 3) Diagnóstico dinâmico factual de GLP-1 / Demanda
+    glp1_skus_hoje = [s for s in level_skus["all"] if any(k in s.get("nome", "").upper() for k in ["MOUNJARO", "OZEMPIC", "WEGOVY", "RYBELSUS", "OZIVY"])]
+    tot_glp1_saldo = sum(s.get("saldo", 0) for s in glp1_skus_hoje)
+    tot_glp1_gap = sum(s.get("gap_d7_rs", 0) for s in glp1_skus_hoje)
 
-    kenvue = next((l for l in level_labs["alavancadores_top"] if "KENVUE" in l["nome"].upper()), None)
-    coty = next((l for l in level_labs["alavancadores_top"] if "COTY" in l["nome"].upper()), None)
-    cimed = next((l for l in level_labs["alavancadores_top"] if "CIMED" in l["nome"].upper()), None)
-    gap_ken = kenvue["gap_d7_rs"] if kenvue else 4865.0
-    gap_coty = coty["gap_d7_rs"] if coty else 3283.0
-    gap_cimed = cimed["gap_d7_rs"] if cimed else 2862.0
-    boost_3 = {
-        "entidade": "Autocuidado, OTC & Cuidados (Kenvue, Coty, Cimed)",
-        "tipo": "Tração Capilar",
-        "impacto_rs": gap_ken + gap_coty + gap_cimed,
-        "detalhe": f"Tração capilar consistente no carrinho com marcas de OTC e higiene: Kenvue OTC (+{fmt_real(gap_ken)}), Coty (+{fmt_real(gap_coty)}) e Cimed (+{fmt_real(gap_cimed)})."
-    }
+    if glp1_skus_hoje:
+        glp1_un_lj = tot_glp1_saldo / TOTAL_LOJAS_REDE
+        if tot_glp1_gap < 0:
+            glp1_diagnostico_str = (
+                f"3) Esclarecimento GLP-1 / Demanda: Medicamentos GLP-1 (Mounjaro, Wegovy, Ozempic) acumulam oscilação de {fmt_real(tot_glp1_gap)} vs D-7. "
+                f"Auditoria no estoque confirma {int(tot_glp1_saldo):,} un físicas nas lojas ({glp1_un_lj:.1f} un/loja), "
+                f"comprovando que a retração reflete ciclo mensal de recompra de 30 dias do paciente e elasticidade digital, e não desabastecimento da rede."
+            )
+        else:
+            glp1_diagnostico_str = (
+                f"3) Esclarecimento GLP-1 / Demanda: Medicamentos GLP-1 operam em ritmo positivo (+{fmt_real(tot_glp1_gap)} vs D-7), "
+                f"com lojas amplamente abastecidas ({int(tot_glp1_saldo):,} un na rede, {glp1_un_lj:.1f} un/loja)."
+            )
+    else:
+        glp1_diagnostico_str = "3) Demanda Regular: Não há concentração anômala em classes reguladas ou de alto custo neste corte."
 
-    destaques_positivos = [boost_1, boost_2, boost_3]
+    # Ação de reprecificação dinâmica
+    reprec_top_skus = [s for s in reprec_skus_all[:3]]
+    if reprec_top_skus:
+        reprec_nomes = ", ".join(s.get("nome", "")[:26].strip() for s in reprec_top_skus)
+        acao_preco_str = f"Ação Recomendada Imediata: Reprecificar no App/Site os itens prioritários com estoque abundante: {reprec_nomes}."
+    else:
+        acao_preco_str = "Ação Recomendada Imediata: Monitorar a paridade de preços contra a concorrência nas praças estratégicas."
+
+    # FRENTES DIRECIONADORAS DE GAP REAIS (Top 3 Detratores Fatuais)
+    principais_detratores = []
+    if level_labs["detratores_top"]:
+        top_lab_det = level_labs["detratores_top"][0]
+        skus_lab = [s for s in level_skus["detratores_top"] if s.get("laboratorio", "") == top_lab_det["nome"] or top_lab_det["nome"] in s.get("nome", "")]
+        detalhe_skus = f", puxado por {', '.join(s['nome'][:25].strip() for s in skus_lab[:2])}" if skus_lab else ""
+        principais_detratores.append({
+            "entidade": f"Laboratório {top_lab_det['nome']}",
+            "tipo": "Retração em Fornecedor",
+            "impacto_rs": top_lab_det["gap_d7_rs"],
+            "detalhe": f"Maior detrator no nível de fornecedor ({fmt_real(top_lab_det['gap_d7_rs'])} vs D-7){detalhe_skus}."
+        })
+    if level_skus["detratores_top"]:
+        top_sku_det = level_skus["detratores_top"][0]
+        status_est = top_sku_det.get("status_estoque", "")
+        causa = top_sku_det.get("causa_tipo", "DEMANDA")
+        principais_detratores.append({
+            "entidade": f"SKU {top_sku_det['nome']}",
+            "tipo": causa.replace("_", " ").title(),
+            "impacto_rs": top_sku_det["gap_d7_rs"],
+            "detalhe": f"Item com maior perda nominal de receita no corte ({fmt_real(top_sku_det['gap_d7_rs'])} vs D-7). Estoque rede: {top_sku_det.get('un_por_loja', 0):.1f} un/loja. {status_est}."
+        })
+    if level_subgrupos["detratores_top"]:
+        top_sub_det = level_subgrupos["detratores_top"][0]
+        principais_detratores.append({
+            "entidade": f"Subgrupo {top_sub_det['nome']}",
+            "tipo": "Retração em Categoria",
+            "impacto_rs": top_sub_det["gap_d7_rs"],
+            "detalhe": f"Categoria com maior perda agregada ({fmt_real(top_sub_det['gap_d7_rs'])} vs D-7)."
+        })
+
+    # FRENTES DIRECIONADORAS DE ALAVANCAGEM REAIS (Top 3 Alavancadores Fatuais)
+    destaques_positivos = []
+    if level_labs["alavancadores_top"]:
+        top_lab_bst = level_labs["alavancadores_top"][0]
+        destaques_positivos.append({
+            "entidade": f"Laboratório {top_lab_bst['nome']}",
+            "tipo": "Crescimento em Fornecedor",
+            "impacto_rs": top_lab_bst["gap_d7_rs"],
+            "detalhe": f"Liderança de ganhos no nível fornecedor (+{fmt_real(top_lab_bst['gap_d7_rs'])} vs D-7)."
+        })
+    if level_skus["alavancadores_top"]:
+        top_sku_bst = level_skus["alavancadores_top"][0]
+        destaques_positivos.append({
+            "entidade": f"SKU {top_sku_bst['nome']}",
+            "tipo": "Alta Demanda no Canal",
+            "impacto_rs": top_sku_bst["gap_d7_rs"],
+            "detalhe": f"Item com maior ganho nominal de receita no corte (+{fmt_real(top_sku_bst['gap_d7_rs'])} vs D-7, faturando {fmt_real(top_sku_bst.get('hoje', 0))} hoje)."
+        })
+    if level_subgrupos["alavancadores_top"]:
+        top_sub_bst = level_subgrupos["alavancadores_top"][0]
+        destaques_positivos.append({
+            "entidade": f"Subgrupo {top_sub_bst['nome']}",
+            "tipo": "Expansão de Categoria",
+            "impacto_rs": top_sub_bst["gap_d7_rs"],
+            "detalhe": f"Categoria com maior expansão agregada (+{fmt_real(top_sub_bst['gap_d7_rs'])} vs D-7)."
+        })
 
     storytelling = {
         "headline": f"Pacing de {fmt_pct(tot_kpi['pacing_corte_pct'])} às {max_hora_str} — Projeção EOD em {fmt_real(tot_kpi['projecao_eod'])} ({'+' if tot_kpi['gap_projecao_rs'] >= 0 else ''}{fmt_real(tot_kpi['gap_projecao_rs'])} vs Meta)",
@@ -1188,27 +1274,22 @@ def process_analytics():
             f"🎯 Norte do Dia: O canal digital faturou {fmt_real(tot_kpi['realizado_hoje'])} até às {max_hora_str}, "
             f"atingindo {fmt_pct(tot_kpi['pacing_corte_pct'])} da meta proporcional esperada no corte ({fmt_real(tot_kpi['meta_esperada_corte'])}), "
             f"projetando fechar o dia em {fmt_real(tot_kpi['projecao_eod'])} (meta oficial do dia: {fmt_real(tot_kpi['meta_dia'])}). "
-            f"🛵 Dinâmica dos Canais: Marketplace é o grande motor de tração operando a {fmt_pct(executive_kpis['MKP']['pacing_corte_pct'])} da meta proporcional (+{fmt_real(executive_kpis['MKP']['gap_corte_rs'])} acima do esperado). "
-            f"Em contrapartida, os canais próprios demandam aceleração no período noturno: APP atingiu {fmt_pct(executive_kpis['APP']['pacing_corte_pct'])} ({fmt_real(executive_kpis['APP']['gap_corte_rs'])}) "
-            f"e Site atingiu {fmt_pct(executive_kpis['Site']['pacing_corte_pct'])} ({fmt_real(executive_kpis['Site']['gap_corte_rs'])})."
+            f"{dinamica_canais_str}"
         ),
         "leitura_janelas": (
-            f"📊 Comparativo de Janelas: vs Ontem (D-1): {fmt_pct(tot_kpi['janela_d1']['var_pct'], show_sign=True)} "
-            f"({'+' if tot_kpi['janela_d1']['var_rs'] >= 0 else ''}{fmt_real(tot_kpi['janela_d1']['var_rs'])}), confirmando forte retomada típica de início de semana. "
-            f"vs {dow_nome} Anterior (D-7): {fmt_pct(tot_kpi['janela_d7']['var_pct'], show_sign=True)} ({fmt_real(tot_kpi['janela_d7']['var_rs'])}), "
-            f"impactado principalmente pela retração pontual em medicamentos de alto valor."
+            f"📊 Comparativo de Janelas: {leitura_d1_str} {leitura_d7_str}"
         ),
         "auditoria_estoque": (
             f"📦 Diagnóstico Executivo de Causa-Raiz (Tríade Estoque x Preço): Dos {fmt_real(-estoque_impacto['total_perda_detratores'])} de gap nos itens detratores vs D-7, "
-            f"a auditoria do estoque real das lojas (1.259 filiais) revela 3 situações distintas: "
-            f"1) Preço Desalinhado com Estoque Farto: {fmt_pct(estoque_impacto['pct_preco_desalinhado'])} ({fmt_real(-estoque_impacto['perda_preco_desalinhado_rs'])}) em {len(reprec_skus_all)} SKUs onde a rede está farta em loja (>=1,5 un/lj), mas a venda travou porque o digital está até +46% mais caro que concorrentes (ex: Pampers Jumbo +6,7%, Neutrogena +90,4%, Evra +39,6%); "
-            f"2) Ruptura Logística Real: {fmt_pct(estoque_impacto['pct_ruptura_logistica'])} ({fmt_real(-estoque_impacto['perda_ruptura_logistica_rs'])}) em {len(rupt_skus_all)} SKUs com real desabastecimento nas lojas (<1,5 un/lj), como Wegovy 1,7mg e Ajovy; "
-            f"3) Esclarecimento GLP-1 / Demanda: Mounjaro e correlatos têm estoque abundante (mais de 30.000 un na rede, 11.783 un de 5mg) e preço rigorosamente empatado (R$ 2.382,23). A oscilação decorre do ciclo mensal de recompra de 30 dias do paciente e base atípica em D-7."
+            f"a auditoria do estoque real das lojas ({TOTAL_LOJAS_REDE} filiais) revela 3 situações distintas: "
+            f"1) Preço Desalinhado com Estoque Farto: {fmt_pct(estoque_impacto['pct_preco_desalinhado'])} ({fmt_real(-estoque_impacto['perda_preco_desalinhado_rs'])}) em {len(reprec_skus_all)} SKUs onde a rede está farta em loja (>=1,5 un/lj), mas a venda travou por sobrepreço online vs concorrência{ex_preco_str}; "
+            f"2) Ruptura Logística Real: {fmt_pct(estoque_impacto['pct_ruptura_logistica'])} ({fmt_real(-estoque_impacto['perda_ruptura_logistica_rs'])}) em {len(rupt_skus_all)} SKUs com real desabastecimento nas lojas (<1,5 un/lj){ex_rupt_str}; "
+            f"{glp1_diagnostico_str}"
         ),
         "auditoria_preco": (
-            f"🏷️ Competitividade Precifica & Alerta de Reprecificação: Dos 7.599 produtos com concorrência ativa monitorados no digital, "
+            f"🏷️ Competitividade Precifica & Alerta de Reprecificação: Dos {len(precifica_catalogo_full):,} produtos com concorrência ativa monitorados no digital, "
             f"temos {len(reprec_skus_all)} produtos com estoque farto nas lojas sofrendo com sobrepreço online vs Nissei, Panvel e Preço Popular. "
-            f"Ação Recomendada Imediata: Reprecificar no App/Site os itens com estoque abundante (como Fraldas Pampers Jumbo, Toalhas e Dermocosméticos) para recuperar o giro imediato do canal digital."
+            f"{acao_preco_str}"
         ),
         "principais_detratores": principais_detratores,
         "destaques_positivos": destaques_positivos
