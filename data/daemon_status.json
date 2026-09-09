@@ -1,12 +1,12 @@
 {
   "status": "ONLINE",
-  "started_at": "08/09/2026 21:46:12",
-  "last_sync": "09/09/2026 09:36:19",
-  "last_corte": "09/09/2026 08:54:04",
-  "last_status": "Sucesso",
-  "sync_count": 66,
-  "is_syncing": false,
+  "started_at": "09/09/2026 09:41:21",
+  "last_sync": "07/09/2026 16:45:00",
+  "last_corte": "07/09/2026 12:52:59",
+  "last_status": "Concluído com Sucesso",
+  "sync_count": 1,
+  "is_syncing": true,
   "next_sync_in": 0,
-  "network_url": "http://192.168.3.10:3000",
+  "network_url": "http://10.200.12.62:3000",
   "local_url": "http://localhost:3000"
 }
