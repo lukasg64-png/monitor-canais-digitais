@@ -1331,6 +1331,39 @@ def process_analytics():
     with open(OUTPUT_JS, "w", encoding="utf-8") as f:
         f.write("window.INTRADAY_DATA = " + json.dumps(output_data, ensure_ascii=False) + ";\n")
 
+    # Atualiza data/daemon_status.json para sinalizar auto-refresh imediato no GitHub Pages e no servidor local
+    status_file = os.path.join(DATA_DIR, "daemon_status.json")
+    status_dict = {
+        "status": "ONLINE",
+        "started_at": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+        "last_sync": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+        "last_corte": max_data_hora,
+        "last_status": "Sucesso",
+        "sync_count": 1,
+        "is_syncing": False,
+        "next_sync_in": 0,
+        "network_url": "http://localhost:3000",
+        "local_url": "http://localhost:3000"
+    }
+    if os.path.exists(status_file):
+        try:
+            with open(status_file, "r", encoding="utf-8") as sf:
+                existing_st = json.load(sf)
+                if isinstance(existing_st, dict):
+                    status_dict.update(existing_st)
+                    status_dict["last_sync"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                    status_dict["last_corte"] = max_data_hora
+                    status_dict["last_status"] = "Sucesso"
+                    status_dict["is_syncing"] = False
+                    status_dict["sync_count"] = int(existing_st.get("sync_count", 0)) + 1
+        except Exception:
+            pass
+    try:
+        with open(status_file, "w", encoding="utf-8") as sf:
+            json.dump(status_dict, sf, ensure_ascii=False, indent=2)
+    except Exception as e_st:
+        print(f"   Aviso ao atualizar daemon_status.json: {e_st}")
+
     # Gera automaticamente a planilha Excel formatada com os Top 50 Detratores
     generate_excel_top50(output_data, DATA_DIR)
 

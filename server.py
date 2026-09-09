@@ -31,14 +31,29 @@ import json
 import socket
 import threading
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 STATUS_FILE = os.path.join(DATA_DIR, 'daemon_status.json')
 PORT = 3000
-SYNC_INTERVAL_SECONDS = 600  # 10 minutos
+SYNC_TARGET_MINUTES = [20, 50]  # Atualização aos minutos :20 e :50 de cada hora
+
+def get_seconds_until_next_sync():
+    """Calcula quantos segundos faltam até o próximo minuto alvo (:20 ou :50)"""
+    now = datetime.now()
+    next_time = None
+    for m in SYNC_TARGET_MINUTES:
+        candidate = now.replace(minute=m, second=0, microsecond=0)
+        if candidate > now:
+            next_time = candidate
+            break
+    if next_time is None:
+        next_hour = (now + timedelta(hours=1)).replace(minute=SYNC_TARGET_MINUTES[0], second=0, microsecond=0)
+        next_time = next_hour
+    diff = int((next_time - now).total_seconds())
+    return max(1, diff)
 
 def get_local_ip():
     try:
@@ -56,12 +71,13 @@ LOCAL_IP = get_local_ip()
 daemon_state = {
     "status": "ONLINE",
     "started_at": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-    "last_sync": "07/09/2026 16:45:00",
-    "last_corte": "07/09/2026 12:52:59",
+    "last_sync": "09/09/2026 10:23:23",
+    "last_corte": "09/09/2026 09:54:57",
     "last_status": "Concluído com Sucesso",
     "sync_count": 1,
     "is_syncing": False,
-    "next_sync_in": SYNC_INTERVAL_SECONDS,
+    "next_sync_in": get_seconds_until_next_sync(),
+    "target_minutes": "20 e 50",
     "network_url": f"http://{LOCAL_IP}:{PORT}",
     "local_url": f"http://localhost:{PORT}"
 }
@@ -110,8 +126,25 @@ def run_sync():
             timeout=60,
             creationflags=CREATE_NO_WINDOW
         )
+
+        # 3. Atualiza estado em memória e grava daemon_status.json ANTES do Git Commit
+        monitor_json = os.path.join(DATA_DIR, "intraday_monitor.json")
+        corte_hora = "09:54"
+        if os.path.exists(monitor_json):
+            try:
+                with open(monitor_json, "r", encoding="utf-8") as f:
+                    mj = json.load(f)
+                    corte_hora = mj.get("metadata", {}).get("corte_timestamp", corte_hora)
+            except Exception:
+                pass
+
+        daemon_state["last_sync"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        daemon_state["last_corte"] = corte_hora
+        daemon_state["last_status"] = "Sucesso"
+        daemon_state["sync_count"] += 1
+        save_status()
         
-        # 3. Publica automaticamente no GitHub Pages se configurado (100% silencioso / sem janela)
+        # 4. Publica automaticamente no GitHub Pages (100% silencioso / sem janela)
         try:
             subprocess.run(
                 ["git", "add", "index.html", "data", "process_intraday_analytics.py", "extract_intraday_qlik.py"],
@@ -131,7 +164,7 @@ def run_sync():
             if diff_chk.returncode != 0:
                 now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
                 subprocess.run(
-                    ["git", "commit", "-m", f"Auto-sync Qlik Sense Intraday ({now_str})"],
+                    ["git", "commit", "-m", f"Auto-sync Qlik Sense Intraday ({now_str}) [Corte: {corte_hora}]"],
                     cwd=BASE_DIR,
                     capture_output=True,
                     text=True,
@@ -141,7 +174,17 @@ def run_sync():
                     creationflags=CREATE_NO_WINDOW
                 )
                 subprocess.run(
-                    ["git", "push", "github", "main:gh-pages"],
+                    ["git", "push", "github", "main"],
+                    cwd=BASE_DIR,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=30,
+                    creationflags=CREATE_NO_WINDOW
+                )
+                subprocess.run(
+                    ["git", "push", "github", "HEAD:gh-pages"],
                     cwd=BASE_DIR,
                     capture_output=True,
                     text=True,
@@ -154,21 +197,6 @@ def run_sync():
         except Exception as e_git:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] Info Git Push: {e_git}")
 
-        # Ler metadados atualizados
-        monitor_json = os.path.join(DATA_DIR, "intraday_monitor.json")
-        corte_hora = "12:52"
-        if os.path.exists(monitor_json):
-            try:
-                with open(monitor_json, "r", encoding="utf-8") as f:
-                    mj = json.load(f)
-                    corte_hora = mj.get("metadata", {}).get("corte_timestamp", corte_hora)
-            except Exception:
-                pass
-
-        daemon_state["last_sync"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        daemon_state["last_corte"] = corte_hora
-        daemon_state["last_status"] = "Sucesso"
-        daemon_state["sync_count"] += 1
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Ciclo concluído! Corte Qlik: {corte_hora}")
         return {"status": "success", "last_sync": daemon_state["last_sync"], "corte": corte_hora}
 
@@ -181,17 +209,17 @@ def run_sync():
         save_status()
 
 def background_daemon_worker():
-    """Worker em segundo plano que roda a cada N minutos continuamente"""
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Daemon contínuo iniciado. Intervalo: {SYNC_INTERVAL_SECONDS // 60} min.")
-    countdown = SYNC_INTERVAL_SECONDS
+    """Worker em segundo plano que sincroniza rigorosamente aos minutos :20 e :50 de cada hora"""
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Daemon contínuo iniciado. Sincronizações nos minutos :20 e :50 de cada hora.")
     while True:
-        time.sleep(1)
-        countdown -= 1
-        daemon_state["next_sync_in"] = max(0, countdown)
+        seconds_left = get_seconds_until_next_sync()
+        while seconds_left > 0:
+            daemon_state["next_sync_in"] = seconds_left
+            time.sleep(1)
+            seconds_left -= 1
         
-        if countdown <= 0:
-            run_sync()
-            countdown = SYNC_INTERVAL_SECONDS
+        run_sync()
+        time.sleep(2)
 
 class IntranetRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -239,7 +267,7 @@ def start_server():
     print("  SERVIDOR INTRANET & DAEMON DE MONITORAMENTO — FARMÁCIAS SÃO JOÃO")
     print(f"  • Acesso Local:     http://localhost:{PORT}")
     print(f"  • Acesso na Rede:   http://{LOCAL_IP}:{PORT} (Compartilhe com a equipe)")
-    print(f"  • Intervalo Qlik:   A cada {SYNC_INTERVAL_SECONDS // 60} minutos")
+    print(f"  • Intervalo Qlik:   Minutos :20 e :50 de cada hora (a cada 30 min)")
     print("=" * 75)
 
     # Inicia worker do daemon em thread separada
