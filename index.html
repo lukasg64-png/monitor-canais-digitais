@@ -3973,53 +3973,55 @@
           }
         }
 
-        // 4. Selo / Badge no topo da barrinha
-        const badgeText = isReached
-          ? `🏆 Meta Batida: ${ms.timeStr}`
-          : `🎯 Meta Prevista: ${ms.timeStr}`;
+        // 4. Selo / Badge no topo da barrinha (exibido apenas no gráfico panorâmico acumulado para não sobrepor as curvas do gráfico de ritmo)
+        if (pluginOptions && pluginOptions.isAccumChart) {
+          const badgeText = isReached
+            ? `🏆 Meta Batida: ${ms.timeStr}`
+            : `🎯 Meta Prevista: ${ms.timeStr}`;
 
-        ctx.font = 'bold 11px Inter, -apple-system, sans-serif';
-        const textMetrics = ctx.measureText(badgeText);
-        const badgeW = textMetrics.width + 18;
-        const badgeH = 22;
+          ctx.font = 'bold 11px Inter, -apple-system, sans-serif';
+          const textMetrics = ctx.measureText(badgeText);
+          const badgeW = textMetrics.width + 18;
+          const badgeH = 22;
 
-        // Garantir que não estoure as bordas do gráfico
-        let badgeX = xPos - (badgeW / 2);
-        if (badgeX < chartArea.left + 4) badgeX = chartArea.left + 4;
-        if (badgeX + badgeW > chartArea.right - 4) badgeX = chartArea.right - badgeW - 4;
-        const badgeY = chartArea.top + 6;
+          // Garantir que não estoure as bordas do gráfico
+          let badgeX = xPos - (badgeW / 2);
+          if (badgeX < chartArea.left + 4) badgeX = chartArea.left + 4;
+          if (badgeX + badgeW > chartArea.right - 4) badgeX = chartArea.right - badgeW - 4;
+          const badgeY = chartArea.top + 6;
 
-        // Sombra suave do badge
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.22)';
-        ctx.shadowBlur = 6;
-        ctx.shadowOffsetY = 2;
+          // Sombra suave do badge
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.22)';
+          ctx.shadowBlur = 6;
+          ctx.shadowOffsetY = 2;
 
-        // Fundo arredondado (pílula)
-        ctx.beginPath();
-        ctx.setLineDash([]);
-        if (ctx.roundRect) {
-          ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 11);
-        } else {
-          ctx.rect(badgeX, badgeY, badgeW, badgeH);
+          // Fundo arredondado (pílula)
+          ctx.beginPath();
+          ctx.setLineDash([]);
+          if (ctx.roundRect) {
+            ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 11);
+          } else {
+            ctx.rect(badgeX, badgeY, badgeW, badgeH);
+          }
+          ctx.fillStyle = badgeBg;
+          ctx.fill();
+
+          // Reset shadow para borda e texto
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
+
+          // Borda branca translúcida
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          // Texto do badge
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
         }
-        ctx.fillStyle = badgeBg;
-        ctx.fill();
-
-        // Reset shadow para borda e texto
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetY = 0;
-
-        // Borda branca translúcida
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Texto do badge
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
 
         ctx.restore();
       }
