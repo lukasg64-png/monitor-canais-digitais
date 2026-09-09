@@ -71,9 +71,9 @@ LOCAL_IP = get_local_ip()
 daemon_state = {
     "status": "ONLINE",
     "started_at": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-    "last_sync": "09/09/2026 10:23:23",
-    "last_corte": "09/09/2026 09:54:57",
-    "last_status": "Concluído com Sucesso",
+    "last_sync": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+    "last_corte": "14:54",
+    "last_status": "Sucesso",
     "sync_count": 1,
     "is_syncing": False,
     "next_sync_in": get_seconds_until_next_sync(),
@@ -81,6 +81,18 @@ daemon_state = {
     "network_url": f"http://{LOCAL_IP}:{PORT}",
     "local_url": f"http://localhost:{PORT}"
 }
+
+if os.path.exists(STATUS_FILE):
+    try:
+        with open(STATUS_FILE, "r", encoding="utf-8") as f:
+            _st = json.load(f)
+            if isinstance(_st, dict):
+                daemon_state.update(_st)
+                daemon_state["status"] = "ONLINE"
+                daemon_state["is_syncing"] = False
+                daemon_state["next_sync_in"] = get_seconds_until_next_sync()
+    except Exception:
+        pass
 
 def save_status():
     try:
