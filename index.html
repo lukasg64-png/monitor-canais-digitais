@@ -804,6 +804,89 @@
       margin-top: 8px;
     }
 
+    /* Cockpit Explanatory Guide & Popover */
+    .btn-cockpit-guide {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--apple-blue-soft);
+      color: var(--apple-blue);
+      border: 1px solid var(--apple-blue-border);
+      padding: 4px 11px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-cockpit-guide:hover {
+      background: var(--apple-blue);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .cockpit-guide-panel {
+      display: none;
+      background: var(--surface-hover);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-top: 4px;
+      margin-bottom: 8px;
+      animation: fadeIn 0.25s ease;
+    }
+    .cockpit-guide-panel.show {
+      display: block;
+    }
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 800px) {
+      .guide-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .guide-col {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .guide-col-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .guide-col-desc {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+    .guide-note-box {
+      background: rgba(0, 113, 227, 0.06);
+      border: 1px solid var(--apple-blue-border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-size: 11.5px;
+      color: var(--text-primary);
+      line-height: 1.5;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .guide-note-box strong {
+      color: var(--apple-blue);
+    }
+
     /* Apple Toast Notification */
     .apple-toast {
       position: fixed;
@@ -2169,13 +2252,49 @@
             <div class="section-title">
               <span>🧭 Cockpit de Velocímetros & Aceleração</span>
             </div>
-            <span class="badge-status" style="font-size: 10.5px;">TEMPO REAL</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button class="btn-cockpit-guide" id="btn-toggle-guide" onclick="toggleCockpitGuide()" title="Clique para entender como cada velocímetro é calculado e como interpretá-los">
+                <span>💡 Como ler estas métricas?</span>
+              </button>
+              <span class="badge-status" style="font-size: 10.5px;">TEMPO REAL</span>
+            </div>
+          </div>
+
+          <!-- Painel Explicativo Expansível dos Velocímetros -->
+          <div class="cockpit-guide-panel" id="cockpit-guide-panel">
+            <div class="guide-grid">
+              <div class="guide-col">
+                <div class="guide-col-title">🎯 1. Pacing no Corte</div>
+                <div class="guide-col-desc">
+                  Compara o <strong>faturamento realizado até agora</strong> com a meta que <em>deveria ter sido realizada até este minuto</em>, ponderada pela <strong>curva histórica real da São João</strong> (não divide linearmente por 24h).
+                </div>
+              </div>
+              <div class="guide-col">
+                <div class="guide-col-title">📈 2. Projeção EOD (Fechamento)</div>
+                <div class="guide-col-desc">
+                  Calcula a <strong>estimativa de fechamento às 23h59</strong> se os canais mantiverem o mesmo ritmo da curva. O percentual indica o atingimento final previsto sobre a meta total do dia.
+                </div>
+              </div>
+              <div class="guide-col">
+                <div class="guide-col-title">⚡ 3. Velocidade Horária</div>
+                <div class="guide-col-desc">
+                  Mede a <strong>tração real de faturamento por hora</strong> (R$/h realizado hoje) versus o ritmo horário necessário daqui até a meia-noite para bater a meta oficial.
+                </div>
+              </div>
+            </div>
+            <div class="guide-note-box">
+              <span style="font-size: 18px; line-height: 1;">💡</span>
+              <div>
+                <strong>Por que o Pacing no Corte e a Projeção EOD mostram a mesma porcentagem?</strong><br>
+                Existe uma <strong>identidade matemática direta</strong> entre ambos: se até agora o canal entregou <strong>+51,2% acima do esperado para este horário</strong> (Pacing = 151,2%), a projeção para o fim do dia no mesmo ritmo será, por definição lógica, de <strong>+51,2% sobre a meta final</strong> (Projeção = 151,2%). O Pacing mede a performance do <em>presente</em> e a Projeção reflete o <em>futuro</em> com essa mesma eficiência.
+              </div>
+            </div>
           </div>
 
           <div class="gauges-container">
             <!-- Velocímetro 1: Pacing no Corte -->
             <div class="gauge-card">
-              <div class="gauge-title">Pacing no Corte</div>
+              <div class="gauge-title" title="Percentual da meta esperada atingido até o minuto de corte">Pacing no Corte <span style="font-size: 11px; cursor: help; opacity: 0.65;">ℹ️</span></div>
               <div class="gauge-svg-wrap" id="gauge-corte-wrap"></div>
               <div class="gauge-value" id="gauge-corte-val">75.2%</div>
               <div class="gauge-sub" id="gauge-corte-sub">Realizado vs Meta Corte</div>
@@ -2184,7 +2303,7 @@
 
             <!-- Velocímetro 2: Projeção Fim do Dia -->
             <div class="gauge-card">
-              <div class="gauge-title">Projeção EOD</div>
+              <div class="gauge-title" title="Percentual da meta do dia que será atingido às 23h59 no ritmo atual">Projeção EOD <span style="font-size: 11px; cursor: help; opacity: 0.65;">ℹ️</span></div>
               <div class="gauge-svg-wrap" id="gauge-eod-wrap"></div>
               <div class="gauge-value" id="gauge-eod-val">75.2%</div>
               <div class="gauge-sub" id="gauge-eod-sub">Projeção vs Meta Dia</div>
@@ -2193,7 +2312,7 @@
 
             <!-- Velocímetro 3: Velocidade Horária -->
             <div class="gauge-card">
-              <div class="gauge-title">Velocidade Horária</div>
+              <div class="gauge-title" title="Ritmo de faturamento por hora realizado vs necessário para bater a meta">Velocidade Horária <span style="font-size: 11px; cursor: help; opacity: 0.65;">ℹ️</span></div>
               <div class="gauge-svg-wrap" id="gauge-speed-wrap"></div>
               <div class="gauge-value" id="gauge-speed-val">R$ 36.7k/h</div>
               <div class="gauge-sub" id="gauge-speed-sub">Alvo: R$ 138.5k/h</div>
@@ -2974,6 +3093,17 @@
                 stroke-dasharray="${totalArc}" stroke-dashoffset="${totalArc - strokeDash}" style="transition: stroke-dashoffset 1s ease;" />
         </svg>
       `;
+    }
+
+    function toggleCockpitGuide() {
+      const panel = document.getElementById('cockpit-guide-panel');
+      const btn = document.getElementById('btn-toggle-guide');
+      if (!panel) return;
+      const isShown = panel.classList.toggle('show');
+      if (btn) {
+        btn.style.background = isShown ? 'var(--apple-blue)' : 'var(--apple-blue-soft)';
+        btn.style.color = isShown ? '#fff' : 'var(--apple-blue)';
+      }
     }
 
     function renderGauges() {
