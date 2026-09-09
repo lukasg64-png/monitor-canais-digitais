@@ -1,13 +1,13 @@
 {
   "status": "ONLINE",
   "started_at": "09/09/2026 10:42:47",
-  "last_sync": "09/09/2026 18:50:04",
+  "last_sync": "09/09/2026 18:50:37",
   "last_corte": "09/09/2026 17:53:48",
   "last_status": "Sucesso",
   "sync_count": 20,
-  "is_syncing": false,
+  "is_syncing": true,
   "next_sync_in": 1,
+  "target_minutes": "20 e 50",
   "network_url": "http://10.200.12.62:3000",
-  "local_url": "http://localhost:3000",
-  "target_minutes": "20 e 50"
+  "local_url": "http://localhost:3000"
 }
