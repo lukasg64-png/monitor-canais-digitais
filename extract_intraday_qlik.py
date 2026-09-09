@@ -22,6 +22,41 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 RAW_FILE = os.path.join(DATA_DIR, 'intraday_raw.json')
+LOCK_FILE = os.path.join(DATA_DIR, 'sync.lock')
+
+def is_pid_running(pid):
+    try:
+        import subprocess
+        res = subprocess.run(['tasklist', '/FI', f'PID eq {pid}', '/NH'], capture_output=True, text=True)
+        return str(pid) in res.stdout
+    except Exception:
+        return False
+
+def acquire_lock(timeout_sec=300):
+    if os.path.exists(LOCK_FILE):
+        try:
+            with open(LOCK_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            lock_pid = data.get('pid')
+            lock_time = data.get('time', 0)
+            if time.time() - lock_time < timeout_sec and lock_pid and is_pid_running(lock_pid):
+                print(f"⚠️ Sincronização já em execução no processo PID {lock_pid}. Ignorando chamada concorrente.")
+                return False
+        except Exception:
+            pass
+    try:
+        with open(LOCK_FILE, 'w', encoding='utf-8') as f:
+            json.dump({'pid': os.getpid(), 'time': time.time()}, f)
+    except Exception:
+        pass
+    return True
+
+def release_lock():
+    try:
+        if os.path.exists(LOCK_FILE):
+            os.remove(LOCK_FILE)
+    except Exception:
+        pass
 
 QLIK_URL = "https://sense.farmaciassaojoao.com.br"
 APP_ID = "671fa4f4-eb7d-418f-b4c9-936e87d8011d"
@@ -372,6 +407,18 @@ JS_TEMPLATE = """async () => {
 
         ws.onmessage = (event) => {
             const msg = JSON.parse(event.data);
+            if (msg.method === "OnMaxParallelSessionsExceeded") {
+                console.error("[Qlik WS] Limite de sessões simultâneas atingido (OnMaxParallelSessionsExceeded)");
+                try { ws.close(); } catch(e) {}
+                reject(new Error("OnMaxParallelSessionsExceeded: Limite de sessões simultâneas atingido no Qlik Sense"));
+                return;
+            }
+            if (msg.params && msg.params.severity === "fatal") {
+                console.error("[Qlik WS Fatal]", JSON.stringify(msg.params));
+                try { ws.close(); } catch(e) {}
+                reject(new Error(`Qlik Fatal: ${msg.params.message || "Erro fatal no Qlik"}`));
+                return;
+            }
             if (msg.id && pending[msg.id]) {
                 const { res, rej } = pending[msg.id];
                 delete pending[msg.id];
@@ -383,7 +430,7 @@ JS_TEMPLATE = """async () => {
         setTimeout(() => {
             try { ws.close(); } catch(e) {}
             resolve(null);
-        }, 90000);
+        }, 120000);
     });
 };"""
 
@@ -429,68 +476,76 @@ def check_qlik_connection(timeout_sec=4.0):
         return False, str(e)
 
 async def fetch_intraday_data(target_dt=None):
-    t0 = time.time()
-    if target_dt is None:
-        target_dt = datetime.now()
+    if not acquire_lock():
+        return None
 
-    replacements = compute_date_replacements(target_dt)
-    dia_str = replacements["%%DIA_HOJE%%"]
-    mes_str = replacements["%%ANO_MES_HOJE%%"]
+    try:
+        t0 = time.time()
+        if target_dt is None:
+            target_dt = datetime.now()
 
-    print("=" * 75)
-    print(f"  EXTRAÇÃO INTRADAY ONLINE — CANAIS DIGITAIS (QLIK SENSE)")
-    print(f"  Data Alvo: {dia_str}/{mes_str} | Ontem: {replacements['%%DIA_ONTEM%%']} | D-7: {replacements['%%DIA_D7%%']}")
-    print("=" * 75)
+        replacements = compute_date_replacements(target_dt)
+        dia_str = replacements["%%DIA_HOJE%%"]
+        mes_str = replacements["%%ANO_MES_HOJE%%"]
 
-    print("0/4 Verificando conectividade de rede com Qlik Sense...", flush=True)
-    is_online, err_msg = check_qlik_connection(timeout_sec=4.0)
-    if not is_online:
-        print(f"❌ AVISO CRÍTICO: Não foi possível conectar a {QLIK_URL} ({err_msg})", flush=True)
-        print("💡 DICA: Se estiver fora do escritório, conecte a VPN corporativa FSJ-VPN (FortiClient)!", flush=True)
-        raise ConnectionError(
-            f"Servidor Qlik Sense ({QLIK_URL}) inacessível. A VPN FSJ-VPN (FortiClient) está desconectada ou a rede corporativa está instável."
-        )
+        print("=" * 75)
+        print(f"  EXTRAÇÃO INTRADAY ONLINE — CANAIS DIGITAIS (QLIK SENSE)")
+        print(f"  Data Alvo: {dia_str}/{mes_str} | Ontem: {replacements['%%DIA_ONTEM%%']} | D-7: {replacements['%%DIA_D7%%']}")
+        print("=" * 75)
 
-    async with async_playwright() as p:
-        print("1/4 Conectando ao Qlik Sense Enterprise...", flush=True)
-        browser = await p.chromium.launch(headless=True, args=['--ignore-certificate-errors'])
-        context = await browser.new_context(
-            ignore_https_errors=True,
-            http_credentials={'username': USERNAME, 'password': PASSWORD},
-            viewport={'width': 1920, 'height': 1080}
-        )
-        page = await context.new_page()
-        await page.goto(SHEET_URL, timeout=60000)
-        try:
-            await page.wait_for_selector('.qv-panel-sheet', timeout=30000)
-        except Exception:
-            await page.wait_for_timeout(4000)
+        print("0/4 Verificando conectividade de rede com Qlik Sense...", flush=True)
+        is_online, err_msg = check_qlik_connection(timeout_sec=4.0)
+        if not is_online:
+            print(f"❌ AVISO CRÍTICO: Não foi possível conectar a {QLIK_URL} ({err_msg})", flush=True)
+            print("💡 DICA: Se estiver fora do escritório, conecte a VPN corporativa FSJ-VPN (FortiClient)!", flush=True)
+            raise ConnectionError(
+                f"Servidor Qlik Sense ({QLIK_URL}) inacessível. A VPN FSJ-VPN (FortiClient) está desconectada ou a rede corporativa está instável."
+            )
 
-        print("2/4 Sessão autenticada! Executando consultas no QIX Engine via WebSocket...", flush=True)
-        js_script = JS_TEMPLATE
-        for k, v in replacements.items():
-            js_script = js_script.replace(k, v)
+        async with async_playwright() as p:
+            print("1/4 Conectando ao Qlik Sense Enterprise...", flush=True)
+            browser = await p.chromium.launch(headless=True, args=['--ignore-certificate-errors'])
+            try:
+                context = await browser.new_context(
+                    ignore_https_errors=True,
+                    http_credentials={'username': USERNAME, 'password': PASSWORD},
+                    viewport={'width': 1920, 'height': 1080}
+                )
+                page = await context.new_page()
+                await page.goto(SHEET_URL, timeout=60000)
+                try:
+                    await page.wait_for_selector('.qv-panel-sheet', timeout=30000)
+                except Exception:
+                    await page.wait_for_timeout(4000)
 
-        raw_data = await page.evaluate(js_script)
-        await browser.close()
+                print("2/4 Sessão autenticada! Executando consultas no QIX Engine via WebSocket...", flush=True)
+                js_script = JS_TEMPLATE
+                for k, v in replacements.items():
+                    js_script = js_script.replace(k, v)
 
-    if not raw_data:
-        raise RuntimeError("Falha ao extrair dados do Qlik Sense (Timeout ou Erro WebSocket)")
+                raw_data = await page.evaluate(js_script)
+            finally:
+                await browser.close()
 
-    # Salva arquivo bruto
-    with open(RAW_FILE, 'w', encoding='utf-8') as f:
-        json.dump(raw_data, f, ensure_ascii=False, indent=2)
+        if not raw_data:
+            raise RuntimeError("Falha ao extrair dados do Qlik Sense (Timeout ou Erro WebSocket)")
 
-    elapsed = time.time() - t0
-    print("\n" + "=" * 75)
-    print(f"EXTRAÇÃO CONCLUÍDA COM SUCESSO EM {elapsed:.1f}s!")
-    print(f"   Arquivo gerado: {RAW_FILE}")
-    print(f"   Corte Atual: {raw_data.get('maxDataHora')} (Minuto: {raw_data.get('maxHora')})")
-    print(f"   Linhas Hoje: {len(raw_data.get('rowsHoje', []))} | Ontem: {len(raw_data.get('rowsOntem', []))} | D-7: {len(raw_data.get('rowsD7', []))}")
-    print(f"   Grupos: {len(raw_data.get('rowsGrupos', []))} | Subgrupos: {len(raw_data.get('rowsSubgrupos', []))}")
-    print(f"   Laboratórios: {len(raw_data.get('rowsLabs', []))} | Linhas: {len(raw_data.get('rowsLinhas', []))} | SKUs: {len(raw_data.get('rowsSKUs', []))}")
-    print("=" * 75)
-    return raw_data
+        # Salva arquivo bruto
+        with open(RAW_FILE, 'w', encoding='utf-8') as f:
+            json.dump(raw_data, f, ensure_ascii=False, indent=2)
+
+        elapsed = time.time() - t0
+        print("\n" + "=" * 75)
+        print(f"EXTRAÇÃO CONCLUÍDA COM SUCESSO EM {elapsed:.1f}s!")
+        print(f"   Arquivo gerado: {RAW_FILE}")
+        print(f"   Corte Atual: {raw_data.get('maxDataHora')} (Minuto: {raw_data.get('maxHora')})")
+        print(f"   Linhas Hoje: {len(raw_data.get('rowsHoje', []))} | Ontem: {len(raw_data.get('rowsOntem', []))} | D-7: {len(raw_data.get('rowsD7', []))}")
+        print(f"   Grupos: {len(raw_data.get('rowsGrupos', []))} | Subgrupos: {len(raw_data.get('rowsSubgrupos', []))}")
+        print(f"   Laboratórios: {len(raw_data.get('rowsLabs', []))} | Linhas: {len(raw_data.get('rowsLinhas', []))} | SKUs: {len(raw_data.get('rowsSKUs', []))}")
+        print("=" * 75)
+        return raw_data
+    finally:
+        release_lock()
 
 if __name__ == '__main__':
     asyncio.run(fetch_intraday_data())

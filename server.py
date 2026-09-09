@@ -115,6 +115,13 @@ def run_sync():
             creationflags=CREATE_NO_WINDOW
         )
         
+        if proc_ext.returncode != 0:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] ERRO na extração Qlik: {proc_ext.stderr or proc_ext.stdout}")
+            daemon_state["last_status"] = f"Erro na extração ({proc_ext.returncode})"
+            daemon_state["is_syncing"] = False
+            save_status()
+            return {"status": "error", "message": f"Falha na extração: {proc_ext.stderr[:200] if proc_ext.stderr else 'Erro'}"}
+        
         # 2. Executa processamento analítico (100% silencioso / sem janela)
         proc_script = os.path.join(BASE_DIR, "process_intraday_analytics.py")
         proc_ana = subprocess.run(
@@ -123,11 +130,15 @@ def run_sync():
             text=True,
             encoding="utf-8",
             errors="replace",
-            timeout=60,
+            timeout=90,
             creationflags=CREATE_NO_WINDOW
         )
-
-        # 3. Atualiza estado em memória e grava daemon_status.json ANTES do Git Commit
+        if proc_ana.returncode != 0:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] ERRO no processamento: {proc_ana.stderr or proc_ana.stdout}")
+            daemon_state["last_status"] = f"Erro no processamento ({proc_ana.returncode})"
+            daemon_state["is_syncing"] = False
+            save_status()
+            return {"status": "error", "message": "Falha no processamento analítico."}
         monitor_json = os.path.join(DATA_DIR, "intraday_monitor.json")
         corte_hora = "09:54"
         if os.path.exists(monitor_json):
