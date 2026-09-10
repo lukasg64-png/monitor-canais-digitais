@@ -298,8 +298,16 @@ def process_analytics():
     except Exception:
         dt_ref = datetime.now()
 
+    dt_ontem = dt_ref - timedelta(days=1)
+    dt_d7 = dt_ref - timedelta(days=7)
+
     DIAS_SEMANA = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
     dow_nome = DIAS_SEMANA[dt_ref.weekday()]
+    dow_short = dow_nome.split("-")[0]
+    ontem_dow_nome = DIAS_SEMANA[dt_ontem.weekday()]
+    ontem_dow_short = ontem_dow_nome.split("-")[0]
+    d7_dow_nome = DIAS_SEMANA[dt_d7.weekday()]
+    d7_dow_short = d7_dow_nome.split("-")[0]
 
     max_minute = get_minute_of_day(max_hora_str)
     curr_hour = max_minute // 60
@@ -1305,6 +1313,12 @@ def process_analytics():
             "horas_restantes": round(remaining_hours, 2),
             "dia_hoje": dia_hoje,
             "dia_semana": dow_nome,
+            "data_hoje": data_hoje_str,
+            "data_ontem": dt_ontem.strftime("%d/%m/%Y"),
+            "data_d7": dt_d7.strftime("%d/%m/%Y"),
+            "label_hoje": f"Hoje ({dow_short} {dt_ref.strftime('%d/%m')})",
+            "label_ontem": f"Ontem ({ontem_dow_short} {dt_ontem.strftime('%d/%m')})",
+            "label_d7": f"D-7 ({d7_dow_short} {dt_d7.strftime('%d/%m')})",
             "canais_monitorados": ["Site", "APP", "MKP"],
             "gerado_em": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         },

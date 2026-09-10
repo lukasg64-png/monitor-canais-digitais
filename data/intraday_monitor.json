@@ -7,12 +7,18 @@
     "horas_restantes": 10.08,
     "dia_hoje": 10,
     "dia_semana": "Quinta-feira",
+    "data_hoje": "10/09/2026",
+    "data_ontem": "09/09/2026",
+    "data_d7": "03/09/2026",
+    "label_hoje": "Hoje (Quinta 10/09)",
+    "label_ontem": "Ontem (Quarta 09/09)",
+    "label_d7": "D-7 (Quinta 03/09)",
     "canais_monitorados": [
       "Site",
       "APP",
       "MKP"
     ],
-    "gerado_em": "2026-09-10 14:50:41"
+    "gerado_em": "2026-09-10 15:03:35"
   },
   "kpis": {
     "Total": {
