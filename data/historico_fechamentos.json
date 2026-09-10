@@ -7,5 +7,77 @@
     "meta_rs": 2053311.6182933333,
     "pacing_pct": 155.5,
     "file": "data/fechamentos/fechamento_2026-09-09.json"
+  },
+  {
+    "data": "08/09/2026",
+    "iso_date": "2026-09-08",
+    "dia_semana": "Terça-feira",
+    "realizado_rs": 1914589.52,
+    "meta_rs": 2119005.91,
+    "pacing_pct": 90.4,
+    "file": "data/fechamentos/fechamento_2026-09-08.json"
+  },
+  {
+    "data": "07/09/2026",
+    "iso_date": "2026-09-07",
+    "dia_semana": "Segunda-feira",
+    "realizado_rs": 1577278.68,
+    "meta_rs": 1560604.42,
+    "pacing_pct": 101.1,
+    "file": "data/fechamentos/fechamento_2026-09-07.json"
+  },
+  {
+    "data": "06/09/2026",
+    "iso_date": "2026-09-06",
+    "dia_semana": "Domingo",
+    "realizado_rs": 1334141.35,
+    "meta_rs": 1571553.47,
+    "pacing_pct": 84.9,
+    "file": "data/fechamentos/fechamento_2026-09-06.json"
+  },
+  {
+    "data": "05/09/2026",
+    "iso_date": "2026-09-05",
+    "dia_semana": "Sábado",
+    "realizado_rs": 1963759.24,
+    "meta_rs": 1850754.22,
+    "pacing_pct": 106.1,
+    "file": "data/fechamentos/fechamento_2026-09-05.json"
+  },
+  {
+    "data": "04/09/2026",
+    "iso_date": "2026-09-04",
+    "dia_semana": "Sexta-feira",
+    "realizado_rs": 2342375.67,
+    "meta_rs": 2064260.67,
+    "pacing_pct": 113.5,
+    "file": "data/fechamentos/fechamento_2026-09-04.json"
+  },
+  {
+    "data": "03/09/2026",
+    "iso_date": "2026-09-03",
+    "dia_semana": "Quinta-feira",
+    "realizado_rs": 2109909.9,
+    "meta_rs": 1949295.65,
+    "pacing_pct": 108.2,
+    "file": "data/fechamentos/fechamento_2026-09-03.json"
+  },
+  {
+    "data": "02/09/2026",
+    "iso_date": "2026-09-02",
+    "dia_semana": "Quarta-feira",
+    "realizado_rs": 1837666.18,
+    "meta_rs": 2004040.9,
+    "pacing_pct": 91.7,
+    "file": "data/fechamentos/fechamento_2026-09-02.json"
+  },
+  {
+    "data": "01/09/2026",
+    "iso_date": "2026-09-01",
+    "dia_semana": "Terça-feira",
+    "realizado_rs": 1949400.42,
+    "meta_rs": 1921923.03,
+    "pacing_pct": 101.4,
+    "file": "data/fechamentos/fechamento_2026-09-01.json"
   }
 ]
