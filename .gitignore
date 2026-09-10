@@ -5,3 +5,12 @@ __pycache__/
 logs/
 *.log
 monitor-canais-digitais.zip
+
+# Temporary and sensitive files
+*.png
+*.pdf
+chave API Precifica.txt
+manual_precifica_extracted.txt
+scratch_*.json
+precifica_sample_*.json
+test_*.json

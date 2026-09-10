@@ -15,6 +15,7 @@ matriz de detratores/alavancadores em 5 níveis hierárquicos e storytelling exe
 import os
 import sys
 import json
+import re
 import openpyxl
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -28,6 +29,10 @@ RAW_FILE = os.path.join(DATA_DIR, "intraday_raw.json")
 EXCEL_META = os.path.join(BASE_DIR, "Diarização Setembro 2026.xlsx")
 OUTPUT_FILE = os.path.join(DATA_DIR, "intraday_monitor.json")
 OUTPUT_JS = os.path.join(DATA_DIR, "intraday_data.js")
+FECHAMENTOS_DIR = os.path.join(DATA_DIR, "fechamentos")
+FECHAMENTO_ONTEM_FILE = os.path.join(DATA_DIR, "fechamento_ontem.json")
+HISTORICO_FECHAMENTOS_FILE = os.path.join(DATA_DIR, "historico_fechamentos.json")
+os.makedirs(FECHAMENTOS_DIR, exist_ok=True)
 
 def norm_canal(c):
     """Mapeamento estrito dos canais definidos"""
@@ -275,6 +280,315 @@ def generate_excel_top50(output_data, data_dir):
         print(f"   Planilha Excel atualizada com sucesso: {excel_path}")
     except Exception as e_excel:
         print(f"   Aviso ao gerar planilha Excel: {e_excel}")
+
+
+def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, base_dir=BASE_DIR, excel_meta_path=EXCEL_META):
+    """
+    Gera o relatório oficial de fechamento consolidado (23:59) para o dia anterior (D-1),
+    com scorecard de metas, decomposição da causa-raiz da perda (estoque vs preço vs demanda),
+    alavancadores vs detratores, curva horária 24h e texto executivo pronto para WhatsApp.
+    Salva em data/fechamento_ontem.json e arquiva em data/fechamentos/fechamento_YYYY-MM-DD.json.
+    """
+    TOTAL_LOJAS_REDE = 1259
+    
+    # 1. Datas de referência
+    dia_ontem_str = str(raw.get("diaOntem", "")).zfill(2)
+    ano_mes_ontem = str(raw.get("anoMesOntem", ""))
+    if not dia_ontem_str or not ano_mes_ontem:
+        dt_ontem = datetime.now() - timedelta(days=1)
+        dia_ontem_str = f"{dt_ontem.day:02d}"
+        ano_mes_ontem = f"{dt_ontem.year}-{dt_ontem.month:02d}"
+    else:
+        parts = ano_mes_ontem.split("-")
+        dt_ontem = datetime(int(parts[0]), int(parts[1]), int(dia_ontem_str))
+
+    data_ontem_formatada = dt_ontem.strftime("%d/%m/%Y")
+    dias_semana = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+    dia_semana_ontem = dias_semana[dt_ontem.weekday()]
+    dia_ontem_int = int(dia_ontem_str)
+
+    # 2. Consolidação de Vendas 24h de Ontem por Canal
+    canais_ontem = {"Total": 0.0, "APP": 0.0, "Site": 0.0, "MKP": 0.0}
+    qtd_ontem = {"Total": 0.0, "APP": 0.0, "Site": 0.0, "MKP": 0.0}
+    hourly_ontem = defaultdict(lambda: {"Total": 0.0, "APP": 0.0, "Site": 0.0, "MKP": 0.0})
+
+    for r in raw.get("rowsOntem", []):
+        c = norm_canal(r[0])
+        if not c:
+            continue
+        val = float(r[2] or 0)
+        qty = float(r[3] or 0) if len(r) > 3 else 0.0
+        h = get_minute_of_day(r[1]) // 60 if len(r) > 1 else 0
+
+        canais_ontem[c] += val
+        canais_ontem["Total"] += val
+        qtd_ontem[c] += qty
+        qtd_ontem["Total"] += qty
+
+        hourly_ontem[h][c] += val
+        hourly_ontem[h]["Total"] += val
+
+    # 3. Metas Oficiais do Dia de Ontem
+    metas_ontem = load_metas(dia_alvo=dia_ontem_int)
+
+    # 4. Scorecard Executivo de Metas
+    scorecard_canais = {}
+    tot_rec = canais_ontem["Total"]
+    tot_meta = metas_ontem.get("Total", 0.0)
+
+    for ch in ["Total", "APP", "Site", "MKP"]:
+        rec = round(canais_ontem[ch], 2)
+        meta = round(metas_ontem.get(ch, 0.0), 2)
+        pacing = round((rec / meta * 100), 1) if meta > 0 else 0.0
+        gap_rs = round(rec - meta, 2)
+        share_rec = round((rec / tot_rec * 100), 1) if tot_rec > 0 else 0.0
+        share_meta = round((meta / tot_meta * 100), 1) if tot_meta > 0 else 0.0
+        qtd = qtd_ontem[ch]
+        ticket = round(rec / qtd, 2) if qtd > 0 else 0.0
+
+        scorecard_canais[ch] = {
+            "canal": ch,
+            "realizado_rs": rec,
+            "meta_dia_rs": meta,
+            "pacing_pct": pacing,
+            "gap_rs": gap_rs,
+            "bateu_meta": rec >= meta,
+            "share_realizado_pct": share_rec,
+            "share_meta_pct": share_meta,
+            "qtd_itens": int(qtd),
+            "ticket_medio_item": ticket
+        }
+
+    # 5. Auditoria SKU: Alavancadores vs Detratores & Causa-Raiz (Estoque vs Preço)
+    skus_closure = []
+    for r in raw.get("rowsSKUs", []):
+        sku_id = str(r[0]).strip()
+        nome = str(r[1] or "").strip()
+        vda_ontem = float(r[3] or 0)
+        vda_d7 = float(r[4] or 0)
+        gap_rs = round(vda_ontem - vda_d7, 2)
+        gap_pct = round(((vda_ontem / vda_d7) - 1.0) * 100, 1) if vda_d7 > 0 else (100.0 if vda_ontem > 0 else 0.0)
+
+        # Dados de Estoque da Rede
+        stk = stock_map.get(sku_id) or stock_map.get(sku_id.lstrip("0"))
+        if isinstance(stk, dict):
+            saldo = float(stk.get("estoqueLoja", 0))
+            transito = float(stk.get("transito", 0))
+        elif isinstance(stk, (int, float)):
+            saldo = float(stk)
+            transito = 0.0
+        else:
+            saldo = 0.0
+            transito = 0.0
+
+        un_loja = round(saldo / TOTAL_LOJAS_REDE, 2)
+
+        # Dados de Preço Precifica
+        prec = precifica_items.get(sku_id) or precifica_items.get(sku_id.lstrip("0"))
+        nosso_preco = prec.get("nosso_preco") if prec else None
+        menor_preco = prec.get("menor_concorrente_preco") if prec else None
+        menor_rede = prec.get("menor_concorrente_rede") if prec else ""
+        spread = prec.get("spread_pct") if prec else None
+        preco_status = prec.get("status") if prec else "SEM_MONITORAMENTO"
+
+        is_ruptura = (un_loja < 1.5 or saldo <= 0)
+        is_caro = (preco_status == "MAIS_CARO" and spread is not None and spread >= 5.0)
+
+        if is_ruptura and is_caro:
+            causa = "DUPLO_DETRATOR"
+            causa_label = "⚠️ Duplo: Ruptura + Preço"
+        elif is_ruptura:
+            causa = "RUPTURA_LOGISTICA"
+            causa_label = "🚨 Ruptura Logística"
+        elif is_caro:
+            causa = "PRECO_DESALINHADO"
+            causa_label = "🏷️ Preço Desalinhado"
+        else:
+            causa = "DEMANDA_COMERCIAL"
+            causa_label = "📉 Demanda Orgânica"
+
+        skus_closure.append({
+            "sku_id": sku_id,
+            "nome": nome,
+            "vda_ontem": vda_ontem,
+            "vda_d7": vda_d7,
+            "gap_rs": gap_rs,
+            "gap_pct": gap_pct,
+            "saldo": saldo,
+            "un_loja": un_loja,
+            "causa": causa,
+            "causa_label": causa_label,
+            "precifica_monitorado": bool(prec),
+            "nosso_preco": nosso_preco,
+            "menor_concorrente_preco": menor_preco,
+            "menor_concorrente_rede": menor_rede,
+            "spread_pct": spread,
+            "preco_status": preco_status
+        })
+
+    # Detratores (quem perdeu vs D-7)
+    detratores = [s for s in skus_closure if s["gap_rs"] < 0]
+    detratores.sort(key=lambda x: x["gap_rs"])
+
+    # Alavancadores (quem ganhou vs D-7)
+    alavancadores = [s for s in skus_closure if s["gap_rs"] > 0]
+    alavancadores.sort(key=lambda x: x["gap_rs"], reverse=True)
+
+    # 6. Decomposição Quantificada da Perda: O quanto Estoque e Preço Prejudicaram
+    total_perda_rs = sum(abs(s["gap_rs"]) for s in detratores)
+    perda_ruptura = sum(abs(s["gap_rs"]) for s in detratores if s["causa"] == "RUPTURA_LOGISTICA")
+    perda_preco = sum(abs(s["gap_rs"]) for s in detratores if s["causa"] == "PRECO_DESALINHADO")
+    perda_duplo = sum(abs(s["gap_rs"]) for s in detratores if s["causa"] == "DUPLO_DETRATOR")
+    perda_demanda = sum(abs(s["gap_rs"]) for s in detratores if s["causa"] == "DEMANDA_COMERCIAL")
+
+    pct_ruptura = round((perda_ruptura / total_perda_rs * 100), 1) if total_perda_rs > 0 else 0.0
+    pct_preco = round((perda_preco / total_perda_rs * 100), 1) if total_perda_rs > 0 else 0.0
+    pct_duplo = round((perda_duplo / total_perda_rs * 100), 1) if total_perda_rs > 0 else 0.0
+    pct_demanda = round((perda_demanda / total_perda_rs * 100), 1) if total_perda_rs > 0 else 0.0
+
+    impacto_total_logistico_rs = perda_ruptura + perda_duplo
+    pct_impacto_logistico = round((impacto_total_logistico_rs / total_perda_rs * 100), 1) if total_perda_rs > 0 else 0.0
+
+    impacto_total_preco_rs = perda_preco + perda_duplo
+    pct_impacto_preco = round((impacto_total_preco_rs / total_perda_rs * 100), 1) if total_perda_rs > 0 else 0.0
+
+    # Top itens de ruptura e top itens de sobrepreço
+    top_ruptura_skus = [s for s in detratores if s["causa"] in ("RUPTURA_LOGISTICA", "DUPLO_DETRATOR")][:25]
+    top_preco_skus = [s for s in detratores if s["causa"] in ("PRECO_DESALINHADO", "DUPLO_DETRATOR")][:25]
+
+    # 7. Curva Horária 24h Consolidada
+    hourly_curve_closure = []
+    for h in range(24):
+        hourly_curve_closure.append({
+            "hora": f"{h:02d}:00",
+            "hora_num": h,
+            "is_horario_nobre": h in (18, 19, 20, 21),
+            "venda_total": round(hourly_ontem[h]["Total"], 2),
+            "venda_app": round(hourly_ontem[h]["APP"], 2),
+            "venda_site": round(hourly_ontem[h]["Site"], 2),
+            "venda_mkp": round(hourly_ontem[h]["MKP"], 2)
+        })
+
+    venda_horario_nobre_ontem = sum(hourly_ontem[h]["Total"] for h in (18, 19, 20, 21))
+    pct_horario_nobre = round((venda_horario_nobre_ontem / tot_rec * 100), 1) if tot_rec > 0 else 0.0
+
+    # 8. Texto Formatado para WhatsApp da Diretoria
+    pacing_total = scorecard_canais["Total"]["pacing_pct"]
+    status_emoji = "🚀" if pacing_total >= 100 else ("⚠️" if pacing_total >= 90 else "🚨")
+    sinal_gap = "+" if scorecard_canais["Total"]["gap_rs"] >= 0 else ""
+
+    top_alav_str = "\n".join([f"  • {s['nome'][:28]}: +R$ {s['gap_rs']:,.0f} (+{s['gap_pct']:.0f}%)" for s in alavancadores[:3]])
+    top_detr_str = "\n".join([f"  • {s['nome'][:28]}: R$ {s['gap_rs']:,.0f} ({s['causa_label']})" for s in detratores[:3]])
+
+    whatsapp_msg = (
+        f"{status_emoji} *BALANÇO FECHAMENTO CANAIS DIGITAIS — {dia_semana_ontem.upper()} ({data_ontem_formatada})*\n"
+        f"Relatório Oficial do Último Minuto (23:59 Congelado)\n\n"
+        f"📊 *RESULTADO CONSOLIDADO 24H:*\n"
+        f"• *Realizado:* R$ {tot_rec:,.2f} ({pacing_total}% da Meta)\n"
+        f"• *Meta do Dia:* R$ {tot_meta:,.2f} | *GAP:* {sinal_gap}R$ {scorecard_canais['Total']['gap_rs']:,.2f}\n\n"
+        f"📱 *DESEMPENHO POR CANAL:*\n"
+        f"• *APP:* R$ {scorecard_canais['APP']['realizado_rs']:,.2f} ({scorecard_canais['APP']['pacing_pct']}%) • Share {scorecard_canais['APP']['share_realizado_pct']}%\n"
+        f"• *SITE:* R$ {scorecard_canais['Site']['realizado_rs']:,.2f} ({scorecard_canais['Site']['pacing_pct']}%) • Share {scorecard_canais['Site']['share_realizado_pct']}%\n"
+        f"• *MARKETPLACE:* R$ {scorecard_canais['MKP']['realizado_rs']:,.2f} ({scorecard_canais['MKP']['pacing_pct']}%) • Share {scorecard_canais['MKP']['share_realizado_pct']}%\n"
+        f"• *Horário Nobre (18h-22h):* R$ {venda_horario_nobre_ontem:,.2f} ({pct_horario_nobre}% do faturamento do dia)\n\n"
+        f"🎯 *AUDITORIA: O QUANTO ESTOQUE E PREÇO PREJUDICARAM:* \n"
+        f"• *Perda Total Mapeada nos Detratores:* R$ {total_perda_rs:,.2f}\n"
+        f"• 📦 *Ruptura de Estoque em Loja:* R$ {impacto_total_logistico_rs:,.2f} ({pct_impacto_logistico}% do prejuízo)\n"
+        f"• 🏷️ *Preço Mais Caro vs Concorrentes:* R$ {impacto_total_preco_rs:,.2f} ({pct_impacto_preco}% do prejuízo)\n"
+        f"• 📉 *Demanda Comercial:* R$ {perda_demanda:,.2f} ({pct_demanda}% da oscilação)\n\n"
+        f"🟢 *O QUE SALVOU O DIA (TOP ALAVANCADORES):*\n{top_alav_str}\n\n"
+        f"🔴 *O QUE AFUNDOU O RESULTADO (TOP DETRATORES):*\n{top_detr_str}\n\n"
+        f"🔗 Painel Online Completo: https://lukasg64-png.github.io/monitor-canais-digitais/"
+    )
+
+    fechamento_data = {
+        "metadata": {
+            "tipo": "FECHAMENTO_OFICIAL_EOD",
+            "data_referencia": data_ontem_formatada,
+            "dia_numero": dia_ontem_int,
+            "dia_semana": dia_semana_ontem,
+            "ano_mes": ano_mes_ontem,
+            "timestamp_congelamento": f"{data_ontem_formatada} 23:59:59",
+            "gerado_em": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        },
+        "scorecard_canais": scorecard_canais,
+        "causa_raiz_impacto": {
+            "total_perda_mapeada_rs": round(total_perda_rs, 2),
+            "perda_ruptura_logistica_rs": round(perda_ruptura, 2),
+            "pct_ruptura_logistica": pct_ruptura,
+            "perda_preco_desalinhado_rs": round(perda_preco, 2),
+            "pct_preco_desalinhado": pct_preco,
+            "perda_duplo_detrator_rs": round(perda_duplo, 2),
+            "pct_duplo_detrator": pct_duplo,
+            "perda_demanda_comercial_rs": round(perda_demanda, 2),
+            "pct_demanda_comercial": pct_demanda,
+            "impacto_total_logistico_rs": round(impacto_total_logistico_rs, 2),
+            "pct_impacto_logistico": pct_impacto_logistico,
+            "impacto_total_preco_rs": round(impacto_total_preco_rs, 2),
+            "pct_impacto_preco": pct_impacto_preco,
+            "qtd_total_detratores": len(detratores),
+            "qtd_total_alavancadores": len(alavancadores)
+        },
+        "alavancadores_top": alavancadores[:100],
+        "detratores_top": detratores[:100],
+        "top_ruptura_skus": top_ruptura_skus,
+        "top_preco_skus": top_preco_skus,
+        "hourly_curve": hourly_curve_closure,
+        "whatsapp_summary": whatsapp_msg
+    }
+
+    # Salva em data/fechamento_ontem.json
+    closure_file = os.path.join(data_dir, "fechamento_ontem.json")
+    with open(closure_file, "w", encoding="utf-8") as f:
+        json.dump(fechamento_data, f, ensure_ascii=False, indent=2)
+
+    # Arquiva em data/fechamentos/fechamento_YYYY-MM-DD.json
+    archive_filename = f"fechamento_{dt_ontem.strftime('%Y-%m-%d')}.json"
+    archive_path = os.path.join(FECHAMENTOS_DIR, archive_filename)
+    with open(archive_path, "w", encoding="utf-8") as f:
+        json.dump(fechamento_data, f, ensure_ascii=False, indent=2)
+
+    # Atualiza índice em data/historico_fechamentos.json
+    index_file = os.path.join(data_dir, "historico_fechamentos.json")
+    historico = []
+    if os.path.exists(index_file):
+        try:
+            with open(index_file, "r", encoding="utf-8") as f:
+                historico = json.load(f)
+                if not isinstance(historico, list):
+                    historico = []
+        except Exception:
+            historico = []
+
+    existing_entry = next((item for item in historico if item.get("data") == data_ontem_formatada), None)
+    entry_dict = {
+        "data": data_ontem_formatada,
+        "iso_date": dt_ontem.strftime("%Y-%m-%d"),
+        "dia_semana": dia_semana_ontem,
+        "realizado_rs": tot_rec,
+        "meta_rs": tot_meta,
+        "pacing_pct": pacing_total,
+        "file": f"data/fechamentos/{archive_filename}"
+    }
+    if existing_entry:
+        existing_entry.update(entry_dict)
+    else:
+        historico.insert(0, entry_dict)
+
+    # Ordena histórico descrescente por iso_date
+    historico.sort(key=lambda x: x.get("iso_date", ""), reverse=True)
+
+    with open(index_file, "w", encoding="utf-8") as f:
+        json.dump(historico, f, ensure_ascii=False, indent=2)
+
+    print(f"[Fechamento D-1] Consolidado com sucesso para {data_ontem_formatada} ({dia_semana_ontem})!")
+    print(f"  Realizado: R$ {tot_rec:,.2f} | Meta: R$ {tot_meta:,.2f} | Pacing: {pacing_total}%")
+    print(f"  Impacto Ruptura em Loja: R$ {impacto_total_logistico_rs:,.2f} ({pct_impacto_logistico}%)")
+    print(f"  Impacto Preço Precifica: R$ {impacto_total_preco_rs:,.2f} ({pct_impacto_preco}%)")
+    print(f"  Arquivo gerado: {closure_file}")
+    print(f"  Arquivo arquivado: {archive_path}")
+
+    return fechamento_data
 
 def process_analytics():
     print("=" * 70)
@@ -1303,6 +1617,14 @@ def process_analytics():
         "destaques_positivos": destaques_positivos
     }
 
+
+    # 9. Geração do Fechamento Consolidado D-1 (Ontem Congelado 23:59)
+    try:
+        fechamento_ontem = generate_daily_closure(raw, precifica_items, stock_map, DATA_DIR, BASE_DIR, EXCEL_META)
+    except Exception as e_fech:
+        print(f"   Aviso ao gerar fechamento consolidado D-1: {e_fech}")
+        fechamento_ontem = None
+
     # Compilação Final
     output_data = {
         "metadata": {
@@ -1330,6 +1652,7 @@ def process_analytics():
         "horario_nobre": horario_nobre,
         "hourly_curve": hourly_curve_table,
         "storytelling": storytelling,
+        "fechamento_ontem": fechamento_ontem,
         "detratores_alavancadores": {
             "skus": level_skus,
             "grupos": level_grupos,
@@ -1387,11 +1710,10 @@ def process_analytics():
         try:
             with open(index_file, "r", encoding="utf-8") as f:
                 html_content = f.read()
-            import re
             pattern = r'(<script id="embedded-data">)[\s\S]*?(<\/script>)'
-            replacement = r'\1\n  window.INTRADAY_DATA = ' + json.dumps(output_data, ensure_ascii=False) + r';\n  \2'
+            json_str = json.dumps(output_data, ensure_ascii=False)
             if re.search(pattern, html_content):
-                updated_html = re.sub(pattern, replacement, html_content)
+                updated_html = re.sub(pattern, lambda m: f'{m.group(1)}\n  window.INTRADAY_DATA = {json_str};\n  {m.group(2)}', html_content)
                 with open(index_file, "w", encoding="utf-8") as f:
                     f.write(updated_html)
                 print(f"   Arquivo HTML atualizado com dados embutidos: {index_file}")
