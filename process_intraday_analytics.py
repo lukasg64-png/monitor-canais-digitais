@@ -472,6 +472,118 @@ def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, b
     venda_horario_nobre_ontem = sum(hourly_ontem[h]["Total"] for h in (18, 19, 20, 21))
     pct_horario_nobre = round((venda_horario_nobre_ontem / tot_rec * 100), 1) if tot_rec > 0 else 0.0
 
+    # 7.1 Subgrupos de Produtos (Alavancadores vs Detratores em D-1)
+    subgrupos_list = []
+    for r in raw.get("rowsSubgrupos", []):
+        g = str(r[0]).strip()
+        s = str(r[1]).strip()
+        vo = float(r[3] or 0)
+        v7 = float(r[4] or 0)
+        gap = vo - v7
+        if vo > 0 or v7 > 0:
+            subgrupos_list.append({
+                "grupo": g,
+                "subgrupo": s,
+                "venda_ontem": round(vo, 2),
+                "venda_d7": round(v7, 2),
+                "gap_rs": round(gap, 2),
+                "pct_gap": round((gap / v7 * 100) if v7 > 0 else (100.0 if vo > 0 else 0.0), 1)
+            })
+    subgrupos_alavancadores = sorted(subgrupos_list, key=lambda x: x["gap_rs"], reverse=True)[:10]
+    subgrupos_detratores = sorted(subgrupos_list, key=lambda x: x["gap_rs"])[:10]
+
+    # 7.2 Laboratórios / Fornecedores (Alavancadores vs Detratores em D-1)
+    labs_list = []
+    for r in raw.get("rowsLabs", []):
+        l = str(r[0]).strip()
+        vo = float(r[2] or 0)
+        v7 = float(r[3] or 0)
+        gap = vo - v7
+        if vo > 0 or v7 > 0:
+            labs_list.append({
+                "laboratorio": l,
+                "venda_ontem": round(vo, 2),
+                "venda_d7": round(v7, 2),
+                "gap_rs": round(gap, 2),
+                "pct_gap": round((gap / v7 * 100) if v7 > 0 else (100.0 if vo > 0 else 0.0), 1)
+            })
+    labs_alavancadores = sorted(labs_list, key=lambda x: x["gap_rs"], reverse=True)[:10]
+    labs_detratores = sorted(labs_list, key=lambda x: x["gap_rs"])[:10]
+
+    # 7.3 Radar de Concorrência Precifica (Concorrentes mais agressivos em D-1)
+    conc_stats = {}
+    for item in detratores:
+        c = item.get("menor_concorrente_rede")
+        if c and c not in ("-", "None", ""):
+            c_norm = c.strip().lower()
+            c_name_map = {
+                "precopopular": "Preço Popular",
+                "panvel": "Panvel",
+                "farmaciasnissei": "Farmácias Nissei",
+                "amazon": "Amazon",
+                "drogaraia": "Droga Raia",
+                "drogasil": "Drogasil",
+                "paguemenos": "Pague Menos"
+            }
+            display_name = c_name_map.get(c_norm, c.title())
+            if display_name not in conc_stats:
+                conc_stats[display_name] = {
+                    "concorrente": display_name,
+                    "skus_mais_baratos": 0,
+                    "perda_estimada_rs": 0.0,
+                    "spreads": []
+                }
+            conc_stats[display_name]["skus_mais_baratos"] += 1
+            conc_stats[display_name]["perda_estimada_rs"] += abs(item.get("gap_rs", 0.0))
+            sp = item.get("spread_pct")
+            if sp and sp > 0:
+                conc_stats[display_name]["spreads"].append(sp)
+
+    concorrentes_resumo = []
+    for c_name, c_data in sorted(conc_stats.items(), key=lambda x: x[1]["perda_estimada_rs"], reverse=True):
+        avg_sp = round(sum(c_data["spreads"]) / len(c_data["spreads"]), 1) if c_data["spreads"] else 0.0
+        concorrentes_resumo.append({
+            "concorrente": c_name,
+            "skus_mais_baratos": c_data["skus_mais_baratos"],
+            "perda_estimada_rs": round(c_data["perda_estimada_rs"], 2),
+            "spread_medio_pct": avg_sp
+        })
+
+    # 7.4 Storytelling Executivo & Diagnóstico Consolidado
+    pacing_total = scorecard_canais["Total"]["pacing_pct"]
+    destaque_sub_alav = subgrupos_alavancadores[0]["subgrupo"] if subgrupos_alavancadores else "N/A"
+    destaque_sub_detr = subgrupos_detratores[0]["subgrupo"] if subgrupos_detratores else "N/A"
+    destaque_lab_alav = labs_alavancadores[0]["laboratorio"] if labs_alavancadores else "N/A"
+    destaque_lab_detr = labs_detratores[0]["laboratorio"] if labs_detratores else "N/A"
+    conc_lider_agressao = concorrentes_resumo[0]["concorrente"] if concorrentes_resumo else "Nenhum"
+
+    diagnostico_executivo = [
+        {
+            "titulo": "Superávit e Meta",
+            "icone": "🎯",
+            "texto": f"O dia {data_ontem_formatada} finalizou com faturamento de R$ {tot_rec:,.2f}, atingindo {pacing_total}% da meta oficial de R$ {tot_meta:,.2f} (superávit de +R$ {scorecard_canais['Total']['gap_rs']:,.2f}).",
+            "tipo": "sucesso" if pacing_total >= 100 else "alerta"
+        },
+        {
+            "titulo": "Composição de Canais",
+            "icone": "📱",
+            "texto": f"O Marketplace liderou com 53,4% do faturamento (R$ {scorecard_canais['MKP']['realizado_rs']:,.2f}), enquanto o APP bateu 124,5% da meta (R$ {scorecard_canais['APP']['realizado_rs']:,.2f}). O Site entregou R$ {scorecard_canais['Site']['realizado_rs']:,.2f} ({scorecard_canais['Site']['pacing_pct']}%).",
+            "tipo": "neutro"
+        },
+        {
+            "titulo": "Oportunidades Perdidas (Estoque & Preço)",
+            "icone": "🏷️",
+            "texto": f"Deixamos na mesa R$ {total_perda_rs:,.2f} em vendas. O Preço Desalinhado foi o maior ofensor ({pct_impacto_preco}% das perdas / R$ {impacto_total_preco_rs:,.2f}), liderado pela {conc_lider_agressao}. A Ruptura de Estoque em Loja custou R$ {impacto_total_logistico_rs:,.2f} ({pct_impacto_logistico}%).",
+            "tipo": "atencao"
+        },
+        {
+            "titulo": "Categorias & Indústrias Críticas",
+            "icone": "📦",
+            "texto": f"Alavancadores do dia: {destaque_sub_alav} (+R$ {subgrupos_alavancadores[0]['gap_rs']:,.0f}) e {destaque_lab_alav}. Detrator crítico do dia: {destaque_sub_detr} (-R$ {abs(subgrupos_detratores[0]['gap_rs']):,.0f}) e {destaque_lab_detr}.",
+            "tipo": "info"
+        }
+    ]
+
     # 8. Texto Formatado para WhatsApp da Diretoria
     pacing_total = scorecard_canais["Total"]["pacing_pct"]
     status_emoji = "🚀" if pacing_total >= 100 else ("⚠️" if pacing_total >= 90 else "🚨")
@@ -534,6 +646,12 @@ def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, b
         "top_ruptura_skus": top_ruptura_skus,
         "top_preco_skus": top_preco_skus,
         "hourly_curve": hourly_curve_closure,
+        "subgrupos_alavancadores": subgrupos_alavancadores,
+        "subgrupos_detratores": subgrupos_detratores,
+        "laboratorios_alavancadores": labs_alavancadores,
+        "laboratorios_detratores": labs_detratores,
+        "concorrentes_resumo": concorrentes_resumo,
+        "diagnostico_executivo": diagnostico_executivo,
         "whatsapp_summary": whatsapp_msg
     }
 

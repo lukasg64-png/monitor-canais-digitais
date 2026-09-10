@@ -6,7 +6,7 @@
     "dia_semana": "Quarta-feira",
     "ano_mes": "2026-09",
     "timestamp_congelamento": "09/09/2026 23:59:59",
-    "gerado_em": "10/09/2026 17:37:21"
+    "gerado_em": "10/09/2026 17:50:05"
   },
   "scorecard_canais": {
     "Total": {
@@ -4799,6 +4799,372 @@
       "venda_app": 19726.25,
       "venda_site": 2574.52,
       "venda_mkp": 9393.87
+    }
+  ],
+  "subgrupos_alavancadores": [
+    {
+      "grupo": "Perfumaria(2)",
+      "subgrupo": "Perfumaria(8)",
+      "venda_ontem": 735560.79,
+      "venda_d7": 262261.77,
+      "gap_rs": 473299.02,
+      "pct_gap": 180.5
+    },
+    {
+      "grupo": "Perfumaria(2)",
+      "subgrupo": "Fraldas(9)",
+      "venda_ontem": 596294.26,
+      "venda_d7": 302600.11,
+      "gap_rs": 293694.15,
+      "pct_gap": 97.1
+    },
+    {
+      "grupo": "Conveniencia(10)",
+      "subgrupo": "Conveniencia - Pereciveis(3205)",
+      "venda_ontem": 77900.02,
+      "venda_d7": 29481.34,
+      "gap_rs": 48418.68,
+      "pct_gap": 164.2
+    },
+    {
+      "grupo": "Medicamentos(1)",
+      "subgrupo": "Referencia Onerosos(40)",
+      "venda_ontem": 139297.96,
+      "venda_d7": 106304.37,
+      "gap_rs": 32993.59,
+      "pct_gap": 31.0
+    },
+    {
+      "grupo": "Dermo-Cosmeticos(3089)",
+      "subgrupo": "Dermo-Cosmeticos(3151)",
+      "venda_ontem": 68580.75,
+      "venda_d7": 40300.72,
+      "gap_rs": 28280.03,
+      "pct_gap": 70.2
+    },
+    {
+      "grupo": "Medicamentos(1)",
+      "subgrupo": "Genericos(3)",
+      "venda_ontem": 93216.05,
+      "venda_d7": 76378.35,
+      "gap_rs": 16837.7,
+      "pct_gap": 22.0
+    },
+    {
+      "grupo": "Perfumaria(2)",
+      "subgrupo": "Lencos e Toalhas Umedecidas(123)",
+      "venda_ontem": 41132.19,
+      "venda_d7": 25804.82,
+      "gap_rs": 15327.37,
+      "pct_gap": 59.4
+    },
+    {
+      "grupo": "Perfumaria(2)",
+      "subgrupo": "Fralda Exclusiva(3188)",
+      "venda_ontem": 28823.29,
+      "venda_d7": 14754.5,
+      "gap_rs": 14068.79,
+      "pct_gap": 95.4
+    },
+    {
+      "grupo": "Medicamentos(1)",
+      "subgrupo": "Referencia Oneroso Controlado(77)",
+      "venda_ontem": 27666.86,
+      "venda_d7": 13957.4,
+      "gap_rs": 13709.46,
+      "pct_gap": 98.2
+    },
+    {
+      "grupo": "Medicamentos(1)",
+      "subgrupo": "Referencia Liberado(25)",
+      "venda_ontem": 36074.58,
+      "venda_d7": 22413.03,
+      "gap_rs": 13661.55,
+      "pct_gap": 61.0
+    }
+  ],
+  "subgrupos_detratores": [
+    {
+      "grupo": "Nutricao(3090)",
+      "subgrupo": "Nutricao Leites(3154)",
+      "venda_ontem": 77639.72,
+      "venda_d7": 132076.64,
+      "gap_rs": -54436.92,
+      "pct_gap": -41.2
+    },
+    {
+      "grupo": "Medicamentos(1)",
+      "subgrupo": "PBMs Controlados(22)",
+      "venda_ontem": 477580.22,
+      "venda_d7": 482558.13,
+      "gap_rs": -4977.91,
+      "pct_gap": -1.0
+    },
+    {
+      "grupo": "Medicamentos(1)",
+      "subgrupo": "PBM Controlado Cupom Desconto(3203)",
+      "venda_ontem": 3057.36,
+      "venda_d7": 3668.3,
+      "gap_rs": -610.94,
+      "pct_gap": -16.7
+    },
+    {
+      "grupo": "Medicamentos(1)",
+      "subgrupo": "Referencia Especial Oneroso(30)",
+      "venda_ontem": 2675.03,
+      "venda_d7": 3034.37,
+      "gap_rs": -359.34,
+      "pct_gap": -11.8
+    },
+    {
+      "grupo": "Medicamentos(1)",
+      "subgrupo": "Generico Super Oneroso(3181)",
+      "venda_ontem": 9765.83,
+      "venda_d7": 9985.95,
+      "gap_rs": -220.12,
+      "pct_gap": -2.2
+    },
+    {
+      "grupo": "Servicos(3)",
+      "subgrupo": "Servicos Farmaceuticos(3144)",
+      "venda_ontem": 103.1,
+      "venda_d7": 219.48,
+      "gap_rs": -116.38,
+      "pct_gap": -53.0
+    },
+    {
+      "grupo": "Dermo-Cosmeticos(3089)",
+      "subgrupo": "Dermo-Cosmeticos Especial(3152)",
+      "venda_ontem": 19.0,
+      "venda_d7": 55.84,
+      "gap_rs": -36.84,
+      "pct_gap": -66.0
+    },
+    {
+      "grupo": "Medicamentos(1)",
+      "subgrupo": "Similar Controlado Oneroso(3187)",
+      "venda_ontem": 0.0,
+      "venda_d7": 19.99,
+      "gap_rs": -19.99,
+      "pct_gap": -100.0
+    },
+    {
+      "grupo": "Conveniencia(10)",
+      "subgrupo": "Conveniencia Refrigerados(3215)",
+      "venda_ontem": 23.8,
+      "venda_d7": 41.6,
+      "gap_rs": -17.8,
+      "pct_gap": -42.8
+    },
+    {
+      "grupo": "Medicamentos(1)",
+      "subgrupo": "Teste Covid19(3166)",
+      "venda_ontem": 119.8,
+      "venda_d7": 109.8,
+      "gap_rs": 10.0,
+      "pct_gap": 9.1
+    }
+  ],
+  "laboratorios_alavancadores": [
+    {
+      "laboratorio": "PROCTER & GAMBLE DO BRASIL S/A",
+      "venda_ontem": 568108.81,
+      "venda_d7": 246913.49,
+      "gap_rs": 321195.32,
+      "pct_gap": 130.1
+    },
+    {
+      "laboratorio": "UNILEVER BRASIL LTDA RS",
+      "venda_ontem": 200312.17,
+      "venda_d7": 61768.54,
+      "gap_rs": 138543.63,
+      "pct_gap": 224.3
+    },
+    {
+      "laboratorio": "LOREAL(PROCOSA LTDA)",
+      "venda_ontem": 153750.73,
+      "venda_d7": 22606.04,
+      "gap_rs": 131144.69,
+      "pct_gap": 580.1
+    },
+    {
+      "laboratorio": "KIMBERLY-CLARK BRASIL IND COM PROD HIG 4",
+      "venda_ontem": 142419.2,
+      "venda_d7": 88162.07,
+      "gap_rs": 54257.13,
+      "pct_gap": 61.5
+    },
+    {
+      "laboratorio": "BDF NIVEA LTDA - SP",
+      "venda_ontem": 69451.19,
+      "venda_d7": 17845.8,
+      "gap_rs": 51605.39,
+      "pct_gap": 289.2
+    },
+    {
+      "laboratorio": "BERTOLUCCI & CIA LTDA",
+      "venda_ontem": 37353.57,
+      "venda_d7": 862.54,
+      "gap_rs": 36491.03,
+      "pct_gap": 4230.6
+    },
+    {
+      "laboratorio": "LOLLIPOPS COSMETICS - DISTRIBUIDORA DE C",
+      "venda_ontem": 26998.09,
+      "venda_d7": 1993.04,
+      "gap_rs": 25005.05,
+      "pct_gap": 1254.6
+    },
+    {
+      "laboratorio": "NOVO NORDISK FARMACEUTICA DO BRASIL LTDA",
+      "venda_ontem": 50084.52,
+      "venda_d7": 34953.97,
+      "gap_rs": 15130.55,
+      "pct_gap": 43.3
+    },
+    {
+      "laboratorio": "LIBBS FARMACEUTICA LTDA 01",
+      "venda_ontem": 51703.59,
+      "venda_d7": 37907.31,
+      "gap_rs": 13796.28,
+      "pct_gap": 36.4
+    },
+    {
+      "laboratorio": "EMS GENERICOS",
+      "venda_ontem": 81607.65,
+      "venda_d7": 68089.62,
+      "gap_rs": 13518.03,
+      "pct_gap": 19.9
+    }
+  ],
+  "laboratorios_detratores": [
+    {
+      "laboratorio": "NESTLE NUTRITION",
+      "venda_ontem": 79186.76,
+      "venda_d7": 139318.39,
+      "gap_rs": -60131.63,
+      "pct_gap": -43.2
+    },
+    {
+      "laboratorio": "ELI LILLY DO BRASIL LTDA",
+      "venda_ontem": 341745.2,
+      "venda_d7": 358026.46,
+      "gap_rs": -16281.26,
+      "pct_gap": -4.5
+    },
+    {
+      "laboratorio": "INDUSTRIA COM PROD DE LIMP GIRANDO SOL",
+      "venda_ontem": 1584.97,
+      "venda_d7": 6475.54,
+      "gap_rs": -4890.57,
+      "pct_gap": -75.5
+    },
+    {
+      "laboratorio": "EMS PRESCRICAO",
+      "venda_ontem": 48248.81,
+      "venda_d7": 51512.12,
+      "gap_rs": -3263.31,
+      "pct_gap": -6.3
+    },
+    {
+      "laboratorio": "APSEN FARMACEUTICA SA.",
+      "venda_ontem": 16295.43,
+      "venda_d7": 18410.15,
+      "gap_rs": -2114.72,
+      "pct_gap": -11.5
+    },
+    {
+      "laboratorio": "PRATI DONADUZZI RX",
+      "venda_ontem": 0.0,
+      "venda_d7": 2068.8,
+      "gap_rs": -2068.8,
+      "pct_gap": -100.0
+    },
+    {
+      "laboratorio": "PFIZER BRASIL LTDA",
+      "venda_ontem": 4826.38,
+      "venda_d7": 6419.65,
+      "gap_rs": -1593.27,
+      "pct_gap": -24.8
+    },
+    {
+      "laboratorio": "UNITED MEDICAL LTDA",
+      "venda_ontem": 0.0,
+      "venda_d7": 946.8,
+      "gap_rs": -946.8,
+      "pct_gap": -100.0
+    },
+    {
+      "laboratorio": "HERSHEY DO BRASIL LTDA",
+      "venda_ontem": 368.46,
+      "venda_d7": 1218.22,
+      "gap_rs": -849.76,
+      "pct_gap": -69.8
+    },
+    {
+      "laboratorio": "UNILEVER BRASIL GELADOS LTDA RS",
+      "venda_ontem": 1861.97,
+      "venda_d7": 2708.43,
+      "gap_rs": -846.46,
+      "pct_gap": -31.3
+    }
+  ],
+  "concorrentes_resumo": [
+    {
+      "concorrente": "Preço Popular",
+      "skus_mais_baratos": 255,
+      "perda_estimada_rs": 130203.65,
+      "spread_medio_pct": 23.5
+    },
+    {
+      "concorrente": "Farmácias Nissei",
+      "skus_mais_baratos": 368,
+      "perda_estimada_rs": 55846.96,
+      "spread_medio_pct": 21.5
+    },
+    {
+      "concorrente": "Amazon",
+      "skus_mais_baratos": 335,
+      "perda_estimada_rs": 45682.58,
+      "spread_medio_pct": 40.4
+    },
+    {
+      "concorrente": "Panvel",
+      "skus_mais_baratos": 236,
+      "perda_estimada_rs": 41061.93,
+      "spread_medio_pct": 23.7
+    },
+    {
+      "concorrente": "Droga Raia",
+      "skus_mais_baratos": 217,
+      "perda_estimada_rs": 29547.64,
+      "spread_medio_pct": 45.9
+    }
+  ],
+  "diagnostico_executivo": [
+    {
+      "titulo": "Superávit e Meta",
+      "icone": "🎯",
+      "texto": "O dia 09/09/2026 finalizou com faturamento de R$ 3,192,383.95, atingindo 155.5% da meta oficial de R$ 2,053,311.62 (superávit de +R$ 1,139,072.33).",
+      "tipo": "sucesso"
+    },
+    {
+      "titulo": "Composição de Canais",
+      "icone": "📱",
+      "texto": "O Marketplace liderou com 53,4% do faturamento (R$ 708,840.41), enquanto o APP bateu 124,5% da meta (R$ 1,913,595.44). O Site entregou R$ 569,948.10 (104.8%).",
+      "tipo": "neutro"
+    },
+    {
+      "titulo": "Oportunidades Perdidas (Estoque & Preço)",
+      "icone": "🏷️",
+      "texto": "Deixamos na mesa R$ 464,615.43 em vendas. O Preço Desalinhado foi o maior ofensor (43.4% das perdas / R$ 201,565.16), liderado pela Preço Popular. A Ruptura de Estoque em Loja custou R$ 114,542.49 (24.7%).",
+      "tipo": "atencao"
+    },
+    {
+      "titulo": "Categorias & Indústrias Críticas",
+      "icone": "📦",
+      "texto": "Alavancadores do dia: Perfumaria(8) (+R$ 473,299) e PROCTER & GAMBLE DO BRASIL S/A. Detrator crítico do dia: Nutricao Leites(3154) (-R$ 54,437) e NESTLE NUTRITION.",
+      "tipo": "info"
     }
   ],
   "whatsapp_summary": "🚀 *BALANÇO FECHAMENTO CANAIS DIGITAIS — QUARTA-FEIRA (09/09/2026)*\nRelatório Oficial do Último Minuto (23:59 Congelado)\n\n📊 *RESULTADO CONSOLIDADO 24H:*\n• *Realizado:* R$ 3,192,383.95 (155.5% da Meta)\n• *Meta do Dia:* R$ 2,053,311.62 | *GAP:* +R$ 1,139,072.33\n\n📱 *DESEMPENHO POR CANAL:*\n• *APP:* R$ 1,913,595.44 (196.7%) • Share 59.9%\n• *SITE:* R$ 569,948.10 (104.8%) • Share 17.9%\n• *MARKETPLACE:* R$ 708,840.41 (132.1%) • Share 22.2%\n• *Horário Nobre (18h-22h):* R$ 977,294.59 (30.6% do faturamento do dia)\n\n🎯 *AUDITORIA: O QUANTO ESTOQUE E PREÇO PREJUDICARAM:* \n• *Perda Total Mapeada nos Detratores:* R$ 464,615.43\n• 📦 *Ruptura de Estoque em Loja:* R$ 114,542.49 (24.7% do prejuízo)\n• 🏷️ *Preço Mais Caro vs Concorrentes:* R$ 201,565.16 (43.4% do prejuízo)\n• 📉 *Demanda Comercial:* R$ 191,547.85 (41.2% da oscilação)\n\n🟢 *O QUE SALVOU O DIA (TOP ALAVANCADORES):*\n  • FR PAMPERS CONFORTSEC BAG SU: +R$ 57,091 (+1033%)\n  • FR PAMPERS CONFORTSEC BAG SU: +R$ 51,309 (+976%)\n  • KIT ELSEVE SH 375+COND 170ML: +R$ 43,412 (+5866%)\n\n🔴 *O QUE AFUNDOU O RESULTADO (TOP DETRATORES):*\n  • LEITE NINHO 800G 1+PREBIO LA: R$ -73,658 (🏷️ Preço Desalinhado)\n  • FR PAMPERS CONFORTSEC BAG MA: R$ -19,390 (📉 Demanda Orgânica)\n  • MOUNJARO 2,5MG 4CAN APLIC LI: R$ -14,898 (📉 Demanda Orgânica)\n\n🔗 Painel Online Completo: https://lukasg64-png.github.io/monitor-canais-digitais/"
