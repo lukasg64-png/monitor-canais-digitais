@@ -1,10 +1,10 @@
 {
   "status": "ONLINE",
   "started_at": "09/09/2026 10:42:47",
-  "last_sync": "10/09/2026 17:52:39",
+  "last_sync": "10/09/2026 18:03:51",
   "last_corte": "10/09/2026 16:53:46",
   "last_status": "Sucesso",
-  "sync_count": 67,
+  "sync_count": 68,
   "is_syncing": false,
   "next_sync_in": 1,
   "network_url": "http://10.200.12.62:3000",

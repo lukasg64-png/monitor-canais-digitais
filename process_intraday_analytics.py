@@ -1743,6 +1743,15 @@ def process_analytics():
         print(f"   Aviso ao gerar fechamento consolidado D-1: {e_fech}")
         fechamento_ontem = None
 
+    # Carrega histórico consolidado de fechamentos
+    historico_fechamentos = []
+    if os.path.exists(HISTORICO_FECHAMENTOS_FILE):
+        try:
+            with open(HISTORICO_FECHAMENTOS_FILE, "r", encoding="utf-8") as f:
+                historico_fechamentos = json.load(f)
+        except Exception:
+            historico_fechamentos = []
+
     # Compilação Final
     output_data = {
         "metadata": {
@@ -1771,6 +1780,7 @@ def process_analytics():
         "hourly_curve": hourly_curve_table,
         "storytelling": storytelling,
         "fechamento_ontem": fechamento_ontem,
+        "historico_fechamentos": historico_fechamentos,
         "detratores_alavancadores": {
             "skus": level_skus,
             "grupos": level_grupos,

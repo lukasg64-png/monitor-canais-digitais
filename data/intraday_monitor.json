@@ -18,7 +18,7 @@
       "APP",
       "MKP"
     ],
-    "gerado_em": "2026-09-10 17:52:39"
+    "gerado_em": "2026-09-10 18:03:50"
   },
   "kpis": {
     "Total": {
@@ -93451,7 +93451,7 @@
       "dia_semana": "Quarta-feira",
       "ano_mes": "2026-09",
       "timestamp_congelamento": "09/09/2026 23:59:59",
-      "gerado_em": "10/09/2026 17:52:39"
+      "gerado_em": "10/09/2026 18:03:50"
     },
     "scorecard_canais": {
       "Total": {
@@ -98614,6 +98614,17 @@
     ],
     "whatsapp_summary": "🚀 *BALANÇO FECHAMENTO CANAIS DIGITAIS — QUARTA-FEIRA (09/09/2026)*\nRelatório Oficial do Último Minuto (23:59 Congelado)\n\n📊 *RESULTADO CONSOLIDADO 24H:*\n• *Realizado:* R$ 3,192,383.95 (155.5% da Meta)\n• *Meta do Dia:* R$ 2,053,311.62 | *GAP:* +R$ 1,139,072.33\n\n📱 *DESEMPENHO POR CANAL:*\n• *APP:* R$ 1,913,595.44 (196.7%) • Share 59.9%\n• *SITE:* R$ 569,948.10 (104.8%) • Share 17.9%\n• *MARKETPLACE:* R$ 708,840.41 (132.1%) • Share 22.2%\n• *Horário Nobre (18h-22h):* R$ 977,294.59 (30.6% do faturamento do dia)\n\n🎯 *AUDITORIA: O QUANTO ESTOQUE E PREÇO PREJUDICARAM:* \n• *Perda Total Mapeada nos Detratores:* R$ 464,615.43\n• 📦 *Ruptura de Estoque em Loja:* R$ 114,542.49 (24.7% do prejuízo)\n• 🏷️ *Preço Mais Caro vs Concorrentes:* R$ 201,565.16 (43.4% do prejuízo)\n• 📉 *Demanda Comercial:* R$ 191,547.85 (41.2% da oscilação)\n\n🟢 *O QUE SALVOU O DIA (TOP ALAVANCADORES):*\n  • FR PAMPERS CONFORTSEC BAG SU: +R$ 57,091 (+1033%)\n  • FR PAMPERS CONFORTSEC BAG SU: +R$ 51,309 (+976%)\n  • KIT ELSEVE SH 375+COND 170ML: +R$ 43,412 (+5866%)\n\n🔴 *O QUE AFUNDOU O RESULTADO (TOP DETRATORES):*\n  • LEITE NINHO 800G 1+PREBIO LA: R$ -73,658 (🏷️ Preço Desalinhado)\n  • FR PAMPERS CONFORTSEC BAG MA: R$ -19,390 (📉 Demanda Orgânica)\n  • MOUNJARO 2,5MG 4CAN APLIC LI: R$ -14,898 (📉 Demanda Orgânica)\n\n🔗 Painel Online Completo: https://lukasg64-png.github.io/monitor-canais-digitais/"
   },
+  "historico_fechamentos": [
+    {
+      "data": "09/09/2026",
+      "iso_date": "2026-09-09",
+      "dia_semana": "Quarta-feira",
+      "realizado_rs": 3192383.954999906,
+      "meta_rs": 2053311.6182933333,
+      "pacing_pct": 155.5,
+      "file": "data/fechamentos/fechamento_2026-09-09.json"
+    }
+  ],
   "detratores_alavancadores": {
     "skus": {
       "all": [
