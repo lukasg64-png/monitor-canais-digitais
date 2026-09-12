@@ -336,6 +336,19 @@ def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, b
     tot_rec = canais_ontem["Total"]
     tot_meta = metas_ontem.get("Total", 0.0)
 
+    # Trava de Segurança: Se a venda de ontem for zerada (ex: virada da meia-noite antes do reload matinal do Qlik),
+    # NUNCA sobrescrever o fechamento oficial consolidado com zeros!
+    closure_file = os.path.join(data_dir, "fechamento_ontem.json")
+    if tot_rec <= 0:
+        print(f"   [Fechamento D-1] AVISO: Venda de ontem zerada (tot_rec = 0). Preservando fechamento oficial anterior sem sobrescrever.")
+        if os.path.exists(closure_file):
+            try:
+                with open(closure_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return None
+
     for ch in ["Total", "APP", "Site", "MKP"]:
         rec = round(canais_ontem[ch], 2)
         meta = round(metas_ontem.get(ch, 0.0), 2)
@@ -557,6 +570,11 @@ def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, b
     destaque_lab_detr = labs_detratores[0]["laboratorio"] if labs_detratores else "N/A"
     conc_lider_agressao = concorrentes_resumo[0]["concorrente"] if concorrentes_resumo else "Nenhum"
 
+    sub_alav_val = f" (+R$ {subgrupos_alavancadores[0]['gap_rs']:,.0f})" if subgrupos_alavancadores else ""
+    sub_detr_val = f" (-R$ {abs(subgrupos_detratores[0]['gap_rs']):,.0f})" if subgrupos_detratores else ""
+    lab_alav_val = f" e {destaque_lab_alav}" if destaque_lab_alav != "N/A" else ""
+    lab_detr_val = f" e {destaque_lab_detr}" if destaque_lab_detr != "N/A" else ""
+
     diagnostico_executivo = [
         {
             "titulo": "Superávit e Meta",
@@ -579,7 +597,7 @@ def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, b
         {
             "titulo": "Categorias & Indústrias Críticas",
             "icone": "📦",
-            "texto": f"Alavancadores do dia: {destaque_sub_alav} (+R$ {subgrupos_alavancadores[0]['gap_rs']:,.0f}) e {destaque_lab_alav}. Detrator crítico do dia: {destaque_sub_detr} (-R$ {abs(subgrupos_detratores[0]['gap_rs']):,.0f}) e {destaque_lab_detr}.",
+            "texto": f"Alavancadores do dia: {destaque_sub_alav}{sub_alav_val}{lab_alav_val}. Detrator crítico do dia: {destaque_sub_detr}{sub_detr_val}{lab_detr_val}.",
             "tipo": "info"
         }
     ]
@@ -1742,6 +1760,13 @@ def process_analytics():
     except Exception as e_fech:
         print(f"   Aviso ao gerar fechamento consolidado D-1: {e_fech}")
         fechamento_ontem = None
+
+    if not fechamento_ontem and os.path.exists(FECHAMENTO_ONTEM_FILE):
+        try:
+            with open(FECHAMENTO_ONTEM_FILE, "r", encoding="utf-8") as f:
+                fechamento_ontem = json.load(f)
+        except Exception:
+            pass
 
     # Carrega histórico consolidado de fechamentos
     historico_fechamentos = []
