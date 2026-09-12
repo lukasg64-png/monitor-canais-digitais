@@ -1,8 +1,8 @@
 {
   "status": "ONLINE",
   "started_at": "09/09/2026 10:42:47",
-  "last_sync": "11/09/2026 23:28:46",
-  "last_corte": "11/09/2026 21:53:02",
+  "last_sync": "12/09/2026 01:21:33",
+  "last_corte": "-",
   "last_status": "Sucesso",
   "sync_count": 118,
   "is_syncing": false,

@@ -1,5 +1,14 @@
 [
   {
+    "data": "11/09/2026",
+    "iso_date": "2026-09-11",
+    "dia_semana": "Sexta-feira",
+    "realizado_rs": 0.0,
+    "meta_rs": 1976668.2766933334,
+    "pacing_pct": 0.0,
+    "file": "data/fechamentos/fechamento_2026-09-11.json"
+  },
+  {
     "data": "10/09/2026",
     "iso_date": "2026-09-10",
     "dia_semana": "Quinta-feira",
