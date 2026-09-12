@@ -108,6 +108,19 @@ class PrecificaClient:
         return None
 
 
+REDE_FARMACIA_MAP = {
+    "panvel": "Panvel",
+    "farmaciasnissei": "Farmácias Nissei",
+    "nissei": "Farmácias Nissei",
+    "precopopular": "Preço Popular",
+    "drogaraia": "Droga Raia",
+    "drogasil": "Drogasil",
+    "paguemenos": "Pague Menos",
+    "farmaciasassociadas": "Farmácias Associadas",
+    "agafarma": "Agafarma",
+    "ultrafarma": "Ultrafarma"
+}
+
 def parse_item_pricing(item):
     """Processa a estrutura de um item retornado pela Precifica e calcula métricas de competitividade."""
     sku_vtex = str(item.get("sku", "")).strip()
@@ -135,23 +148,47 @@ def parse_item_pricing(item):
             nosso_disp = avail
         else:
             if p is not None and avail:
+                is_farm = any(k in dom for k in REDE_FARMACIA_MAP)
+                nome_formatado = REDE_FARMACIA_MAP.get(dom, "Amazon" if "amazon" in dom else dom.capitalize())
+                
+                # Checagem de anomalia de preço (>150% de spread vs nosso_preco se existir)
+                is_anomalo = False
+                if nosso_preco and nosso_preco > 0:
+                    spread = abs(float(p) - nosso_preco) / nosso_preco
+                    if spread > 1.5:
+                        is_anomalo = True
+
                 concorrentes.append({
                     "rede": dom,
+                    "rede_nome": nome_formatado,
                     "preco": float(p),
                     "disponivel": True,
-                    "sold_by": sold_by
+                    "sold_by": sold_by,
+                    "is_farmacia": is_farm,
+                    "is_anomalo": is_anomalo
                 })
 
     concorrentes.sort(key=lambda x: x["preco"])
+    
+    # Menor farmácia concorrente direta (sem anomalia de pack)
+    farmacias = [c for c in concorrentes if c["is_farmacia"] and not c["is_anomalo"]]
+    if not farmacias:
+        farmacias = [c for c in concorrentes if c["is_farmacia"]]
+    menor_farmacia = farmacias[0] if farmacias else None
+
+    # Menor geral
     menor_concorrente = concorrentes[0] if concorrentes else None
+    
+    # Menor concorrente para balanço (prioriza rede física de farmácia)
+    ref_conc = menor_farmacia if menor_farmacia else menor_concorrente
 
     # Status de competitividade
     status = "SEM_CONCORRENTE"
     diff_pct = None
     diff_rs = None
 
-    if nosso_preco and menor_concorrente:
-        menor_p = menor_concorrente["preco"]
+    if nosso_preco and ref_conc:
+        menor_p = ref_conc["preco"]
         diff_rs = round(nosso_preco - menor_p, 2)
         diff_pct = round(((nosso_preco / menor_p) - 1.0) * 100.0, 1)
 
@@ -173,13 +210,74 @@ def parse_item_pricing(item):
         "nosso_preco": nosso_preco,
         "nosso_disponivel": nosso_disp,
         "total_concorrentes": len(concorrentes),
-        "menor_concorrente_rede": menor_concorrente["rede"] if menor_concorrente else None,
-        "menor_concorrente_preco": menor_concorrente["preco"] if menor_concorrente else None,
+        "menor_concorrente_rede": ref_conc["rede_nome"] if ref_conc else (menor_concorrente["rede"] if menor_concorrente else None),
+        "menor_concorrente_preco": ref_conc["preco"] if ref_conc else (menor_concorrente["preco"] if menor_concorrente else None),
+        "menor_farmacia_rede": menor_farmacia["rede_nome"] if menor_farmacia else None,
+        "menor_farmacia_preco": menor_farmacia["preco"] if menor_farmacia else None,
         "spread_pct": diff_pct,
         "spread_rs": diff_rs,
         "status": status,
+        "anomalia_pack": bool(ref_conc and ref_conc.get("is_anomalo")),
         "concorrentes": concorrentes[:6]
     }
+
+
+def calculate_competitor_loss_ranking(items_by_ref):
+    """
+    Calcula para qual concorrente mais estamos perdendo faturamento/margem.
+    Agrupa os produtos monitorados onde a São João está mais cara.
+    """
+    ranking_map = {}
+    
+    for k, item in items_by_ref.items():
+        if not isinstance(item, dict):
+            continue
+        nosso_p = item.get("nosso_preco")
+        concs = item.get("concorrentes", [])
+        if not nosso_p or not concs:
+            continue
+        for c in concs:
+            c_preco = c.get("preco")
+            c_raw = str(c.get("rede", "")).lower()
+            is_farm = c.get("is_farmacia", any(k in c_raw for k in REDE_FARMACIA_MAP))
+            c_rede = c.get("rede_nome") or REDE_FARMACIA_MAP.get(c_raw, "Amazon" if "amazon" in c_raw else c_raw.capitalize())
+            
+            if c_preco and c_preco < nosso_p:
+                diff = round(nosso_p - c_preco, 2)
+                diff_pct = round(((nosso_p / c_preco) - 1.0) * 100.0, 1)
+                
+                # Ignora discrepâncias extremas (>200% de diferença, indício forte de pack/kit incorreto)
+                if diff_pct > 200:
+                    continue
+                    
+                if c_rede not in ranking_map:
+                    ranking_map[c_rede] = {
+                        "rede": c_rede,
+                        "is_farmacia": is_farm,
+                        "skus_mais_baratos": 0,
+                        "impacto_financeiro_estimado_rs": 0.0,
+                        "maior_spread_pct": 0.0,
+                        "exemplos_skus": []
+                    }
+                
+                ranking_map[c_rede]["skus_mais_baratos"] += 1
+                ranking_map[c_rede]["impacto_financeiro_estimado_rs"] += diff
+                if diff_pct > ranking_map[c_rede]["maior_spread_pct"]:
+                    ranking_map[c_rede]["maior_spread_pct"] = diff_pct
+                
+                if len(ranking_map[c_rede]["exemplos_skus"]) < 5:
+                    ranking_map[c_rede]["exemplos_skus"].append({
+                        "sku": item.get("ref_code") or item.get("sku_vtex"),
+                        "titulo": item.get("title") or "Item",
+                        "nosso_preco": nosso_p,
+                        "concorrente_preco": c_preco,
+                        "diff_rs": diff,
+                        "diff_pct": diff_pct
+                    })
+                    
+    ranking_list = list(ranking_map.values())
+    ranking_list.sort(key=lambda x: (x["skus_mais_baratos"], x["impacto_financeiro_estimado_rs"]), reverse=True)
+    return ranking_list
 
 
 def sync_precifica_cache(max_pages=None, target_skus=None):

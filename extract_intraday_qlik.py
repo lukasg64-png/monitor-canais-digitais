@@ -342,6 +342,94 @@ JS_TEMPLATE = """async () => {
                 const totSKU = lSKU.result.qLayout.qHyperCube.qSize.qcy;
                 resData.rowsSKUs = await fetchAllHyperCubeRows(hSKU, Math.min(5000, totSKU), 6, 1500, "SKUs");
 
+                // 11. Estados (UF Filial)
+                const cUF = await send("CreateSessionObject", docHandle, [{
+                    "qInfo": { "qType": "q_uf" },
+                    "qHyperCubeDef": {
+                        "qDimensions": [{ "qDef": { "qFieldDefs": ["UF Filial"] } }],
+                        "qMeasures": [
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                        ],
+                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 10, "qWidth": 4 }],
+                        "qSuppressZero": true
+                    }
+                }]);
+                const hUF = cUF.result.qReturn.qHandle;
+                const lUF = await send("GetLayout", hUF, []);
+                resData.rowsUF = (lUF.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText));
+
+                // 12. Diretorias
+                const cDir = await send("CreateSessionObject", docHandle, [{
+                    "qInfo": { "qType": "q_diretor" },
+                    "qHyperCubeDef": {
+                        "qDimensions": [{ "qDef": { "qFieldDefs": ["Diretor"] } }],
+                        "qMeasures": [
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                        ],
+                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 20, "qWidth": 4 }],
+                        "qSuppressZero": true
+                    }
+                }]);
+                const hDir = cDir.result.qReturn.qHandle;
+                const lDir = await send("GetLayout", hDir, []);
+                resData.rowsDir = (lDir.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText));
+
+                // 13. Coordenações
+                const cCoord = await send("CreateSessionObject", docHandle, [{
+                    "qInfo": { "qType": "q_coord" },
+                    "qHyperCubeDef": {
+                        "qDimensions": [
+                            { "qDef": { "qFieldDefs": ["Coordenador"] } },
+                            { "qDef": { "qFieldDefs": ["UF Filial"] } }
+                        ],
+                        "qMeasures": [
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                        ],
+                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 60, "qWidth": 5 }],
+                        "qSuppressZero": true
+                    }
+                }]);
+                const hCoord = cCoord.result.qReturn.qHandle;
+                const lCoord = await send("GetLayout", hCoord, []);
+                resData.rowsCoord = (lCoord.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText));
+
+                // 14. Filiais (Top Lojas por Faturamento Digital)
+                const cFil = await send("CreateSessionObject", docHandle, [{
+                    "qInfo": { "qType": "q_filiais" },
+                    "qHyperCubeDef": {
+                        "qDimensions": [
+                            { 
+                                "qDef": { 
+                                    "qFieldDefs": ["Filial_ID"],
+                                    "qSortCriterias": [{
+                                        "qSortByExpression": -1,
+                                        "qExpression": { "qv": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida]) + Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` }
+                                    }]
+                                } 
+                            },
+                            { "qDef": { "qFieldDefs": ["Desc_Filial"] } },
+                            { "qDef": { "qFieldDefs": ["UF Filial"] } },
+                            { "qDef": { "qFieldDefs": ["Coordenador"] } }
+                        ],
+                        "qMeasures": [
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                        ],
+                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 250, "qWidth": 7 }],
+                        "qSuppressZero": true
+                    }
+                }]);
+                const hFil = cFil.result.qReturn.qHandle;
+                const lFil = await send("GetLayout", hFil, []);
+                resData.rowsFiliais = (lFil.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText));
+
                 ws.close();
 
                 // 11. Consulta Oficial de Estoque da Rede no Relatório Estoque Final (936a28fb-245f-4f19-b285-420535685c43)
@@ -591,6 +679,7 @@ async def fetch_intraday_data(target_dt=None):
         print(f"   Linhas Hoje: {len(raw_data.get('rowsHoje', []))} | Ontem: {len(raw_data.get('rowsOntem', []))} | D-7: {len(raw_data.get('rowsD7', []))}")
         print(f"   Grupos: {len(raw_data.get('rowsGrupos', []))} | Subgrupos: {len(raw_data.get('rowsSubgrupos', []))}")
         print(f"   Laboratórios: {len(raw_data.get('rowsLabs', []))} | Linhas: {len(raw_data.get('rowsLinhas', []))} | SKUs: {len(raw_data.get('rowsSKUs', []))}")
+        print(f"   Regional: {len(raw_data.get('rowsUF', []))} UFs | {len(raw_data.get('rowsDir', []))} Diretorias | {len(raw_data.get('rowsCoord', []))} Coordenações | {len(raw_data.get('rowsFiliais', []))} Filiais")
         print("=" * 75)
         return raw_data
     finally:

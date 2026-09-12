@@ -282,6 +282,140 @@ def generate_excel_top50(output_data, data_dir):
         print(f"   Aviso ao gerar planilha Excel: {e_excel}")
 
 
+def process_regional_data(raw):
+    """
+    Processa a hierarquia regional de vendas digitais em 4 níveis:
+    1. Estados (UF): RS, SC, PR
+    2. Diretorias Regionais
+    3. Coordenações Distritais
+    4. Filiais: Top 50 Campeãs e Top 50 em Maior Queda vs D-7
+    """
+    rows_uf = raw.get("rowsUF", [])
+    rows_dir = raw.get("rowsDir", [])
+    rows_coord = raw.get("rowsCoord", [])
+    rows_fil = raw.get("rowsFiliais", [])
+
+    tot_hoje_uf = sum(float(r[1] or 0) for r in rows_uf)
+    tot_ontem_uf = sum(float(r[2] or 0) for r in rows_uf)
+    tot_d7_uf = sum(float(r[3] or 0) for r in rows_uf)
+
+    ufs = []
+    for r in rows_uf:
+        uf_name = str(r[0]).strip().upper() if r[0] else "OUTROS"
+        v_hoje = float(r[1] or 0)
+        v_ontem = float(r[2] or 0)
+        v_d7 = float(r[3] or 0)
+        share = round((v_hoje / tot_hoje_uf * 100.0), 1) if tot_hoje_uf > 0 else 0.0
+        gap_d7 = round(v_hoje - v_d7, 2)
+        var_d7 = round(((v_hoje / v_d7) - 1.0) * 100.0, 1) if v_d7 > 0 else 0.0
+        gap_ontem = round(v_hoje - v_ontem, 2)
+        var_ontem = round(((v_hoje / v_ontem) - 1.0) * 100.0, 1) if v_ontem > 0 else 0.0
+        
+        ufs.append({
+            "uf": uf_name,
+            "vendas_hoje": round(v_hoje, 2),
+            "vendas_ontem": round(v_ontem, 2),
+            "vendas_d7": round(v_d7, 2),
+            "share_pct": share,
+            "gap_d7_rs": gap_d7,
+            "var_d7_pct": var_d7,
+            "gap_ontem_rs": gap_ontem,
+            "var_ontem_pct": var_ontem,
+            "pacing_status": "SUPEROU" if gap_d7 >= 0 else ("MODERADO" if var_d7 >= -15 else "CRITICO")
+        })
+    ufs.sort(key=lambda x: x["vendas_hoje"], reverse=True)
+
+    diretorias = []
+    for r in rows_dir:
+        dir_name = str(r[0]).strip() if r[0] else "Sem Diretoria"
+        v_hoje = float(r[1] or 0)
+        v_ontem = float(r[2] or 0)
+        v_d7 = float(r[3] or 0)
+        share = round((v_hoje / tot_hoje_uf * 100.0), 1) if tot_hoje_uf > 0 else 0.0
+        gap_d7 = round(v_hoje - v_d7, 2)
+        var_d7 = round(((v_hoje / v_d7) - 1.0) * 100.0, 1) if v_d7 > 0 else 0.0
+        diretorias.append({
+            "diretor": dir_name,
+            "vendas_hoje": round(v_hoje, 2),
+            "vendas_ontem": round(v_ontem, 2),
+            "vendas_d7": round(v_d7, 2),
+            "share_pct": share,
+            "gap_d7_rs": gap_d7,
+            "var_d7_pct": var_d7
+        })
+    diretorias.sort(key=lambda x: x["vendas_hoje"], reverse=True)
+
+    coordenacoes = []
+    for r in rows_coord:
+        coord_name = str(r[0]).strip() if r[0] else "Sem Coordenação"
+        coord_uf = str(r[1]).strip().upper() if len(r) > 1 and r[1] else "RS"
+        v_hoje = float(r[2] or 0)
+        v_ontem = float(r[3] or 0)
+        v_d7 = float(r[4] or 0)
+        gap_d7 = round(v_hoje - v_d7, 2)
+        var_d7 = round(((v_hoje / v_d7) - 1.0) * 100.0, 1) if v_d7 > 0 else 0.0
+        share_c = round((v_hoje / tot_hoje_uf) * 100.0, 1) if tot_hoje_uf > 0 else 0.0
+        coordenacoes.append({
+            "coordenador": coord_name,
+            "uf": coord_uf,
+            "vendas_hoje": round(v_hoje, 2),
+            "vendas_ontem": round(v_ontem, 2),
+            "vendas_d7": round(v_d7, 2),
+            "share_pct": share_c,
+            "gap_d7_rs": gap_d7,
+            "var_d7_pct": var_d7
+        })
+    coordenacoes.sort(key=lambda x: x["vendas_hoje"], reverse=True)
+
+    filiais_all = []
+    for r in rows_fil:
+        f_id = str(r[0]).strip() if r[0] else ""
+        f_num = f_id.split("|")[-1] if "|" in f_id else f_id
+        f_desc = str(r[1]).strip() if len(r) > 1 and r[1] else f"Filial {f_num}"
+        f_uf = str(r[2]).strip().upper() if len(r) > 2 and r[2] else "RS"
+        f_coord = str(r[3]).strip() if len(r) > 3 and r[3] else ""
+        v_hoje = float(r[4] or 0) if len(r) > 4 else 0.0
+        v_ontem = float(r[5] or 0) if len(r) > 5 else 0.0
+        v_d7 = float(r[6] or 0) if len(r) > 6 else 0.0
+        gap_d7 = round(v_hoje - v_d7, 2)
+        var_d7 = round(((v_hoje / v_d7) - 1.0) * 100.0, 1) if v_d7 > 0 else 0.0
+        share_f = round((v_hoje / tot_hoje_uf) * 100.0, 2) if tot_hoje_uf > 0 else 0.0
+        nome_formatado = f"Filial {f_num} — {f_desc}" if f_desc and not f_desc.startswith("Filial") else f_desc
+
+        filiais_all.append({
+            "filial_id": f_num,
+            "raw_id": f_id,
+            "nome": nome_formatado,
+            "desc_filial": f_desc,
+            "uf": f_uf,
+            "coordenador": f_coord,
+            "vendas_hoje": round(v_hoje, 2),
+            "vendas_ontem": round(v_ontem, 2),
+            "vendas_d7": round(v_d7, 2),
+            "share_pct": share_f,
+            "gap_d7_rs": gap_d7,
+            "var_d7_pct": var_d7
+        })
+
+    top_campeas = sorted(filiais_all, key=lambda x: x["vendas_hoje"], reverse=True)[:50]
+    top_quedas = sorted([f for f in filiais_all if f["vendas_d7"] > 0], key=lambda x: x["gap_d7_rs"])[:50]
+
+    return {
+        "totais": {
+            "vendas_hoje": round(tot_hoje_uf, 2),
+            "vendas_ontem": round(tot_ontem_uf, 2),
+            "vendas_d7": round(tot_d7_uf, 2),
+            "gap_d7_rs": round(tot_hoje_uf - tot_d7_uf, 2),
+            "var_d7_pct": round(((tot_hoje_uf / tot_d7_uf) - 1.0) * 100.0, 1) if tot_d7_uf > 0 else 0.0
+        },
+        "ufs": ufs,
+        "diretorias": diretorias,
+        "coordenacoes": coordenacoes,
+        "filiais_campeas": top_campeas,
+        "filiais_quedas": top_quedas
+    }
+
+
 def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, base_dir=BASE_DIR, excel_meta_path=EXCEL_META):
     """
     Gera o relatório oficial de fechamento consolidado (23:59) para o dia anterior (D-1),
@@ -670,7 +804,8 @@ def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, b
         "laboratorios_detratores": labs_detratores,
         "concorrentes_resumo": concorrentes_resumo,
         "diagnostico_executivo": diagnostico_executivo,
-        "whatsapp_summary": whatsapp_msg
+        "whatsapp_summary": whatsapp_msg,
+        "regional": process_regional_data(raw)
     }
 
     # Salva em data/fechamento_ontem.json
@@ -1777,6 +1912,45 @@ def process_analytics():
         except Exception:
             historico_fechamentos = []
 
+    # 8.5 Processamento de Inteligência Regional e Concorrência
+    regional_data = process_regional_data(raw)
+
+    try:
+        from extract_precifica import calculate_competitor_loss_ranking
+        concorrentes_ranking = calculate_competitor_loss_ranking(precifica_items)
+    except Exception as e_conc:
+        print(f"   Aviso ao calcular ranking de concorrentes: {e_conc}")
+        concorrentes_ranking = []
+
+    # Alertas Comerciais Executivos adicionais em radar_alertas
+    uf_maior_queda = min(regional_data["ufs"], key=lambda x: x["gap_d7_rs"]) if regional_data.get("ufs") else None
+    coord_maior_queda = min(regional_data["coordenacoes"], key=lambda x: x["gap_d7_rs"]) if regional_data.get("coordenacoes") else None
+    top_concorrente = concorrentes_ranking[0] if concorrentes_ranking else None
+
+    if uf_maior_queda and coord_maior_queda:
+        radar_alertas["alerta_regional"] = {
+            "titulo": "🌍 Alerta Regional (Capilaridade Geográfica)",
+            "estado_critico": uf_maior_queda["uf"],
+            "gap_estado_rs": uf_maior_queda["gap_d7_rs"],
+            "var_estado_pct": uf_maior_queda["var_d7_pct"],
+            "coordenacao_critica": coord_maior_queda["coordenador"],
+            "coordenacao_uf": coord_maior_queda["uf"],
+            "gap_coordenacao_rs": coord_maior_queda["gap_d7_rs"],
+            "var_coordenacao_pct": coord_maior_queda["var_d7_pct"],
+            "texto": f"O estado {uf_maior_queda['uf']} concentra o maior GAP vs D-7 (R$ {uf_maior_queda['gap_d7_rs']:,.2f}, {uf_maior_queda['var_d7_pct']}%). Na coordenação de {coord_maior_queda['coordenador']} ({coord_maior_queda['uf']}), o recuo foi de R$ {coord_maior_queda['gap_d7_rs']:,.2f}."
+        }
+
+    if top_concorrente:
+        radar_alertas["alerta_concorrencia"] = {
+            "titulo": "🎯 Alerta de Concorrência (Maior Agressividade de Preço)",
+            "principal_concorrente": top_concorrente["rede"],
+            "is_farmacia": top_concorrente["is_farmacia"],
+            "skus_mais_baratos": top_concorrente["skus_mais_baratos"],
+            "perda_potencial_rs": round(top_concorrente["impacto_financeiro_estimado_rs"], 2),
+            "maior_spread_pct": top_concorrente["maior_spread_pct"],
+            "texto": f"A rede {top_concorrente['rede']} lidera a pressão de preço com {top_concorrente['skus_mais_baratos']:,} SKUs mais baratos e R$ {top_concorrente['impacto_financeiro_estimado_rs']:,.2f} em perda potencial estimada."
+        }
+
     # Compilação Final
     output_data = {
         "metadata": {
@@ -1800,6 +1974,8 @@ def process_analytics():
         "estoque_impacto": estoque_impacto,
         "radar_alertas": radar_alertas,
         "precifica_catalogo_full": precifica_catalogo_full,
+        "concorrentes_ranking": concorrentes_ranking,
+        "regional": regional_data,
         "mix_canais": mix_canais,
         "horario_nobre": horario_nobre,
         "hourly_curve": hourly_curve_table,
@@ -1857,22 +2033,7 @@ def process_analytics():
     # Gera automaticamente a planilha Excel formatada com os Top 50 Detratores
     generate_excel_top50(output_data, DATA_DIR)
 
-    # Injeta dados diretamente no index.html para funcionamento instantâneo em qualquer protocolo (file:// e http://)
-    index_file = os.path.join(BASE_DIR, "index.html")
-    if os.path.exists(index_file):
-        try:
-            with open(index_file, "r", encoding="utf-8") as f:
-                html_content = f.read()
-            pattern = r'(<script id="embedded-data">)[\s\S]*?(<\/script>)'
-            json_str = json.dumps(output_data, ensure_ascii=False)
-            if re.search(pattern, html_content):
-                updated_html = re.sub(pattern, lambda m: f'{m.group(1)}\n  window.INTRADAY_DATA = {json_str};\n  {m.group(2)}', html_content)
-                with open(index_file, "w", encoding="utf-8") as f:
-                    f.write(updated_html)
-                print(f"   Arquivo HTML atualizado com dados embutidos: {index_file}")
-        except Exception as e_html:
-            print(f"   Aviso ao embutir dados no HTML: {e_html}")
-
+    # Dados são salvos em intraday_monitor.json e intraday_data.js para carregamento ultra-rápido (<50ms)
     print(f"\n[OK] PROCESSAMENTO CONCLUÍDO COM SUCESSO!")
     print(f"   Arquivo JSON: {OUTPUT_FILE}")
     print(f"   Arquivo JS:   {OUTPUT_JS}")
