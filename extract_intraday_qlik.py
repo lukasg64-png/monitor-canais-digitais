@@ -33,17 +33,29 @@ def is_pid_running(pid):
         return False
 
 def acquire_lock(timeout_sec=300):
-    if os.path.exists(LOCK_FILE):
-        try:
-            with open(LOCK_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            lock_pid = data.get('pid')
-            lock_time = data.get('time', 0)
-            if time.time() - lock_time < timeout_sec and lock_pid and is_pid_running(lock_pid):
+    for _ in range(6):
+        if os.path.exists(LOCK_FILE):
+            try:
+                with open(LOCK_FILE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                lock_pid = data.get('pid')
+                lock_time = data.get('time', 0)
+                if time.time() - lock_time < timeout_sec and lock_pid and is_pid_running(lock_pid):
+                    time.sleep(2.5)
+                    continue
+            except Exception:
+                pass
+        break
+    else:
+        if os.path.exists(LOCK_FILE):
+            try:
+                with open(LOCK_FILE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                lock_pid = data.get('pid')
                 print(f"⚠️ Sincronização já em execução no processo PID {lock_pid}. Ignorando chamada concorrente.")
                 return False
-        except Exception:
-            pass
+            except Exception:
+                pass
     try:
         with open(LOCK_FILE, 'w', encoding='utf-8') as f:
             json.dump({'pid': os.getpid(), 'time': time.time()}, f)
@@ -74,6 +86,8 @@ JS_TEMPLATE = """async () => {
     const CHANNELS = "%%DIGITAL_CHANNELS%%";
 
     return new Promise((resolve, reject) => {
+        let isResolved = false;
+        console.log('[WS] Iniciando conexao WebSocket:', wsUrl);
         const ws = new WebSocket(wsUrl);
         let msgId = 1;
         const pending = {};
@@ -81,39 +95,47 @@ JS_TEMPLATE = """async () => {
         function send(method, handle, params) {
             return new Promise((res, rej) => {
                 const id = msgId++;
-                pending[id] = { res, rej };
+                pending[id] = { res, rej, method, t0: performance.now() };
+                console.log(`[WS Send] #${id} ${method} handle=${handle}`);
                 ws.send(JSON.stringify({ "jsonrpc": "2.0", "id": id, "method": method, "handle": handle, "params": params }));
             });
         }
 
-        async function fetchAllHyperCubeRows(objHandle, totalRows, qWidth, pageSize) {
+        async function fetchAllHyperCubeRows(objHandle, totalRows, qWidth, pageSize, name = "Cube") {
             let rows = [];
             let top = 0;
+            const t0 = performance.now();
+            const effPageSize = Math.min(pageSize, 1500);
             while (top < totalRows) {
-                const height = Math.min(pageSize, totalRows - top);
+                const height = Math.min(effPageSize, totalRows - top);
                 const pageRes = await send("GetHyperCubeData", objHandle, ["/qHyperCubeDef", [{ "qTop": top, "qLeft": 0, "qHeight": height, "qWidth": qWidth }]]);
                 const matrix = pageRes.result.qDataPages[0]?.qMatrix || [];
                 if (matrix.length === 0) break;
                 matrix.forEach(r => rows.push(r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText)));
                 top += matrix.length;
             }
+            console.log(`[Qlik] ${name}: ${rows.length}/${totalRows} em ${(performance.now() - t0).toFixed(0)}ms`);
             return rows;
         }
 
         ws.onopen = async () => {
             try {
+                console.log('[WS] Aberto com sucesso! Chamando OpenDoc...');
                 const openRes = await send("OpenDoc", -1, [appId]);
                 const docHandle = openRes.result.qReturn.qHandle;
+                console.log(`[WS] OpenDoc conectado, docHandle=${docHandle}`);
                 const resData = {};
 
                 // 1. Timestamp mais recente do dia atual
-                const eMaxHora = await send("Evaluate", docHandle, ["MaxString({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}>} Hora)"]);
-                const eMaxDataHora = await send("Evaluate", docHandle, ["MaxString({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}>} [Data e Hora])"]);
-                const eMaxData = await send("Evaluate", docHandle, ["MaxString({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}>} Data)"]);
+                const evalDataHora = await send("Evaluate", docHandle, [`MaxString({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} DataHora)`]);
+                resData.maxDataHora = evalDataHora.result.qReturn;
+
+                const evalHora = await send("Evaluate", docHandle, [`Time(Frac(Max({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} Hora)), 'hh:mm')`]);
+                resData.maxHora = evalHora.result.qReturn;
+
+                const evalDate = await send("Evaluate", docHandle, [`Date(Floor(Max({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} Hora)), 'DD/MM/YYYY')`]);
+                resData.maxDate = evalDate.result.qReturn;
                 
-                resData.maxHora = (eMaxHora.result?.qReturn && eMaxHora.result.qReturn !== '-') ? eMaxHora.result.qReturn : "%%DEFAULT_HORA%%";
-                resData.maxDataHora = (eMaxDataHora.result?.qReturn && eMaxDataHora.result.qReturn !== '-') ? eMaxDataHora.result.qReturn : "%%DEFAULT_DATA_HORA%%";
-                resData.dataHoje = (eMaxData.result?.qReturn && eMaxData.result.qReturn !== '-') ? eMaxData.result.qReturn : "%%DEFAULT_DATA%%";
                 resData.diaHoje = "%%DIA_HOJE%%";
                 resData.diaOntem = "%%DIA_ONTEM%%";
                 resData.diaD7 = "%%DIA_D7%%";
@@ -133,14 +155,14 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
                             { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
                         ],
-                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 2500, "qWidth": 4 }],
+                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
                 const hH = cH.result.qReturn.qHandle;
                 const lH = await send("GetLayout", hH, []);
                 const totH = lH.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsHoje = await fetchAllHyperCubeRows(hH, totH, 4, 2500);
+                resData.rowsHoje = await fetchAllHyperCubeRows(hH, totH, 4, 1500, "Hoje");
 
                 // 3. Vendas Ontem (D-1) - Canal x Hora
                 const cO = await send("CreateSessionObject", docHandle, [{
@@ -154,14 +176,14 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
                             { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
                         ],
-                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 2500, "qWidth": 4 }],
+                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
                 const hO = cO.result.qReturn.qHandle;
                 const lO = await send("GetLayout", hO, []);
                 const totO = lO.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsOntem = await fetchAllHyperCubeRows(hO, totO, 4, 2500);
+                resData.rowsOntem = await fetchAllHyperCubeRows(hO, totO, 4, 1500, "Ontem");
 
                 // 4. Vendas D-7 - Canal x Hora
                 const c7 = await send("CreateSessionObject", docHandle, [{
@@ -175,14 +197,14 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
                             { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
                         ],
-                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 2500, "qWidth": 4 }],
+                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
                 const h7 = c7.result.qReturn.qHandle;
                 const l7 = await send("GetLayout", h7, []);
                 const tot7 = l7.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsD7 = await fetchAllHyperCubeRows(h7, tot7, 4, 2500);
+                resData.rowsD7 = await fetchAllHyperCubeRows(h7, tot7, 4, 1500, "D7");
 
                 // 5. Histórico por Dia e Canal (Mês Atual e Mês Anterior para Janela Móvel 7D)
                 const cHist = await send("CreateSessionObject", docHandle, [{
@@ -245,7 +267,7 @@ JS_TEMPLATE = """async () => {
                 const hSub = cSub.result.qReturn.qHandle;
                 const lSub = await send("GetLayout", hSub, []);
                 const totSub = lSub.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsSubgrupos = await fetchAllHyperCubeRows(hSub, totSub, 5, 1500);
+                resData.rowsSubgrupos = await fetchAllHyperCubeRows(hSub, totSub, 5, 1500, "Subgrupos");
 
                 // 8. Fornecedores / Laboratórios (Hoje vs Ontem vs D-7)
                 const cLabs = await send("CreateSessionObject", docHandle, [{
@@ -266,7 +288,7 @@ JS_TEMPLATE = """async () => {
                 const hLabs = cLabs.result.qReturn.qHandle;
                 const lLabs = await send("GetLayout", hLabs, []);
                 const totLabs = lLabs.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsLabs = await fetchAllHyperCubeRows(hLabs, totLabs, 4, 1500);
+                resData.rowsLabs = await fetchAllHyperCubeRows(hLabs, totLabs, 4, 1500, "Labs");
 
                 // 9. Linhas de Produtos (Hoje vs Ontem vs D-7)
                 const cLin = await send("CreateSessionObject", docHandle, [{
@@ -287,7 +309,7 @@ JS_TEMPLATE = """async () => {
                 const hLin = cLin.result.qReturn.qHandle;
                 const lLin = await send("GetLayout", hLin, []);
                 const totLin = lLin.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsLinhas = await fetchAllHyperCubeRows(hLin, totLin, 4, 1500);
+                resData.rowsLinhas = await fetchAllHyperCubeRows(hLin, totLin, 4, 1500, "Linhas");
 
                 // 10. Top SKUs / Itens (Hoje vs Ontem vs D-7 + Saldo de Estoque)
                 const cSKU = await send("CreateSessionObject", docHandle, [{
@@ -318,7 +340,7 @@ JS_TEMPLATE = """async () => {
                 const hSKU = cSKU.result.qReturn.qHandle;
                 const lSKU = await send("GetLayout", hSKU, []);
                 const totSKU = lSKU.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsSKUs = await fetchAllHyperCubeRows(hSKU, Math.min(5000, totSKU), 6, 1500);
+                resData.rowsSKUs = await fetchAllHyperCubeRows(hSKU, Math.min(5000, totSKU), 6, 1500, "SKUs");
 
                 ws.close();
 
@@ -398,8 +420,10 @@ JS_TEMPLATE = """async () => {
                     resData.stockMap = {};
                 }
 
+                isResolved = true;
                 resolve(resData);
             } catch (e) {
+                console.error("[Qlik Error in onopen]", e);
                 ws.close();
                 reject(new Error(e.message || String(e)));
             }
@@ -420,17 +444,39 @@ JS_TEMPLATE = """async () => {
                 return;
             }
             if (msg.id && pending[msg.id]) {
-                const { res, rej } = pending[msg.id];
+                const { res, rej, method, t0 } = pending[msg.id];
                 delete pending[msg.id];
-                if (msg.error) rej(new Error(JSON.stringify(msg.error)));
-                else res(msg);
+                const dt = (performance.now() - t0).toFixed(0);
+                if (msg.error) {
+                    console.error(`[WS Err] #${msg.id} ${method} em ${dt}ms:`, JSON.stringify(msg.error));
+                    rej(new Error(JSON.stringify(msg.error)));
+                } else {
+                    console.log(`[WS OK] #${msg.id} ${method} em ${dt}ms`);
+                    res(msg);
+                }
+            } else if (msg.method) {
+                console.log(`[WS Push] ${msg.method}`);
+            }
+        };
+
+        ws.onerror = (e) => {
+            console.error("[Qlik WS Error Event]", e);
+        };
+
+        ws.onclose = (e) => {
+            console.log(`[Qlik WS Close Event] code=${e.code} reason=${e.reason}`);
+            if (!isResolved && e.code !== 1000) {
+                reject(new Error(`WebSocket fechado prematuramente: code=${e.code} reason=${e.reason}`));
             }
         };
 
         setTimeout(() => {
             try { ws.close(); } catch(e) {}
-            resolve(null);
-        }, 120000);
+            if (!isResolved) {
+                console.warn("[Qlik WS Timeout] Limite de 600s atingido no WebSocket.");
+                resolve(null);
+            }
+        }, 600000);
     });
 };"""
 
@@ -460,19 +506,21 @@ def compute_date_replacements(target_dt=None):
         "%%ANO_MES_ANTERIOR%%": f"{dt_mes_ant.year}-{dt_mes_ant.month:02d}"
     }
 
-def check_qlik_connection(timeout_sec=4.0):
+def check_qlik_connection(timeout_sec=10.0):
     """Verifica se o Qlik Sense Enterprise responde antes de instanciar o navegador"""
     import urllib.request
     import ssl
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
-    test_url = "https://sense.farmaciassaojoao.com.br/hub/"
+    test_url = SHEET_URL
     try:
         req = urllib.request.Request(test_url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, context=ctx, timeout=timeout_sec) as r:
             return True, "OK"
     except Exception as e:
+        if "403" in str(e) or "401" in str(e):
+            return True, "OK"
         return False, str(e)
 
 async def fetch_intraday_data(target_dt=None):
@@ -494,7 +542,7 @@ async def fetch_intraday_data(target_dt=None):
         print("=" * 75)
 
         print("0/4 Verificando conectividade de rede com Qlik Sense...", flush=True)
-        is_online, err_msg = check_qlik_connection(timeout_sec=4.0)
+        is_online, err_msg = check_qlik_connection(timeout_sec=10.0)
         if not is_online:
             print(f"❌ AVISO CRÍTICO: Não foi possível conectar a {QLIK_URL} ({err_msg})", flush=True)
             print("💡 DICA: Se estiver fora do escritório, conecte a VPN corporativa FSJ-VPN (FortiClient)!", flush=True)
@@ -512,7 +560,8 @@ async def fetch_intraday_data(target_dt=None):
                     viewport={'width': 1920, 'height': 1080}
                 )
                 page = await context.new_page()
-                await page.goto(SHEET_URL, timeout=60000)
+                page.on("console", lambda msg: print(f"   [Qlik] {msg.text}", flush=True))
+                await page.goto(SHEET_URL, timeout=90000)
                 try:
                     await page.wait_for_selector('.qv-panel-sheet', timeout=30000)
                 except Exception:
@@ -548,4 +597,11 @@ async def fetch_intraday_data(target_dt=None):
         release_lock()
 
 if __name__ == '__main__':
-    asyncio.run(fetch_intraday_data())
+    res = asyncio.run(fetch_intraday_data())
+    if res is None:
+        if os.path.exists(RAW_FILE) and (time.time() - os.path.getmtime(RAW_FILE) < 180):
+            print("ℹ️ Dados brutos atualizados recentemente por processo concorrente. Prosseguindo.")
+            sys.exit(0)
+        else:
+            print("❌ Extração não pôde ser executada (bloqueio concorrente ou erro). Abortando ciclo.")
+            sys.exit(1)

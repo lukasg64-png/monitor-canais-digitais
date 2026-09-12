@@ -19,7 +19,7 @@ import sys
 if sys.stdout is None or sys.stderr is None:
     _log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
     os.makedirs(_log_dir, exist_ok=True)
-    _log_file = open(os.path.join(_log_dir, 'server_daemon.log'), 'a', encoding='utf-8')
+    _log_file = open(os.path.join(_log_dir, 'server_daemon.log'), 'a', encoding='utf-8', buffering=1)
     sys.stdout = _log_file
     sys.stderr = _log_file
 
@@ -123,7 +123,7 @@ def run_sync():
             text=True,
             encoding="utf-8",
             errors="replace",
-            timeout=120,
+            timeout=660,
             creationflags=CREATE_NO_WINDOW
         )
         
