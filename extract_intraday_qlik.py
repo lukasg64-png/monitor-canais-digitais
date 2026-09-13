@@ -428,7 +428,8 @@ JS_TEMPLATE = """async () => {
                 }]);
                 const hFil = cFil.result.qReturn.qHandle;
                 const lFil = await send("GetLayout", hFil, []);
-                resData.rowsFiliais = (lFil.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText));
+                const totFil = lFil.result.qLayout.qHyperCube.qSize.qcy;
+                resData.rowsFiliais = await fetchAllHyperCubeRows(hFil, totFil, 7, 1000, "Filiais");
 
                 ws.close();
 

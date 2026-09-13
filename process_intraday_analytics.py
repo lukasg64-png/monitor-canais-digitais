@@ -282,29 +282,77 @@ def generate_excel_top50(output_data, data_dir):
         print(f"   Aviso ao gerar planilha Excel: {e_excel}")
 
 
+def resolve_city_name(fdesc):
+    clean = str(fdesc or "").strip()
+    if not clean:
+        return "Não Identificado"
+    if clean.upper().startswith("PF -") or clean.upper().startswith("PF-"):
+        return "Passo Fundo"
+    if clean.upper().startswith("POA -") or clean.upper().startswith("POA-"):
+        return "Porto Alegre"
+    
+    city_overrides = {
+        "PF": "Passo Fundo", "POA": "Porto Alegre", "PORTO ALEGRE": "Porto Alegre",
+        "CAXIAS": "Caxias do Sul", "CAXIAS DO SUL": "Caxias do Sul", "PELOTAS": "Pelotas",
+        "SANTA MARIA": "Santa Maria", "CANOAS": "Canoas", "GRAVATAI": "Gravataí",
+        "VIAMAO": "Viamão", "NOVO HAMBURGO": "Novo Hamburgo", "SAO LEOPOLDO": "São Leopoldo",
+        "RIO GRANDE": "Rio Grande", "ALVORADA": "Alvorada", "PASSO FUNDO": "Passo Fundo",
+        "URUGUAIANA": "Uruguaiana", "SANTA CRUZ": "Santa Cruz do Sul", "BENTO": "Bento Gonçalves",
+        "BENTO GONCALVES": "Bento Gonçalves", "BAGÉ": "Bagé", "BAGE": "Bagé",
+        "ERECHIM": "Erechim", "IJUI": "Ijuí", "SANTANA DO LIVRAMENTO": "Santana do Livramento",
+        "LIVRAMENTO": "Santana do Livramento", "GUAIBA": "Guaíba", "CACHOEIRINHA": "Cachoeirinha",
+        "SAPUCAIA": "Sapucaia do Sul", "FREDERICO": "Frederico Westphalen",
+        "FLORES DA CUNHA": "Flores da Cunha", "TRES PASSOS": "Três Passos",
+        "SANTA ROSA": "Santa Rosa", "SANTO ANGELO": "Santo Ângelo"
+    }
+    import re
+    base = re.sub(r"\s+\d+.*$", "", clean).strip()
+    base = re.sub(r"\s+(?:Dark Store|Matriz|Hiper|Super|Centro).*$", "", base, flags=re.I).strip()
+    upper_base = base.upper().replace("Á", "A").replace("É", "E").replace("Í", "I").replace("Ó", "O").replace("Ú", "U").replace("Ç", "C")
+    for k, v in city_overrides.items():
+        if upper_base == k or upper_base.startswith(k + " "):
+            return v
+    return base.title()
+
+
 def process_regional_data(raw):
     """
-    Processa a hierarquia regional de vendas digitais em 4 níveis:
-    1. Estados (UF): RS, SC, PR
+    Processa a inteligência geográfica de vendas digitais em 5 níveis analíticos:
+    1. Estados (UF): RS (foco primordial), SC e PR
     2. Diretorias Regionais
     3. Coordenações Distritais
-    4. Filiais: Top 50 Campeãs e Top 50 em Maior Queda vs D-7
+    4. Municípios / Polos Comerciais (faturamento, lojas ativas e centroides)
+    5. Filiais Físicas (com latitude, longitude reais do Qlik Sense e status comercial)
     """
     rows_uf = raw.get("rowsUF", [])
     rows_dir = raw.get("rowsDir", [])
     rows_coord = raw.get("rowsCoord", [])
     rows_fil = raw.get("rowsFiliais", [])
 
+    # Carrega Dicionário Mestre de Geolocalização (Lat/Lon/Município)
+    lojas_geo_file = os.path.join(DATA_DIR, "lojas_master_geo.json")
+    lojas_master = {}
+    if os.path.exists(lojas_geo_file):
+        try:
+            with open(lojas_geo_file, "r", encoding="utf-8") as f:
+                lojas_master = json.load(f)
+        except Exception:
+            lojas_master = {}
+
     tot_hoje_uf = sum(float(r[1] or 0) for r in rows_uf)
     tot_ontem_uf = sum(float(r[2] or 0) for r in rows_uf)
     tot_d7_uf = sum(float(r[3] or 0) for r in rows_uf)
 
+    # 1. UFs
     ufs = []
+    tot_rs_hoje = 0.0
     for r in rows_uf:
         uf_name = str(r[0]).strip().upper() if r[0] else "OUTROS"
         v_hoje = float(r[1] or 0)
         v_ontem = float(r[2] or 0)
         v_d7 = float(r[3] or 0)
+        if uf_name == "RS":
+            tot_rs_hoje = v_hoje
         share = round((v_hoje / tot_hoje_uf * 100.0), 1) if tot_hoje_uf > 0 else 0.0
         gap_d7 = round(v_hoje - v_d7, 2)
         var_d7 = round(((v_hoje / v_d7) - 1.0) * 100.0, 1) if v_d7 > 0 else 0.0
@@ -325,6 +373,7 @@ def process_regional_data(raw):
         })
     ufs.sort(key=lambda x: x["vendas_hoje"], reverse=True)
 
+    # 2. Diretorias
     diretorias = []
     for r in rows_dir:
         dir_name = str(r[0]).strip() if r[0] else "Sem Diretoria"
@@ -341,10 +390,12 @@ def process_regional_data(raw):
             "vendas_d7": round(v_d7, 2),
             "share_pct": share,
             "gap_d7_rs": gap_d7,
-            "var_d7_pct": var_d7
+            "var_d7_pct": var_d7,
+            "pacing_status": "SUPEROU" if gap_d7 >= 0 else ("MODERADO" if var_d7 >= -15 else "CRITICO")
         })
     diretorias.sort(key=lambda x: x["vendas_hoje"], reverse=True)
 
+    # 3. Coordenações
     coordenacoes = []
     for r in rows_coord:
         coord_name = str(r[0]).strip() if r[0] else "Sem Coordenação"
@@ -363,11 +414,17 @@ def process_regional_data(raw):
             "vendas_d7": round(v_d7, 2),
             "share_pct": share_c,
             "gap_d7_rs": gap_d7,
-            "var_d7_pct": var_d7
+            "var_d7_pct": var_d7,
+            "pacing_status": "SUPEROU" if gap_d7 >= 0 else ("MODERADO" if var_d7 >= -15 else "CRITICO")
         })
     coordenacoes.sort(key=lambda x: x["vendas_hoje"], reverse=True)
 
+    # 4. Filiais & Enriquecimento Geográfico
     filiais_all = []
+    municipios_map = {}
+    lojas_com_geo = 0
+    lojas_superando = 0
+
     for r in rows_fil:
         f_id = str(r[0]).strip() if r[0] else ""
         f_num = f_id.split("|")[-1] if "|" in f_id else f_id
@@ -382,23 +439,121 @@ def process_regional_data(raw):
         share_f = round((v_hoje / tot_hoje_uf) * 100.0, 2) if tot_hoje_uf > 0 else 0.0
         nome_formatado = f"Filial {f_num} — {f_desc}" if f_desc and not f_desc.startswith("Filial") else f_desc
 
-        filiais_all.append({
+        status = "SUPEROU" if gap_d7 >= 0 else ("MODERADO" if var_d7 >= -15 else "CRITICO")
+        if gap_d7 >= 0:
+            lojas_superando += 1
+
+        # Enriquecer com Dicionário Mestre de Lojas
+        geo_info = lojas_master.get(f_num, {})
+        cidade = geo_info.get("cidade") or resolve_city_name(f_desc)
+        lat = geo_info.get("latitude")
+        lon = geo_info.get("longitude")
+        diretor = geo_info.get("diretor") or ""
+        if not f_coord and geo_info.get("coordenador"):
+            f_coord = geo_info.get("coordenador")
+        if not f_uf and geo_info.get("uf"):
+            f_uf = geo_info.get("uf")
+
+        if lat is not None and lon is not None:
+            lojas_com_geo += 1
+
+        filial_item = {
             "filial_id": f_num,
             "raw_id": f_id,
             "nome": nome_formatado,
             "desc_filial": f_desc,
+            "cidade": cidade,
             "uf": f_uf,
+            "diretor": diretor,
             "coordenador": f_coord,
+            "latitude": lat,
+            "longitude": lon,
             "vendas_hoje": round(v_hoje, 2),
             "vendas_ontem": round(v_ontem, 2),
             "vendas_d7": round(v_d7, 2),
             "share_pct": share_f,
             "gap_d7_rs": gap_d7,
-            "var_d7_pct": var_d7
+            "var_d7_pct": var_d7,
+            "pacing_status": status
+        }
+        filiais_all.append(filial_item)
+
+        # Agrupamento por Município
+        if cidade not in municipios_map:
+            municipios_map[cidade] = {
+                "cidade": cidade,
+                "uf": f_uf,
+                "total_lojas": 0,
+                "vendas_hoje": 0.0,
+                "vendas_ontem": 0.0,
+                "vendas_d7": 0.0,
+                "lats": [],
+                "lons": []
+            }
+        m = municipios_map[cidade]
+        m["total_lojas"] += 1
+        m["vendas_hoje"] += v_hoje
+        m["vendas_ontem"] += v_ontem
+        m["vendas_d7"] += v_d7
+        if lat is not None:
+            m["lats"].append(lat)
+        if lon is not None:
+            m["lons"].append(lon)
+
+    # Consolidação dos Municípios
+    municipios_list = []
+    for cid, m in municipios_map.items():
+        v_h = m["vendas_hoje"]
+        v_o = m["vendas_ontem"]
+        v_7 = m["vendas_d7"]
+        gap = round(v_h - v_7, 2)
+        var_pct = round(((v_h / v_7) - 1.0) * 100.0, 1) if v_7 > 0 else 0.0
+        sh = round((v_h / tot_hoje_uf) * 100.0, 2) if tot_hoje_uf > 0 else 0.0
+        center_lat = round(sum(m["lats"]) / len(m["lats"]), 5) if m["lats"] else None
+        center_lon = round(sum(m["lons"]) / len(m["lons"]), 5) if m["lons"] else None
+
+        municipios_list.append({
+            "cidade": cid,
+            "uf": m["uf"],
+            "total_lojas": m["total_lojas"],
+            "vendas_hoje": round(v_h, 2),
+            "vendas_ontem": round(v_o, 2),
+            "vendas_d7": round(v_7, 2),
+            "gap_d7_rs": gap,
+            "var_d7_pct": var_pct,
+            "share_pct": sh,
+            "center_lat": center_lat,
+            "center_lon": center_lon,
+            "pacing_status": "SUPEROU" if gap >= 0 else ("MODERADO" if var_pct >= -15 else "CRITICO")
         })
+    municipios_list.sort(key=lambda x: x["vendas_hoje"], reverse=True)
 
     top_campeas = sorted(filiais_all, key=lambda x: x["vendas_hoje"], reverse=True)[:50]
     top_quedas = sorted([f for f in filiais_all if f["vendas_d7"] > 0], key=lambda x: x["gap_d7_rs"])[:50]
+    top_municipios = municipios_list[:50]
+
+    # Array leve otimizado para o mapa Leaflet
+    lojas_geo_map = []
+    for f in filiais_all:
+        if f["latitude"] is not None and f["longitude"] is not None:
+            lojas_geo_map.append([
+                f["filial_id"],
+                f["nome"],
+                f["cidade"],
+                f["uf"],
+                f["latitude"],
+                f["longitude"],
+                f["vendas_hoje"],
+                f["vendas_d7"],
+                f["gap_d7_rs"],
+                f["var_d7_pct"],
+                f["pacing_status"],
+                f["diretor"],
+                f["coordenador"]
+            ])
+
+    pct_superando = round((lojas_superando / len(filiais_all) * 100.0), 1) if filiais_all else 0.0
+    share_rs_pct = round((tot_rs_hoje / tot_hoje_uf * 100.0), 1) if tot_hoje_uf > 0 else 0.0
 
     return {
         "totais": {
@@ -406,13 +561,24 @@ def process_regional_data(raw):
             "vendas_ontem": round(tot_ontem_uf, 2),
             "vendas_d7": round(tot_d7_uf, 2),
             "gap_d7_rs": round(tot_hoje_uf - tot_d7_uf, 2),
-            "var_d7_pct": round(((tot_hoje_uf / tot_d7_uf) - 1.0) * 100.0, 1) if tot_d7_uf > 0 else 0.0
+            "var_d7_pct": round(((tot_hoje_uf / tot_d7_uf) - 1.0) * 100.0, 1) if tot_d7_uf > 0 else 0.0,
+            "total_lojas_ativas": len(filiais_all),
+            "total_lojas_geo": len(lojas_geo_map),
+            "total_municipios": len(municipios_list),
+            "total_vendas_rs": round(tot_rs_hoje, 2),
+            "share_rs_pct": share_rs_pct,
+            "pct_lojas_superando": pct_superando,
+            "municipio_lider": municipios_list[0]["cidade"] if municipios_list else "Porto Alegre"
         },
         "ufs": ufs,
         "diretorias": diretorias,
         "coordenacoes": coordenacoes,
+        "municipios": municipios_list,
+        "top_municipios": top_municipios,
         "filiais_campeas": top_campeas,
-        "filiais_quedas": top_quedas
+        "filiais_quedas": top_quedas,
+        "filiais_todas": filiais_all,
+        "lojas_geo_map": lojas_geo_map
     }
 
 

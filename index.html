@@ -10,6 +10,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- Leaflet Maps & MarkerCluster (Apple-grade interactive GIS) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <style>
     /* ==========================================================================
@@ -2723,8 +2730,293 @@
     #regional-data-table tr:hover td {
       background: rgba(0, 113, 227, 0.04);
     }
+    /* ==========================================================================
+       GEOGRAPHIC INTELLIGENCE & LEAFLET MAP DESIGN SYSTEM (APPLE HIG)
+       ========================================================================== */
+    .geo-scorecard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .geo-kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .geo-kpi-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+    .geo-kpi-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .geo-kpi-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+    .geo-kpi-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
+    /* Map Card & Toolbar */
+    .geo-map-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .geo-map-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--surface-subtle);
+    }
+    .geo-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .geo-pill-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .geo-pill-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text-primary);
+      border-color: var(--border-hover);
+    }
+    .geo-pill-btn.active {
+      background: var(--apple-blue);
+      color: #FFFFFF;
+      border-color: var(--apple-blue);
+      box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+    }
+    .geo-select-filter {
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+    }
+    .geo-search-input {
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      outline: none;
+      min-width: 220px;
+    }
+    .geo-search-input:focus {
+      border-color: var(--apple-blue);
+      box-shadow: 0 0 0 3px var(--apple-blue-soft);
+    }
+
+    #regional-leaflet-map {
+      width: 100%;
+      height: 540px;
+      background: var(--surface-sunken);
+      z-index: 1;
+    }
+
+    /* Custom Leaflet Pins */
+    .fsj-pin-wrapper.leaflet-div-icon {
+      background: transparent !important;
+      border: none !important;
+      position: relative;
+      cursor: pointer;
+    }
+    .fsj-pin-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      position: relative;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .fsj-pin-wrapper:hover .fsj-pin-dot {
+      transform: scale(1.35);
+      z-index: 1000;
+    }
+    .fsj-pin-dot.pin-superou {
+      background: var(--apple-green);
+    }
+    .fsj-pin-dot.pin-moderado {
+      background: var(--apple-orange);
+    }
+    .fsj-pin-dot.pin-critico {
+      background: var(--apple-red);
+      animation: fsj-pulse 2s infinite;
+    }
+    @keyframes fsj-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.6); }
+      70% { box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+    }
+
+    /* Leaflet Popup Styling (Apple Glassmorphism) */
+    .leaflet-popup-content-wrapper {
+      background: var(--surface-translucent) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius-md) !important;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16) !important;
+      color: var(--text-primary) !important;
+      padding: 0 !important;
+    }
+    .leaflet-popup-content {
+      margin: 0 !important;
+      line-height: 1.4 !important;
+    }
+    .leaflet-popup-tip {
+      background: var(--surface) !important;
+      border: 1px solid var(--border) !important;
+    }
+    .geo-popup-card {
+      padding: 16px 18px;
+      min-width: 250px;
+    }
+    .geo-popup-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    .geo-popup-sub {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .geo-popup-metric-box {
+      background: var(--surface-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xs);
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+    .geo-popup-vendas {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    /* MarkerCluster Apple Styles */
+    .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+      background-color: rgba(0, 113, 227, 0.25) !important;
+    }
+    .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+      background-color: var(--apple-blue) !important;
+      color: #FFFFFF !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-weight: 700 !important;
+      font-size: 12px !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    }
+
+    /* Split Section below map */
+    .geo-split-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 1080px) {
+      .geo-split-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .geo-city-ranking-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .geo-city-item {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .geo-city-item:hover {
+      background: var(--surface-hover);
+      border-color: var(--apple-blue);
+      transform: translateX(3px);
+    }
+    .geo-city-item.active {
+      border-color: var(--apple-blue);
+      background: var(--apple-blue-soft);
+    }
+    .geo-city-bar {
+      height: 4px;
+      background: var(--surface-sunken);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .geo-city-bar-fill {
+      height: 100%;
+      background: var(--apple-blue);
+      border-radius: 2px;
+    }
 </style>
+
 </head>
 <body>
 
@@ -3816,122 +4108,248 @@
     <!-- ==========================================================================
          NOVA ABA: 🌍 VISÃO REGIONAL & HIERARQUIA DE LOJAS
          ========================================================================== -->
+    <!-- ==========================================================================
+         🌍 INTELIGÊNCIA GEOGRÁFICA & MAPAS INTERATIVOS (RS, MUNICÍPIOS, DIRETORIAS, FILIAIS)
+         ========================================================================== -->
     <div id="view-regional-container" style="display: none;">
       
-      <!-- Banner Executivo & Alertas Comerciais Regionais e de Concorrência -->
-      <div class="regional-banner-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 24px;">🌍</span>
+      <!-- Banner Executivo de Inteligência Geográfica -->
+      <div class="regional-banner-card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--apple-blue-soft); display: flex; align-items: center; justify-content: center; font-size: 24px;">
+              🗺️
+            </div>
             <div>
-              <div style="font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800; color: var(--text-primary);">Inteligência Geográfica & Desempenho de Lojas Digitais</div>
-              <div style="font-size: 13px; color: var(--text-secondary);">Capilaridade de vendas online por Estado (UF), Diretoria, Coordenação Distrital e Filiais Físicas</div>
+              <div style="font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px;">
+                Inteligência Geográfica & Desempenho de Lojas Digitais
+              </div>
+              <div style="font-size: 13.5px; color: var(--text-secondary); margin-top: 2px;">
+                Capilaridade das vendas online integrada às coordenadas GPS oficiais do Qlik Sense por Estado (RS/SC/PR), Diretoria, Município e Filial
+              </div>
             </div>
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <span class="tag-badge tag-super" id="regional-badge-corte">CORTE ONLINE</span>
-            <span class="tag-badge tag-moderado" id="regional-badge-lojas">1.259 LOJAS MONITORADAS</span>
+            <span class="tag-badge tag-super" id="regional-badge-corte" style="padding: 5px 12px; font-size: 11px;">CORTE ONLINE</span>
+            <span class="tag-badge tag-moderado" id="regional-badge-lojas" style="padding: 5px 12px; font-size: 11px;">1.253 LOJAS MAPEADAS</span>
+            <span class="tag-badge" style="background: rgba(88, 86, 214, 0.12); color: var(--apple-indigo); font-weight: 700; padding: 5px 12px; font-size: 11px;" id="regional-badge-municipios">325 MUNICÍPIOS</span>
           </div>
         </div>
 
-        <!-- Alertas Comerciais Executivos (Duplo Callout) -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-top: 14px;">
-          <div style="background: rgba(0, 113, 227, 0.05); border: 1px solid rgba(0, 113, 227, 0.2); border-left: 4px solid var(--apple-blue); border-radius: 12px; padding: 14px 18px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <strong style="color: var(--apple-blue); font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
-                <span>📍</span> Alerta Regional de Pacing
-              </strong>
-              <span class="tag-badge tag-critico" id="alert-reg-badge" style="font-size: 10px;">GAP CRÍTICO</span>
+        <!-- Alerta Executivo Regional de Pacing -->
+        <div style="margin-top: 14px; background: rgba(0, 113, 227, 0.04); border: 1px solid rgba(0, 113, 227, 0.16); border-left: 4px solid var(--apple-blue); border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">📍</span>
+            <div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--apple-blue);">Diretriz Estratégica Regional</div>
+              <div id="geo-alerta-texto" style="font-size: 12.5px; color: var(--text-primary);">Acompanhamento em tempo real da dispersão de vendas nos polos do Rio Grande do Sul e expansão Sul.</div>
             </div>
-            <div id="alert-reg-texto" style="font-size: 12.5px; color: var(--text-primary); line-height: 1.55;">Carregando análise regional...</div>
           </div>
+          <div id="geo-alerta-tag" class="tag-badge tag-super">MONITORAMENTO ATIVO</div>
+        </div>
+      </div>
 
-          <div style="background: rgba(255, 149, 0, 0.05); border: 1px solid rgba(255, 149, 0, 0.25); border-left: 4px solid var(--apple-orange); border-radius: 12px; padding: 14px 18px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <strong style="color: var(--apple-orange-text); font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
-                <span>🎯</span> Para qual Concorrente mais estamos perdendo?
-              </strong>
-              <span class="tag-badge tag-moderado" id="alert-conc-badge" style="font-size: 10px;">PREÇO ONLINE</span>
-            </div>
-            <div id="alert-conc-texto" style="font-size: 12.5px; color: var(--text-primary); line-height: 1.55;">Carregando análise de concorrência...</div>
+      <!-- SCORECARD EXECUTIVO GEOGRÁFICO (5 KPIS) -->
+      <div class="geo-scorecard-grid">
+        <div class="geo-kpi-card" style="border-left: 4px solid var(--apple-blue);">
+          <div class="geo-kpi-label"><span>🏛️</span> Vendas Online RS (Foco)</div>
+          <div class="geo-kpi-val" id="geo-kpi-vendas-rs">R$ 0,00</div>
+          <div class="geo-kpi-sub">
+            <span id="geo-kpi-share-rs" class="tag-badge tag-super" style="font-size: 10.5px;">63.5% SHARE REDE</span>
+            <span id="geo-kpi-gap-rs" style="font-weight: 600;">vs D-7</span>
+          </div>
+        </div>
+
+        <div class="geo-kpi-card" style="border-left: 4px solid var(--apple-indigo);">
+          <div class="geo-kpi-label"><span>🌐</span> Faturamento Digital Sul</div>
+          <div class="geo-kpi-val" id="geo-kpi-vendas-total">R$ 0,00</div>
+          <div class="geo-kpi-sub">
+            <span style="color: var(--text-secondary);">Total consolidado da rede</span>
+          </div>
+        </div>
+
+        <div class="geo-kpi-card" style="border-left: 4px solid var(--apple-purple);">
+          <div class="geo-kpi-label"><span>🏙️</span> Municípios com Venda</div>
+          <div class="geo-kpi-val" id="geo-kpi-municipios">0</div>
+          <div class="geo-kpi-sub">
+            <span style="color: var(--text-secondary);">de 325 cidades atendidas</span>
+          </div>
+        </div>
+
+        <div class="geo-kpi-card" style="border-left: 4px solid var(--apple-green);">
+          <div class="geo-kpi-label"><span>🏥</span> Filiais Físicas no Digital</div>
+          <div class="geo-kpi-val" id="geo-kpi-lojas">0</div>
+          <div class="geo-kpi-sub">
+            <span class="tag-badge tag-super" style="font-size: 10.5px;" id="geo-kpi-superando">0% no positivo</span>
+          </div>
+        </div>
+
+        <div class="geo-kpi-card" style="border-left: 4px solid var(--apple-orange);">
+          <div class="geo-kpi-label"><span>🏆</span> Polo Municipal Líder</div>
+          <div class="geo-kpi-val" id="geo-kpi-polo" style="font-size: 20px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Porto Alegre</div>
+          <div class="geo-kpi-sub">
+            <span style="color: var(--text-secondary);" id="geo-kpi-polo-vendas">Maior faturamento online</span>
           </div>
         </div>
       </div>
 
-      <!-- CARDS C-LEVEL POR ESTADO (UF) -->
-      <div class="regional-cards-grid" id="regional-uf-cards-grid">
-        <!-- Injetado dinamicamente: RS, PR, SC -->
+      <!-- CARDS C-LEVEL POR ESTADO (UF: RS, SC, PR) -->
+      <div class="regional-cards-grid" id="regional-uf-cards-grid" style="margin-bottom: 24px;">
+        <!-- Injetado dinamicamente: RS, SC, PR -->
       </div>
 
-      <!-- PAINEL EXECUTIVO: RADAR PRECIFICA & RANKING DE PERDA POR CONCORRENTE -->
-      <div class="fech-causa-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+      <!-- COCKPIT DO MAPA INTERATIVO (LEAFLET & CLUSTERS) -->
+      <div class="geo-map-card">
+        <div class="geo-map-header">
           <div>
-            <div class="fech-section-title">
-              <span>🏷️</span> Radar de Concorrência: Perda Financeira por Rede
+            <div style="font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>🗺️</span> Mapa Interativo de Capilaridade Digital das Lojas
             </div>
-            <div class="fech-section-sub">
-              Produtos monitorados onde o preço digital da São João está acima do mercado (impacto de margem e faturamento)
+            <div style="font-size: 12.5px; color: var(--text-secondary); margin-top: 2px;">
+              Posicionamento GPS exato das 1.253 filiais • Clique em qualquer pin ou município para ver desempenho e indicadores
             </div>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <button class="regional-pill-btn active" id="btn-filtro-farmacias-only" onclick="toggleCompetitorFilter(true)">🏥 Apenas Redes de Farmácia</button>
-            <button class="regional-pill-btn" id="btn-filtro-all-conc" onclick="toggleCompetitorFilter(false)">🌐 Todas as Redes (Inclui Marketplaces)</button>
+
+          <!-- Toolbar de Filtros e Modos do Mapa -->
+          <div class="geo-toolbar">
+            <!-- Modos de Camada -->
+            <div style="display: flex; gap: 4px; background: var(--surface-sunken); padding: 3px; border-radius: var(--radius-pill);">
+              <button class="geo-pill-btn active" id="btn-map-mode-lojas" onclick="setMapMode('lojas')" title="Exibir todas as lojas com pins individuais e clusters de densidade">
+                <span>📍</span> Lojas
+              </button>
+              <button class="geo-pill-btn" id="btn-map-mode-municipios" onclick="setMapMode('municipios')" title="Exibir bolhas proporcionais por volume de vendas de cada município">
+                <span>🟣</span> Polos Municipais
+              </button>
+              <button class="geo-pill-btn" id="btn-map-mode-alertas" onclick="setMapMode('alertas')" title="Destacar apenas lojas e cidades com maior queda vs D-7">
+                <span>🚨</span> Alertas D-7
+              </button>
+            </div>
+
+            <!-- Filtro UF -->
+            <select class="geo-select-filter" id="map-filter-uf" onchange="applyMapFilters()">
+              <option value="ALL">🌐 Todos os Estados</option>
+              <option value="RS" selected>🏛️ Rio Grande do Sul (Foco)</option>
+              <option value="SC">🌊 Santa Catarina</option>
+              <option value="PR">🌲 Paraná</option>
+            </select>
+
+            <!-- Filtro Diretoria -->
+            <select class="geo-select-filter" id="map-filter-dir" onchange="applyMapFilters()">
+              <option value="ALL">👔 Todas as Diretorias</option>
+              <option value="Laerti Siqueira">Laerti Siqueira</option>
+              <option value="Cintia Silva">Cintia Silva</option>
+            </select>
+
+            <!-- Busca Rápida -->
+            <input type="text" id="map-search-input" class="geo-search-input" placeholder="🔍 Buscar loja, cidade, código..." oninput="onMapSearchInput(this.value)">
+
+            <!-- Botão Reset Zoom -->
+            <button class="geo-pill-btn" onclick="resetMapCenter()" title="Centralizar visualização no Rio Grande do Sul">
+              <span>🎯</span> Focar RS
+            </button>
           </div>
         </div>
 
-        <div class="concorrente-card-grid" id="concorrentes-ranking-grid">
-          <!-- Injetado dinamicamente: Preço Popular, Farmácias Nissei, Droga Raia, Panvel, Amazon -->
+        <!-- O MAPA LEAFLET -->
+        <div id="regional-leaflet-map"></div>
+
+        <!-- Rodapé / Legenda do Mapa -->
+        <div style="padding: 10px 20px; background: var(--surface-subtle); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 11.5px; color: var(--text-secondary);">
+          <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <span style="font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Legenda:</span>
+            <span style="display: flex; align-items: center; gap: 5px;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--apple-green); display: inline-block;"></span>
+              Superou D-7 (+ Crescimento)
+            </span>
+            <span style="display: flex; align-items: center; gap: 5px;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--apple-orange); display: inline-block;"></span>
+              Moderado (-0% a -15% vs D-7)
+            </span>
+            <span style="display: flex; align-items: center; gap: 5px;">
+              <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--apple-red); display: inline-block;"></span>
+              Crítico / Alerta (&lt; -15% vs D-7)
+            </span>
+          </div>
+          <div id="map-rendered-count" style="font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--apple-blue);">
+            Carregando pontos no mapa...
+          </div>
         </div>
       </div>
 
-      <!-- SELETOR DE NÍVEL HIERÁRQUICO E TABELA DE PERFORMANCE REGIONAL -->
-      <div class="fech-causa-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <div class="fech-section-title">
-              <span>📊</span> Matriz Comparativa de Vendas Regionais & Lojas
+      <!-- SPLIT VIEW: TOP MUNICÍPIOS (ESQUERDA) VS COCKPIT MULTIDIMENSIONAL (DIREITA) -->
+      <div class="geo-split-grid">
+        
+        <!-- COLUNA 1: RANKING DOS TOP MUNICÍPIOS (CLICÁVEL COM FLYTO NO MAPA) -->
+        <div class="fech-causa-panel" style="margin-bottom: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+              <div class="fech-section-title" style="font-size: 16px;">
+                <span>🏙️</span> Polos Municipais
+              </div>
+              <div class="fech-section-sub">
+                Clique na cidade para focar no mapa
+              </div>
             </div>
-            <div class="fech-section-sub">
-              Acompanhamento de vendas em janelas idênticas: Hoje no Corte vs Ontem (D-1) vs D-7 (Semana Passada)
+            <span class="tag-badge tag-super" id="badge-top-cidades-count" style="font-size: 10.5px;">TOP POLOS</span>
+          </div>
+
+          <!-- Lista dos Top Municípios -->
+          <div class="geo-city-ranking-list" id="geo-city-ranking-list">
+            <!-- Injetado dinamicamente: Porto Alegre, Caxias, Passo Fundo... -->
+          </div>
+        </div>
+
+        <!-- COLUNA 2: MATRIZ ANALÍTICA COMPARATIVA DE VENDAS -->
+        <div class="fech-causa-panel" style="margin-bottom: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <div class="fech-section-title" style="font-size: 16px;">
+                <span>📊</span> Matriz Analítica de Vendas Digitais
+              </div>
+              <div class="fech-section-sub">
+                Vendas Hoje no Corte vs Ontem (D-1) vs D-7 (Semana Passada)
+              </div>
+            </div>
+
+            <!-- Campo de Busca na Tabela -->
+            <div style="position: relative; min-width: 240px;">
+              <input type="text" id="regional-search-input" class="fechamento-date-select" style="width: 100%; padding: 8px 14px; border-radius: 8px; font-size: 12.5px;" placeholder="🔍 Filtrar tabela..." oninput="filterRegionalTable()">
             </div>
           </div>
 
-          <!-- Campo de Busca Rápida -->
-          <div style="position: relative; min-width: 260px;">
-            <input type="text" id="regional-search-input" class="fechamento-date-select" style="width: 100%; padding: 8px 14px; border-radius: 8px; font-size: 13px;" placeholder="🔍 Filtrar por UF, diretor, coordenador ou filial..." oninput="filterRegionalTable()">
+          <!-- Pills de Nível Hierárquico -->
+          <div class="regional-pills-bar" style="margin-bottom: 14px;">
+            <button class="regional-pill-btn active" id="pill-reg-municipios" onclick="setRegionalLevel('municipios')">🏙️ Por Município</button>
+            <button class="regional-pill-btn" id="pill-reg-campeas" onclick="setRegionalLevel('campeas')">🏆 Top 50 Lojas Campeãs</button>
+            <button class="regional-pill-btn" id="pill-reg-quedas" onclick="setRegionalLevel('quedas')">⚠️ Top 50 Lojas em Alerta</button>
+            <button class="regional-pill-btn" id="pill-reg-diretorias" onclick="setRegionalLevel('diretorias')">👔 Por Diretoria</button>
+            <button class="regional-pill-btn" id="pill-reg-coordenacoes" onclick="setRegionalLevel('coordenacoes')">📍 Por Coordenação</button>
+            <button class="regional-pill-btn" id="pill-reg-ufs" onclick="setRegionalLevel('ufs')">🏛️ Por Estado (UF)</button>
+            <button class="regional-pill-btn" id="pill-reg-todas" onclick="setRegionalLevel('todas')">📋 Todas as Lojas</button>
+          </div>
+
+          <!-- Tabela com Scroll Suave -->
+          <div style="overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); max-height: 520px;">
+            <table id="regional-data-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead style="position: sticky; top: 0; z-index: 10;">
+                <tr>
+                  <th style="min-width: 200px;" id="th-reg-nome">Identificador / Nome</th>
+                  <th style="width: 60px; text-align: center;">UF</th>
+                  <th style="text-align: right;">Hoje no Corte</th>
+                  <th style="text-align: right;">Ontem (D-1)</th>
+                  <th style="text-align: right;">D-7 (Semana Passada)</th>
+                  <th style="text-align: right;">Variação vs D-7</th>
+                  <th style="text-align: right;">GAP vs D-7</th>
+                  <th style="width: 120px; text-align: center;">Share Digital</th>
+                </tr>
+              </thead>
+              <tbody id="regional-table-tbody">
+                <!-- Injetado dinamicamente -->
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Pills de Seleção de Nível -->
-        <div class="regional-pills-bar">
-          <button class="regional-pill-btn active" id="pill-reg-ufs" onclick="setRegionalLevel('ufs')">🏛️ Por Estado (UF)</button>
-          <button class="regional-pill-btn" id="pill-reg-diretorias" onclick="setRegionalLevel('diretorias')">👔 Por Diretoria Regional</button>
-          <button class="regional-pill-btn" id="pill-reg-coordenacoes" onclick="setRegionalLevel('coordenacoes')">📍 Por Coordenação Distrital</button>
-          <button class="regional-pill-btn" id="pill-reg-campeas" onclick="setRegionalLevel('campeas')">🏆 Top 50 Lojas Digitais Campeãs</button>
-          <button class="regional-pill-btn" id="pill-reg-quedas" onclick="setRegionalLevel('quedas')">⚠️ Top 50 Lojas em Alerta (Maior Queda vs D-7)</button>
-        </div>
-
-        <!-- Tabela -->
-        <div style="overflow-x: auto; margin-top: 10px; border-radius: 10px; border: 1px solid var(--border);">
-          <table id="regional-data-table" style="width: 100%; border-collapse: collapse; text-align: left;">
-            <thead>
-              <tr>
-                <th style="min-width: 220px;" id="th-reg-nome">Identificador / Nome</th>
-                <th style="width: 80px; text-align: center;">UF</th>
-                <th style="text-align: right;">Hoje no Corte</th>
-                <th style="text-align: right;">Ontem (D-1)</th>
-                <th style="text-align: right;">D-7 (Semana Passada)</th>
-                <th style="text-align: right;">Variação vs D-7</th>
-                <th style="text-align: right;">GAP vs D-7</th>
-                <th style="width: 150px; text-align: center;">Share Digital</th>
-              </tr>
-            </thead>
-            <tbody id="regional-table-tbody">
-              <!-- Injetado dinamicamente -->
-            </tbody>
-          </table>
-        </div>
       </div>
 
     </div><!-- FIM #view-regional-container -->
@@ -3973,10 +4391,6 @@
     /* ==========================================================================
        LÓGICA JAVASCRIPT: NAVEGAÇÃO DE ABAS & VISÃO REGIONAL E LOJAS
        ========================================================================== */
-    let currentRegionalLevel = 'ufs'; // 'ufs', 'diretorias', 'coordenacoes', 'campeas', 'quedas'
-    let regionalSearchQuery = '';
-    let competitorFilterOnlyPharmacies = true;
-
     function switchViewMode(mode) {
       currentViewMode = mode;
       const liveBtn = document.getElementById('tab-btn-live');
@@ -3985,6 +4399,7 @@
       const liveContainer = document.getElementById('view-live-container');
       const fechContainer = document.getElementById('view-fechamento-container');
       const regContainer = document.getElementById('view-regional-container');
+      const floatingDock = document.getElementById('floating-dock');
 
       if (liveBtn) liveBtn.classList.toggle('active', mode === 'live');
       if (fechBtn) fechBtn.classList.toggle('active', mode === 'fechamento');
@@ -3993,6 +4408,7 @@
       if (liveContainer) liveContainer.style.display = (mode === 'live') ? 'block' : 'none';
       if (fechContainer) fechContainer.style.display = (mode === 'fechamento') ? 'flex' : 'none';
       if (regContainer) regContainer.style.display = (mode === 'regional') ? 'flex' : 'none';
+      if (floatingDock) floatingDock.style.display = (mode === 'regional') ? 'none' : 'flex';
 
       if (mode === 'fechamento') {
         loadFechamentoHistoryList();
@@ -4003,9 +4419,26 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    // ==========================================================================
+    // 🌍 INTELIGÊNCIA GEOGRÁFICA & CONTROLLER DO MAPA LEAFLET
+    // ==========================================================================
+    let currentRegionalLevel = 'municipios';
+    let regionalSearchQuery = '';
+    let leafletMap = null;
+    let leafletTileLayer = null;
+    let leafletRefLayer = null;
+    let markerClusterGroup = null;
+    let municipalityLayerGroup = null;
+    let currentMapMode = 'lojas'; // 'lojas' | 'municipios' | 'alertas'
+    let mapFilterUF = 'RS';
+    let mapFilterDir = 'ALL';
+    let mapSearchQuery = '';
+    let mapSearchTimeout = null;
+    let activeSelectedCity = null;
+
     function setRegionalLevel(level) {
       currentRegionalLevel = level;
-      ['ufs', 'diretorias', 'coordenacoes', 'campeas', 'quedas'].forEach(lvl => {
+      ['municipios', 'campeas', 'quedas', 'diretorias', 'coordenacoes', 'ufs', 'todas'].forEach(lvl => {
         const btn = document.getElementById(`pill-reg-${lvl}`);
         if (btn) btn.classList.toggle('active', lvl === level);
       });
@@ -4018,18 +4451,367 @@
       renderRegionalTable();
     }
 
-    function toggleCompetitorFilter(onlyPharmacies) {
-      competitorFilterOnlyPharmacies = onlyPharmacies;
-      const btnPharma = document.getElementById('btn-filtro-farmacias-only');
-      const btnAll = document.getElementById('btn-filtro-all-conc');
-      if (btnPharma) btnPharma.classList.toggle('active', onlyPharmacies);
-      if (btnAll) btnAll.classList.toggle('active', !onlyPharmacies);
-      renderCompetitorRanking();
+    function setMapMode(mode) {
+      currentMapMode = mode;
+      ['lojas', 'municipios', 'alertas'].forEach(m => {
+        const btn = document.getElementById(`btn-map-mode-${m}`);
+        if (btn) btn.classList.toggle('active', m === mode);
+      });
+      renderMapPoints();
+    }
+
+    function applyMapFilters() {
+      const selUf = document.getElementById('map-filter-uf');
+      const selDir = document.getElementById('map-filter-dir');
+      if (selUf) mapFilterUF = selUf.value;
+      if (selDir) mapFilterDir = selDir.value;
+
+      if (leafletMap) {
+        if (mapFilterUF === 'RS') leafletMap.flyTo([-29.8, -52.5], 7, { duration: 0.8 });
+        else if (mapFilterUF === 'SC') leafletMap.flyTo([-27.2, -50.5], 7, { duration: 0.8 });
+        else if (mapFilterUF === 'PR') leafletMap.flyTo([-24.8, -51.5], 7, { duration: 0.8 });
+        else leafletMap.flyTo([-27.5, -51.5], 6, { duration: 0.8 });
+      }
+
+      renderMapPoints();
+    }
+
+    function resetMapCenter() {
+      mapFilterUF = 'RS';
+      mapFilterDir = 'ALL';
+      mapSearchQuery = '';
+      activeSelectedCity = null;
+
+      const selUf = document.getElementById('map-filter-uf');
+      const selDir = document.getElementById('map-filter-dir');
+      const searchInp = document.getElementById('map-search-input');
+      if (selUf) selUf.value = 'RS';
+      if (selDir) selDir.value = 'ALL';
+      if (searchInp) searchInp.value = '';
+
+      if (leafletMap) {
+        leafletMap.flyTo([-29.8, -52.5], 7, { duration: 1.0 });
+      }
+      renderMapPoints();
+    }
+
+    function onMapSearchInput(val) {
+      clearTimeout(mapSearchTimeout);
+      mapSearchTimeout = setTimeout(() => {
+        mapSearchQuery = (val || '').trim().toLowerCase();
+        renderMapPoints();
+      }, 250);
+    }
+
+    function initRegionalLeafletMap() {
+      const mapContainer = document.getElementById('regional-leaflet-map');
+      if (!mapContainer) return;
+
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const baseUrl = isDark 
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+        : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+      const refUrl = isDark
+        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'
+        : 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
+
+      if (!leafletMap) {
+        // Criar Mapa Centrado no Rio Grande do Sul
+        leafletMap = L.map('regional-leaflet-map', {
+          center: [-29.8, -52.5],
+          zoom: 7,
+          minZoom: 5,
+          maxZoom: 16,
+          zoomControl: true,
+          attributionControl: false
+        });
+
+        leafletTileLayer = L.tileLayer(baseUrl, {
+          maxZoom: 16
+        }).addTo(leafletMap);
+
+        leafletRefLayer = L.tileLayer(refUrl, {
+          maxZoom: 16,
+          opacity: 0.9
+        }).addTo(leafletMap);
+
+        // Grupo de Clusters para Lojas Individuais
+        markerClusterGroup = L.markerClusterGroup({
+          maxClusterRadius: 45,
+          showCoverageOnHover: false,
+          spiderfyOnMaxZoom: true,
+          disableClusteringAtZoom: 14,
+          iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            let cSize = count < 10 ? 'small' : (count < 40 ? 'medium' : 'large');
+            return L.divIcon({
+              html: `<div><span>${count}</span></div>`,
+              className: `marker-cluster marker-cluster-${cSize}`,
+              iconSize: L.point(40, 40)
+            });
+          }
+        });
+        leafletMap.addLayer(markerClusterGroup);
+
+        // Grupo de Camada para Bolhas de Municípios
+        municipalityLayerGroup = L.layerGroup();
+        leafletMap.addLayer(municipalityLayerGroup);
+
+      } else {
+        // Atualizar Tiles se tema mudou
+        if (leafletTileLayer) {
+          leafletTileLayer.setUrl(baseUrl);
+        }
+        if (leafletRefLayer) {
+          leafletRefLayer.setUrl(refUrl);
+        }
+        setTimeout(() => {
+          leafletMap.invalidateSize();
+        }, 100);
+      }
+
+      renderMapPoints();
+    }
+
+    function renderMapPoints() {
+      if (!leafletMap || !globalData) return;
+      const reg = globalData.regional || {};
+      const lojasGeo = reg.lojas_geo_map || [];
+      const municipios = reg.municipios || [];
+
+      markerClusterGroup.clearLayers();
+      municipalityLayerGroup.clearLayers();
+
+      let visiblePointsCount = 0;
+
+      if (currentMapMode === 'municipios') {
+        // MODO 2: POLOS MUNICIPAIS (BOLHAS PROPORCIONAIS)
+        const maxVenda = municipios.length > 0 ? (municipios[0].vendas_hoje || 1) : 1;
+
+        municipios.forEach(m => {
+          if (m.center_lat === null || m.center_lon === null) return;
+          if (mapFilterUF !== 'ALL' && m.uf !== mapFilterUF) return;
+          if (mapSearchQuery) {
+            const cidNorm = (m.cidade || '').toLowerCase();
+            if (!cidNorm.includes(mapSearchQuery)) return;
+          }
+
+          visiblePointsCount++;
+          const ratio = Math.max(0.1, Math.min(1.0, (m.vendas_hoje || 0) / maxVenda));
+          const radius = Math.round(9 + ratio * 28);
+          
+          let fillColor = '#0071E3';
+          if (m.pacing_status === 'SUPEROU') fillColor = '#34C759';
+          else if (m.pacing_status === 'MODERADO') fillColor = '#FF9500';
+          else if (m.pacing_status === 'CRITICO') fillColor = '#FF3B30';
+
+          const circle = L.circleMarker([m.center_lat, m.center_lon], {
+            radius: radius,
+            fillColor: fillColor,
+            color: '#FFFFFF',
+            weight: 2,
+            opacity: 0.9,
+            fillOpacity: 0.75
+          });
+
+          const isPos = (m.gap_d7_rs || 0) >= 0;
+          const corGap = isPos ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
+          const sinal = isPos ? '+' : '';
+
+          const popupContent = `
+            <div class="geo-popup-card">
+              <div class="geo-popup-title">${m.cidade}</div>
+              <div class="geo-popup-sub">
+                <span class="tag-badge" style="background: var(--surface-sunken); font-size: 10px; font-weight: 700;">${m.uf}</span>
+                <span>${m.total_lojas} filial(is) ativas</span>
+              </div>
+              <div class="geo-popup-metric-box">
+                <div style="font-size: 11px; color: var(--text-secondary);">Vendas Hoje no Corte:</div>
+                <div class="geo-popup-vendas">${fmtMoeda(m.vendas_hoje)}</div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">Share Digital: <strong>${(m.share_pct || 0).toFixed(1)}%</strong></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 8px;">
+                <span style="color: var(--text-secondary);">vs D-7:</span>
+                <strong style="color: ${corGap}; font-family: 'JetBrains Mono', monospace;">${sinal}${fmtMoeda(m.gap_d7_rs)} (${sinal}${(m.var_d7_pct || 0).toFixed(1)}%)</strong>
+              </div>
+              <button onclick="zoomToCity('${m.cidade}')" class="geo-pill-btn active" style="width: 100%; justify-content: center; font-size: 11px; padding: 5px 0;">
+                🔍 Detalhar Lojas deste Município
+              </button>
+            </div>
+          `;
+          circle.bindPopup(popupContent);
+          municipalityLayerGroup.addLayer(circle);
+        });
+
+      } else {
+        // MODO 1 & 3: LOJAS INDIVIDUAIS COM PINS DE STATUS
+        lojasGeo.forEach(item => {
+          // item: [filial_id, nome, cidade, uf, lat, lon, v_hoje, v_d7, gap, var_pct, status, diretor, coordenador]
+          const [f_id, nome, cidade, uf, lat, lon, v_hoje, v_d7, gap, var_pct, status, diretor, coord] = item;
+
+          if (lat === null || lon === null) return;
+          if (mapFilterUF !== 'ALL' && uf !== mapFilterUF) return;
+          if (mapFilterDir !== 'ALL' && diretor && !diretor.toLowerCase().includes(mapFilterDir.toLowerCase())) return;
+
+          if (currentMapMode === 'alertas' && status !== 'CRITICO' && gap >= 0) return;
+
+          if (mapSearchQuery) {
+            const searchStr = `${f_id} ${nome} ${cidade} ${diretor} ${coord}`.toLowerCase();
+            if (!searchStr.includes(mapSearchQuery)) return;
+          }
+
+          if (activeSelectedCity && cidade.toLowerCase() !== activeSelectedCity.toLowerCase()) return;
+
+          visiblePointsCount++;
+
+          let pinClass = 'pin-superou';
+          if (status === 'MODERADO') pinClass = 'pin-moderado';
+          else if (status === 'CRITICO') pinClass = 'pin-critico';
+
+          const pinIcon = L.divIcon({
+            className: 'fsj-pin-wrapper',
+            html: `<div class="fsj-pin-dot ${pinClass}" title="${nome}"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8],
+            popupAnchor: [0, -10]
+          });
+
+          const marker = L.marker([lat, lon], { icon: pinIcon });
+
+          const isPos = (gap || 0) >= 0;
+          const corGap = isPos ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
+          const sinal = isPos ? '+' : '';
+          const tagPacing = status === 'CRITICO' ? 'tag-critico' : (status === 'MODERADO' ? 'tag-moderado' : 'tag-super');
+
+          const popupHtml = `
+            <div class="geo-popup-card">
+              <div class="geo-popup-title">${nome}</div>
+              <div class="geo-popup-sub">
+                <span class="tag-badge" style="background: var(--surface-sunken); font-size: 10px; font-weight: 700;">${uf}</span>
+                <span>${cidade}</span>
+                <span class="tag-badge ${tagPacing}" style="font-size: 9.5px;">${status}</span>
+              </div>
+              <div class="geo-popup-metric-box">
+                <div style="font-size: 11px; color: var(--text-secondary);">Vendas Hoje no Corte:</div>
+                <div class="geo-popup-vendas">${fmtMoeda(v_hoje)}</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 4px;">
+                <span style="color: var(--text-secondary);">Semana Passada (D-7):</span>
+                <span style="font-family: 'JetBrains Mono', monospace;">${fmtMoeda(v_d7)}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 8px;">
+                <span style="color: var(--text-secondary);">GAP vs D-7:</span>
+                <strong style="color: ${corGap}; font-family: 'JetBrains Mono', monospace;">${sinal}${fmtMoeda(gap)} (${sinal}${(var_pct || 0).toFixed(1)}%)</strong>
+              </div>
+              ${coord ? `<div style="font-size: 10.5px; color: var(--text-tertiary); border-top: 1px solid var(--border-subtle); padding-top: 6px;">Coord: ${coord} ${diretor ? '• Dir: ' + diretor : ''}</div>` : ''}
+            </div>
+          `;
+          marker.bindPopup(popupHtml);
+          markerClusterGroup.addLayer(marker);
+        });
+      }
+
+      // Atualiza contador no rodapé do mapa
+      const counterEl = document.getElementById('map-rendered-count');
+      if (counterEl) {
+        const modeTxt = currentMapMode === 'municipios' ? 'municípios' : 'lojas';
+        counterEl.innerText = `Exibindo ${visiblePointsCount.toLocaleString('pt-BR')} ${modeTxt} no mapa`;
+      }
+    }
+
+    function zoomToCity(cityName) {
+      if (!globalData) return;
+      const reg = globalData.regional || {};
+      const municipios = reg.municipios || [];
+      const city = municipios.find(m => m.cidade.toLowerCase() === cityName.toLowerCase());
+      if (!city || city.center_lat === null || city.center_lon === null) return;
+
+      activeSelectedCity = cityName;
+
+      // Se estava no modo municípios, muda para lojas para ver os pins daquela cidade
+      if (currentMapMode === 'municipios') {
+        currentMapMode = 'lojas';
+        ['lojas', 'municipios', 'alertas'].forEach(m => {
+          const btn = document.getElementById(`btn-map-mode-${m}`);
+          if (btn) btn.classList.toggle('active', m === 'lojas');
+        });
+      }
+
+      // Destaca na lista de ranking
+      document.querySelectorAll('.geo-city-item').forEach(el => {
+        el.classList.toggle('active', el.getAttribute('data-city') === cityName);
+      });
+
+      renderMapPoints();
+
+      if (leafletMap) {
+        leafletMap.flyTo([city.center_lat, city.center_lon], 12, {
+          duration: 1.2,
+          easeLinearity: 0.25
+        });
+      }
+    }
+
+    function renderTopCitiesRanking(municipios) {
+      const container = document.getElementById('geo-city-ranking-list');
+      const badgeCount = document.getElementById('badge-top-cidades-count');
+      if (!container) return;
+
+      if (!municipios || municipios.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-secondary); padding: 15px;">Nenhum município com vendas registradas.</div>';
+        return;
+      }
+
+      const topCities = municipios.slice(0, 35);
+      if (badgeCount) badgeCount.innerText = `${topCities.length} PRINCIPAIS POLOS`;
+
+      const maxVenda = topCities[0].vendas_hoje || 1;
+
+      let html = '';
+      topCities.forEach((c, idx) => {
+        const isPos = (c.gap_d7_rs || 0) >= 0;
+        const colorGap = isPos ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
+        const sinal = isPos ? '+' : '';
+        const pctBar = Math.min(100, Math.max(4, ((c.vendas_hoje || 0) / maxVenda) * 100));
+
+        html += `
+          <div class="geo-city-item" data-city="${c.cidade}" onclick="zoomToCity('${c.cidade}')" title="Clique para focar no mapa">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--text-tertiary); width: 22px;">#${idx + 1}</span>
+                <div>
+                  <div style="font-weight: 700; font-size: 13.5px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                    ${c.cidade}
+                    <span class="tag-badge" style="background: var(--surface-sunken); font-size: 9.5px; padding: 1px 5px;">${c.uf}</span>
+                  </div>
+                  <div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">
+                    ${c.total_lojas} filial(is) • ${(c.share_pct || 0).toFixed(1)}% share
+                  </div>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; font-weight: 800; color: var(--text-primary);">
+                  ${fmtMoeda(c.vendas_hoje)}
+                </div>
+                <div style="font-size: 10.5px; font-weight: 700; color: ${colorGap}; font-family: 'JetBrains Mono', monospace; margin-top: 1px;">
+                  ${sinal}${fmtMoeda(c.gap_d7_rs)} (${sinal}${(c.var_d7_pct || 0).toFixed(1)}%)
+                </div>
+              </div>
+            </div>
+            <div class="geo-city-bar">
+              <div class="geo-city-bar-fill" style="width: ${pctBar}%;"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
     }
 
     function renderRegionalView() {
       if (!globalData) return;
       const reg = globalData.regional || {};
+      const totais = reg.totais || {};
       const radar = globalData.radar_alertas || {};
 
       // 1. Atualizar Badges do Topo
@@ -4039,39 +4821,56 @@
       }
       const badgeLojas = document.getElementById('regional-badge-lojas');
       if (badgeLojas) {
-        badgeLojas.innerText = '1.259 LOJAS MONITORADAS';
+        badgeLojas.innerText = `${(totais.total_lojas_geo || 1253).toLocaleString('pt-BR')} LOJAS COM GPS`;
+      }
+      const badgeMuni = document.getElementById('regional-badge-municipios');
+      if (badgeMuni) {
+        badgeMuni.innerText = `${totais.total_municipios || 325} MUNICÍPIOS`;
       }
 
-      // 2. Alertas Comerciais Executivos
-      const alertRegBadge = document.getElementById('alert-reg-badge');
-      const alertRegTexto = document.getElementById('alert-reg-texto');
-      if (radar.alerta_regional) {
-        const ar = radar.alerta_regional;
-        if (alertRegBadge) {
-          alertRegBadge.innerText = ar.critico ? 'GAP CRÍTICO' : 'PACING ESTÁVEL';
-          alertRegBadge.className = `tag-badge ${ar.critico ? 'tag-critico' : 'tag-super'}`;
-        }
-        if (alertRegTexto) alertRegTexto.innerText = ar.texto || 'Desempenho regional consolidado.';
+      // 2. Scorecard Executivo de Inteligência Geográfica
+      const kpiRs = document.getElementById('geo-kpi-vendas-rs');
+      if (kpiRs) kpiRs.innerText = fmtMoeda(totais.total_vendas_rs || 0);
+
+      const kpiShareRs = document.getElementById('geo-kpi-share-rs');
+      if (kpiShareRs) kpiShareRs.innerText = `${(totais.share_rs_pct || 63.5).toFixed(1)}% SHARE REDE`;
+
+      const kpiGapRs = document.getElementById('geo-kpi-gap-rs');
+      if (kpiGapRs) {
+        const isPos = (totais.gap_d7_rs || 0) >= 0;
+        kpiGapRs.innerHTML = `<span style="color: ${isPos ? 'var(--apple-green-text)' : 'var(--apple-red-text)'}; font-family: 'JetBrains Mono', monospace;">${isPos ? '+' : ''}${(totais.var_d7_pct || 0).toFixed(1)}% vs D-7</span>`;
       }
 
-      const alertConcBadge = document.getElementById('alert-conc-badge');
-      const alertConcTexto = document.getElementById('alert-conc-texto');
-      if (radar.alerta_concorrencia) {
-        const ac = radar.alerta_concorrencia;
-        if (alertConcBadge) {
-          alertConcBadge.innerText = ac.rede_detratora ? ac.rede_detratora.toUpperCase() : 'PREÇO ONLINE';
-          alertConcBadge.className = 'tag-badge tag-moderado';
-        }
-        if (alertConcTexto) alertConcTexto.innerText = ac.texto || 'Monitoramento de concorrência ativo.';
+      const kpiTotal = document.getElementById('geo-kpi-vendas-total');
+      if (kpiTotal) kpiTotal.innerText = fmtMoeda(totais.vendas_hoje || 0);
+
+      const kpiMuni = document.getElementById('geo-kpi-municipios');
+      if (kpiMuni) kpiMuni.innerText = (totais.total_municipios || 0).toLocaleString('pt-BR');
+
+      const kpiLojas = document.getElementById('geo-kpi-lojas');
+      if (kpiLojas) kpiLojas.innerText = (totais.total_lojas_ativas || 0).toLocaleString('pt-BR');
+
+      const kpiSuperando = document.getElementById('geo-kpi-superando');
+      if (kpiSuperando) kpiSuperando.innerText = `${(totais.pct_lojas_superando || 0).toFixed(1)}% SUPERANDO D-7`;
+
+      const kpiPolo = document.getElementById('geo-kpi-polo');
+      if (kpiPolo) kpiPolo.innerText = totais.municipio_lider || 'Porto Alegre';
+
+      const kpiPoloVendas = document.getElementById('geo-kpi-polo-vendas');
+      if (kpiPoloVendas && reg.municipios && reg.municipios.length > 0) {
+        kpiPoloVendas.innerText = `${fmtMoeda(reg.municipios[0].vendas_hoje)} hoje no corte`;
       }
 
-      // 3. Renderizar Cards C-Level por UF (RS, PR, SC)
+      // 3. Renderizar Cards C-Level por UF (RS, SC, PR)
       renderRegionalUFCards(reg.ufs || []);
 
-      // 4. Renderizar Radar de Concorrência
-      renderCompetitorRanking();
+      // 4. Inicializar / Atualizar Mapa Leaflet Interativo
+      initRegionalLeafletMap();
 
-      // 5. Renderizar Matriz Comparativa (Tabela)
+      // 5. Renderizar Ranking dos Top Municípios (Lista Esquerda)
+      renderTopCitiesRanking(reg.municipios || []);
+
+      // 6. Renderizar Matriz Comparativa (Tabela Direita)
       renderRegionalTable();
     }
 
@@ -4085,7 +4884,7 @@
       }
 
       const ufNomes = {
-        'RS': 'Rio Grande do Sul',
+        'RS': 'Rio Grande do Sul (Foco Principal)',
         'PR': 'Paraná',
         'SC': 'Santa Catarina'
       };
@@ -4108,7 +4907,7 @@
         const colorOntem = isPosOntem ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
         const sinalOntem = isPosOntem ? '+' : '';
 
-        const pacingClass = uf.pacing_status === 'CRITICO' ? 'tag-critico' : (uf.pacing_status === 'ATENCAO' ? 'tag-moderado' : 'tag-super');
+        const pacingClass = uf.pacing_status === 'CRITICO' ? 'tag-critico' : (uf.pacing_status === 'MODERADO' ? 'tag-moderado' : 'tag-super');
 
         html += `
           <div class="regional-uf-card" style="border-top: 4px solid ${color};">
@@ -4154,68 +4953,10 @@
               </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 11px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 11px;">
               <span style="color: var(--text-secondary);">Ontem: <strong>${fmtMoeda(uf.vendas_ontem)}</strong></span>
               <span class="tag-badge ${pacingClass}" style="font-size: 9.5px; padding: 2px 7px;">${uf.pacing_status || 'ESTÁVEL'}</span>
             </div>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
-    }
-
-    function renderCompetitorRanking() {
-      const container = document.getElementById('concorrentes-ranking-grid');
-      if (!container || !globalData) return;
-
-      const concs = globalData.concorrentes_ranking || [];
-      const filtered = competitorFilterOnlyPharmacies ? concs.filter(c => c.is_farmacia) : concs;
-
-      if (filtered.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-secondary); padding: 15px;">Nenhum concorrente encontrado com o filtro ativo.</div>';
-        return;
-      }
-
-      let html = '';
-      filtered.forEach(c => {
-        const badgeType = c.is_farmacia ? '<span class="tag-badge tag-super" style="font-size: 9.5px;">FARMÁCIA</span>' : '<span class="tag-badge tag-moderado" style="font-size: 9.5px;">MARKETPLACE 3P</span>';
-        
-        let skusHtml = '';
-        if (c.exemplos_skus && c.exemplos_skus.length > 0) {
-          skusHtml = '<div style="margin-top: 8px; border-top: 1px solid var(--border-subtle); padding-top: 8px;">';
-          skusHtml += '<div style="font-size: 10.5px; color: var(--text-tertiary); margin-bottom: 4px; font-weight: 600;">Top SKUs com Maior Dispersão:</div>';
-          c.exemplos_skus.slice(0, 2).forEach(ex => {
-            skusHtml += `
-              <div style="font-size: 11px; display: flex; justify-content: space-between; margin-bottom: 3px; gap: 6px;" title="${ex.titulo}">
-                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; color: var(--text-primary); font-weight: 500;">${ex.titulo}</span>
-                <span style="color: var(--apple-red-text); font-weight: 700; font-family: 'JetBrains Mono', monospace; flex-shrink: 0;">+${ex.diff_pct}%</span>
-              </div>
-            `;
-          });
-          skusHtml += '</div>';
-        }
-
-        html += `
-          <div class="concorrente-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <strong style="font-size: 14px; color: var(--text-primary);">${c.rede}</strong>
-              ${badgeType}
-            </div>
-            
-            <div style="margin-top: 4px;">
-              <div style="font-size: 10.5px; color: var(--text-secondary);">Perda Financeira Potencial</div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 19px; font-weight: 800; color: var(--apple-red-text);">
-                ${fmtMoeda(c.impacto_financeiro_estimado_rs)}
-              </div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-top: 4px; color: var(--text-secondary);">
-              <span>SKUs mais baratos: <strong style="color: var(--text-primary); font-family: 'JetBrains Mono', monospace;">${(c.skus_mais_baratos || 0).toLocaleString('pt-BR')}</strong></span>
-              <span>Spread máx: <strong style="color: var(--apple-orange-text); font-family: 'JetBrains Mono', monospace;">+${(c.maior_spread_pct || 0).toFixed(1)}%</strong></span>
-            </div>
-
-            ${skusHtml}
           </div>
         `;
       });
@@ -4232,9 +4973,9 @@
       let items = [];
       let labelNome = 'Identificador / Nome';
 
-      if (currentRegionalLevel === 'ufs') {
-        items = reg.ufs || [];
-        labelNome = 'Estado (UF)';
+      if (currentRegionalLevel === 'municipios') {
+        items = reg.municipios || [];
+        labelNome = 'Município / Polo';
       } else if (currentRegionalLevel === 'diretorias') {
         items = reg.diretorias || [];
         labelNome = 'Diretoria Regional';
@@ -4247,6 +4988,12 @@
       } else if (currentRegionalLevel === 'quedas') {
         items = reg.filiais_quedas || [];
         labelNome = 'Filial em Alerta (Top 50 Maior Queda vs D-7)';
+      } else if (currentRegionalLevel === 'ufs') {
+        items = reg.ufs || [];
+        labelNome = 'Estado (UF)';
+      } else if (currentRegionalLevel === 'todas') {
+        items = reg.filiais_todas || reg.filiais_campeas || [];
+        labelNome = 'Filial Física';
       }
 
       if (thNome) thNome.innerText = labelNome;
@@ -4254,7 +5001,7 @@
       // Filtragem por busca
       if (regionalSearchQuery) {
         items = items.filter(item => {
-          const n = (item.nome || item.diretor || item.coordenador || item.uf || item.filial_id || '').toString().toLowerCase();
+          const n = (item.nome || item.cidade || item.diretor || item.coordenador || item.uf || item.filial_id || '').toString().toLowerCase();
           const u = (item.uf || '').toLowerCase();
           const d = (item.diretor || '').toLowerCase();
           return n.includes(regionalSearchQuery) || u.includes(regionalSearchQuery) || d.includes(regionalSearchQuery);
@@ -4262,7 +5009,7 @@
       }
 
       if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-secondary);">Nenhum registro encontrado para este nível ou termo de pesquisa.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-secondary);">Nenhum registro encontrado para este nível ou filtro de pesquisa.</td></tr>';
         return;
       }
 
@@ -4272,7 +5019,10 @@
         let subDisplay = '';
         let ufDisplay = item.uf || '-';
 
-        if (currentRegionalLevel === 'ufs') {
+        if (currentRegionalLevel === 'municipios') {
+          nomeDisplay = item.cidade || 'Município';
+          subDisplay = `${item.total_lojas} filial(is) física(s)`;
+        } else if (currentRegionalLevel === 'ufs') {
           const ufNomes = { 'RS': 'Rio Grande do Sul', 'PR': 'Paraná', 'SC': 'Santa Catarina' };
           nomeDisplay = ufNomes[item.uf] || item.uf;
           subDisplay = `Estado da Região Sul`;
@@ -4285,9 +5035,9 @@
         } else {
           // Lojas
           nomeDisplay = item.nome || `Filial ${item.filial_id}`;
+          const cidStr = item.cidade ? item.cidade : '';
           const coordStr = item.coordenador ? `Coord. ${item.coordenador}` : '';
-          const idStr = item.filial_id ? `Cod: ${item.filial_id}` : '';
-          subDisplay = [idStr, coordStr].filter(Boolean).join(' • ');
+          subDisplay = [cidStr, coordStr].filter(Boolean).join(' • ');
         }
 
         const isPosD7 = (item.gap_d7_rs || 0) >= 0;
@@ -4299,7 +5049,9 @@
         html += `
           <tr>
             <td>
-              <div style="font-weight: 600; color: var(--text-primary);">${nomeDisplay}</div>
+              <div style="font-weight: 600; color: var(--text-primary); cursor: pointer;" ${currentRegionalLevel === 'municipios' ? `onclick="zoomToCity('${item.cidade}')"` : ''}>
+                ${nomeDisplay}
+              </div>
               ${subDisplay ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 1px;">${subDisplay}</div>` : ''}
             </td>
             <td style="text-align: center;">
