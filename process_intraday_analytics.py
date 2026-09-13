@@ -15,6 +15,7 @@ matriz de detratores/alavancadores em 5 níveis hierárquicos e storytelling exe
 import os
 import sys
 import json
+import math
 import re
 import openpyxl
 from datetime import datetime, timedelta
@@ -280,6 +281,27 @@ def generate_excel_top50(output_data, data_dir):
         print(f"   Planilha Excel atualizada com sucesso: {excel_path}")
     except Exception as e_excel:
         print(f"   Aviso ao gerar planilha Excel: {e_excel}")
+
+
+
+def compute_curva_abc(skus_list):
+    """Classifica SKUs na Curva ABC (A: 80% receita, B: 15%, C: 5%) baseada no baseline D-7"""
+    skus_sorted = sorted(skus_list, key=lambda x: float(x[4] or 0) if len(x) > 4 else 0.0, reverse=True)
+    total_rev = sum(float(x[4] or 0) for x in skus_sorted if len(x) > 4)
+    abc_map = {}
+    accum = 0.0
+    for s in skus_sorted:
+        sku_id = str(s[0])
+        val = float(s[4] or 0) if len(s) > 4 else 0.0
+        accum += val
+        pct = (accum / total_rev) if total_rev > 0 else 1.0
+        if pct <= 0.80:
+            abc_map[sku_id] = 'A'
+        elif pct <= 0.95:
+            abc_map[sku_id] = 'B'
+        else:
+            abc_map[sku_id] = 'C'
+    return abc_map
 
 
 def resolve_city_name(fdesc):
@@ -1722,6 +1744,17 @@ def process_analytics():
 
     # 5. Indicadores Executivos, 3 Janelas e Cenários de Projeção com Proteção Matinal
     executive_kpis = {}
+    # Cálculo Estatístico de Desvio Padrão Histórico (Base para Intervalos de Confiança P10-P50-P90)
+    std_dev_hist = {}
+    for ch in ["Total", "APP", "Site", "MKP"]:
+        ch_vals = [hist_days[d][ch] for d in hist_days if hist_days[d][ch] > 0]
+        if len(ch_vals) >= 2:
+            m_val = sum(ch_vals) / len(ch_vals)
+            var_val = sum((x - m_val)**2 for x in ch_vals) / (len(ch_vals) - 1)
+            std_dev_hist[ch] = math.sqrt(var_val)
+        else:
+            std_dev_hist[ch] = metas[ch] * 0.12 # Fallback conservador de 12% de volatilidade
+
     for ch in ["Total", "APP", "Site", "MKP"]:
         real = hoje_cut[ch]
         m_dia = metas[ch]
@@ -1765,6 +1798,21 @@ def process_analytics():
         var_m7_rs = real - m7_c
         var_m7_pct = ((real - m7_c) / m7_c * 100.0) if m7_c > 0 else 0.0
 
+        # Modelagem Estatística: Cone de Incerteza (P10 - P50 - P90) e Probabilidade de Meta
+        sigma_ch = std_dev_hist.get(ch, m_dia * 0.12)
+        # O desvio padrão residual decresce proporcionalmente à raiz do tempo restante:
+        sigma_residual = sigma_ch * math.sqrt(max(0.01, 1.0 - w_cut))
+        p50 = proj_base
+        p10 = max(real, round(p50 - 1.282 * sigma_residual, 2))  # 80% CI Piso (P10)
+        p90 = round(p50 + 1.282 * sigma_residual, 2)            # 80% CI Teto (P90)
+
+        if sigma_residual > 0:
+            z_meta = (p50 - m_dia) / sigma_residual
+            prob_meta = 0.5 * (1.0 + math.erf(z_meta / math.sqrt(2.0))) * 100.0
+            prob_meta = max(0.1, min(99.9, round(prob_meta, 1)))
+        else:
+            prob_meta = 100.0 if p50 >= m_dia else 0.0
+
         executive_kpis[ch] = {
             "canal": ch,
             "meta_dia": round(m_dia, 2),
@@ -1785,7 +1833,12 @@ def process_analytics():
             "gap_projecao_rs": round(gap_proj_base, 2),
             "cenarios_projecao": {
                 "base": round(proj_base, 2),
-                "conservador": round(proj_conservadora, 2),
+                "p10_conservador": round(p10, 2),
+                "p50_provavel": round(p50, 2),
+                "p90_otimista": round(p90, 2),
+                "probabilidade_meta_pct": prob_meta,
+                "sigma_residual_rs": round(sigma_residual, 2),
+                "conservador": round(p10, 2),
                 "reversao_meta": round(proj_reversao, 2)
             },
             "run_rate_atual_hora": round(run_rate_atual_hora, 2),
@@ -1823,12 +1876,61 @@ def process_analytics():
         desvio_mix = share_real - share_meta
         ticket_item = (real_ch / qtd_ch) if qtd_ch > 0 else 0.0
 
+        # Triângulo Fundamental do Varejo Farma (AOV = UPT x AUR)
+        # Estimativa de pedidos por proxy de transações reais
+        pedidos_est = max(1, int(round(qtd_ch / 3.55))) if ch != "Total" else int(round(qtd_ch / 3.55))
+        aur_item = (real_ch / qtd_ch) if qtd_ch > 0 else 0.0
+        upt_cesta = (qtd_ch / pedidos_est) if pedidos_est > 0 else 0.0
+        aov_ticket = (real_ch / pedidos_est) if pedidos_est > 0 else 0.0
+
         mix_canais[ch] = {
             "share_realizado_pct": round(share_real, 1),
             "share_meta_pct": round(share_meta, 1),
             "desvio_mix_pp": round(desvio_mix, 1),
-            "ticket_medio_item": round(ticket_item, 2),
+            "ticket_medio_item": round(aur_item, 2),
+            "aur_preco_medio": round(aur_item, 2),
+            "upt_itens_pedido": round(upt_cesta, 2),
+            "aov_ticket_medio": round(aov_ticket, 2),
+            "pedidos_estimados": int(pedidos_est),
             "qtd_itens": int(qtd_ch)
+        }
+
+    # Decomposição Waterfall de Vendas (Efeito Volume vs Efeito Preço vs Efeito Mix vs D-7)
+    waterfall_variacao = {}
+    for ch in ["Total", "APP", "Site", "MKP"]:
+        v_h = hoje_cut[ch]
+        q_h = hoje_qtd[ch]
+        v_7 = d7_cut[ch]
+        q_7 = d7_qtd_cut[ch]
+
+        p_h = (v_h / q_h) if q_h > 0 else 0.0
+        p_7 = (v_7 / q_7) if q_7 > 0 else 0.0
+
+        delta_tot = v_h - v_7
+        delta_vol = (q_h - q_7) * p_7
+        delta_prc = (p_h - p_7) * q_h
+
+        pct_vol = (delta_vol / abs(delta_tot) * 100.0) if delta_tot != 0 else 0.0
+        pct_prc = (delta_prc / abs(delta_tot) * 100.0) if delta_tot != 0 else 0.0
+
+        waterfall_variacao[ch] = {
+            "venda_hoje": round(v_h, 2),
+            "venda_d7": round(v_7, 2),
+            "delta_total_rs": round(delta_tot, 2),
+            "delta_volume_rs": round(delta_vol, 2),
+            "delta_preco_rs": round(delta_prc, 2),
+            "qtd_hoje": int(q_h),
+            "qtd_d7": int(q_7),
+            "delta_qtd_un": int(q_h - q_7),
+            "aur_hoje": round(p_h, 2),
+            "aur_d7": round(p_7, 2),
+            "delta_aur_rs": round(p_h - p_7, 2),
+            "pct_efeito_volume": round(pct_vol, 1),
+            "pct_efeito_preco": round(pct_prc, 1),
+            "diagnostico_waterfall": (
+                f"Variação de {delta_tot:+,.2f} explicada por Volume ({delta_vol:+,.2f}, {int(q_h - q_7):+d} un) "
+                f"e Preço/AUR ({delta_prc:+,.2f}, {p_h - p_7:+,.2f}/un)."
+            )
         }
 
     # 7. Radar do Horário Nobre (18h às 22h)
@@ -1922,6 +2024,7 @@ def process_analytics():
     # Nível 1: SKUs / Itens com Análise de Capilaridade de Rede (1.259 Lojas) + Inteligência de Preço (Precifica)
     TOTAL_LOJAS_REDE = 1259
     stock_map = raw.get("stockMap", {})
+    abc_map = compute_curva_abc(raw.get("rowsSKUs", []))
     skus_raw = []
     for r in raw.get("rowsSKUs", []):
         sku_code_str = str(r[0]).strip()
@@ -1990,9 +2093,21 @@ def process_analytics():
                 acao_rec = "Ação Promocional / Destaque Home"
                 acao_badge = "📉 Ação Comercial"
 
+        curva_abc = abc_map.get(sku_code_str) or abc_map.get(sku_code_str.lstrip("0")) or 'C'
+        abc_weight = 1.0 if curva_abc == 'A' else (0.5 if curva_abc == 'B' else 0.2)
+        d7_vda = float(r[4] or 0)
+        giro_est = (d7_vda / max(1.0, nosso_preco)) if (d7_vda > 0 and nosso_preco and nosso_preco > 0) else 1.0
+        spread_monetario = max(0.0, (nosso_preco - menor_conc_preco)) if (nosso_preco and menor_conc_preco) else 0.0
+        spread_capped = min(spread_monetario, (nosso_preco or 0) * 0.50)
+        opp_score = round(giro_est * spread_capped * abc_weight, 2)
+        prio_reprec = "CRÍTICA" if (opp_score >= 80 or (curva_abc == 'A' and (spread_pct or 0) > 15)) else ("MODERADA" if (opp_score >= 25 or (spread_pct or 0) > 25) else "MONITORAR")
+
         skus_raw.append({
             "sku_id": r[0],
             "nome": r[1],
+            "curva_abc": curva_abc,
+            "opportunity_score_rs": opp_score,
+            "prioridade_reprecificacao": prio_reprec,
             "hoje": r[2],
             "ontem": r[3],
             "d7": r[4],
@@ -2014,7 +2129,7 @@ def process_analytics():
     level_skus = build_detractors_boosters(
         skus_raw, "nome",
         extra_keys=[
-            "sku_id", "saldo", "un_por_loja", "status_estoque", "causa_tipo",
+            "sku_id", "curva_abc", "opportunity_score_rs", "prioridade_reprecificacao", "saldo", "un_por_loja", "status_estoque", "causa_tipo",
             "precifica_monitorado", "nosso_preco", "menor_concorrente_preco",
             "menor_concorrente_rede", "spread_pct", "preco_status",
             "acao_recomendada", "acao_badge"
@@ -2594,6 +2709,7 @@ def process_analytics():
         "precifica_catalogo_full": precifica_catalogo_full,
         "concorrentes_ranking": concorrentes_ranking,
         "regional": regional_data,
+        "waterfall_variacao": waterfall_variacao,
         "mix_canais": mix_canais,
         "horario_nobre": horario_nobre,
         "hourly_curve": hourly_curve_table,
