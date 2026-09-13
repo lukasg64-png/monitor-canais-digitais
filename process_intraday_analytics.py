@@ -555,6 +555,106 @@ def process_regional_data(raw):
     pct_superando = round((lojas_superando / len(filiais_all) * 100.0), 1) if filiais_all else 0.0
     share_rs_pct = round((tot_rs_hoje / tot_hoje_uf * 100.0), 1) if tot_hoje_uf > 0 else 0.0
 
+    # 5. Dupla Hierarquia Paralela (Geográfica vs Organizacional)
+    # 5.1 Árvore Geográfica: UF -> Municípios -> Filiais
+    hierarquia_geografica = []
+    for u in ufs:
+        uf_code = u["uf"]
+        muns_in_uf = [m for m in municipios_list if m["uf"] == uf_code]
+        muns_tree = []
+        for m in muns_in_uf:
+            fils_in_mun = [f for f in filiais_all if f["uf"] == uf_code and f["cidade"] == m["cidade"]]
+            fils_in_mun.sort(key=lambda x: x["vendas_hoje"], reverse=True)
+            m_copy = dict(m)
+            m_copy["filiais"] = fils_in_mun
+            muns_tree.append(m_copy)
+        muns_tree.sort(key=lambda x: x["vendas_hoje"], reverse=True)
+
+        u_tree = dict(u)
+        u_tree["total_lojas"] = sum(m["total_lojas"] for m in muns_tree)
+        u_tree["municipios"] = muns_tree
+        hierarquia_geografica.append(u_tree)
+
+    # 5.2 Árvore Organizacional: Diretoria -> Coordenação Distrital -> Filiais
+    org_dirs = {}
+    for f in filiais_all:
+        d_name = f.get("diretor") or "Sem Diretoria Atribuída"
+        c_name = f.get("coordenador") or "Sem Coordenação Atribuída"
+        if d_name not in org_dirs:
+            org_dirs[d_name] = {
+                "diretor": d_name,
+                "vendas_hoje": 0.0,
+                "vendas_ontem": 0.0,
+                "vendas_d7": 0.0,
+                "coordenacoes_map": {}
+            }
+        od = org_dirs[d_name]
+        od["vendas_hoje"] += f["vendas_hoje"]
+        od["vendas_ontem"] += f["vendas_ontem"]
+        od["vendas_d7"] += f["vendas_d7"]
+
+        if c_name not in od["coordenacoes_map"]:
+            od["coordenacoes_map"][c_name] = {
+                "coordenador": c_name,
+                "diretor": d_name,
+                "uf": f["uf"],
+                "vendas_hoje": 0.0,
+                "vendas_ontem": 0.0,
+                "vendas_d7": 0.0,
+                "filiais": []
+            }
+        oc = od["coordenacoes_map"][c_name]
+        oc["vendas_hoje"] += f["vendas_hoje"]
+        oc["vendas_ontem"] += f["vendas_ontem"]
+        oc["vendas_d7"] += f["vendas_d7"]
+        oc["filiais"].append(f)
+
+    hierarquia_organizacional = []
+    for d_name, d_data in org_dirs.items():
+        coords_list = []
+        for c_name, c_data in d_data["coordenacoes_map"].items():
+            c_data["filiais"].sort(key=lambda x: x["vendas_hoje"], reverse=True)
+            c_vh = c_data["vendas_hoje"]
+            c_v7 = c_data["vendas_d7"]
+            c_vo = c_data["vendas_ontem"]
+            c_gap = round(c_vh - c_v7, 2)
+            c_var = round(((c_vh / c_v7) - 1.0) * 100.0, 1) if c_v7 > 0 else 0.0
+            coords_list.append({
+                "coordenador": c_name,
+                "diretor": d_name,
+                "uf": c_data["uf"],
+                "total_lojas": len(c_data["filiais"]),
+                "vendas_hoje": round(c_vh, 2),
+                "vendas_ontem": round(c_vo, 2),
+                "vendas_d7": round(c_v7, 2),
+                "gap_d7_rs": c_gap,
+                "var_d7_pct": c_var,
+                "pacing_status": "SUPEROU" if c_gap >= 0 else ("MODERADO" if c_var >= -15 else "CRITICO"),
+                "filiais": c_data["filiais"]
+            })
+        coords_list.sort(key=lambda x: x["vendas_hoje"], reverse=True)
+
+        d_vh = d_data["vendas_hoje"]
+        d_v7 = d_data["vendas_d7"]
+        d_vo = d_data["vendas_ontem"]
+        d_gap = round(d_vh - d_v7, 2)
+        d_var = round(((d_vh / d_v7) - 1.0) * 100.0, 1) if d_v7 > 0 else 0.0
+        tot_lojas_dir = sum(c["total_lojas"] for c in coords_list)
+
+        hierarquia_organizacional.append({
+            "diretor": d_name,
+            "total_lojas": tot_lojas_dir,
+            "total_coordenacoes": len(coords_list),
+            "vendas_hoje": round(d_vh, 2),
+            "vendas_ontem": round(d_vo, 2),
+            "vendas_d7": round(d_v7, 2),
+            "gap_d7_rs": d_gap,
+            "var_d7_pct": d_var,
+            "pacing_status": "SUPEROU" if d_gap >= 0 else ("MODERADO" if d_var >= -15 else "CRITICO"),
+            "coordenacoes": coords_list
+        })
+    hierarquia_organizacional.sort(key=lambda x: x["vendas_hoje"], reverse=True)
+
     return {
         "totais": {
             "vendas_hoje": round(tot_hoje_uf, 2),
@@ -578,7 +678,215 @@ def process_regional_data(raw):
         "filiais_campeas": top_campeas,
         "filiais_quedas": top_quedas,
         "filiais_todas": filiais_all,
-        "lojas_geo_map": lojas_geo_map
+        "lojas_geo_map": lojas_geo_map,
+        "hierarquia_geografica": hierarquia_geografica,
+        "hierarquia_organizacional": hierarquia_organizacional
+    }
+
+
+def process_stock_audit_data(raw, precifica_items, regional_data, level_skus, estoque_impacto):
+    """
+    Módulo Executivo de Auditoria & Impacto Financeiro de Estoque por Loja e Hierarquia.
+    Calcula o impacto financeiro em R$, identifica as causas-raiz (Preço vs Estoque vs Demanda),
+    localiza os desvios por Geografia (UF, Município, Loja) e Organização (Diretoria, Coordenação, Loja)
+    e sugere ações logísticas pontuais 100% embasadas em dados reais do Qlik Sense.
+    """
+    TOTAL_LOJAS_REDE = 1259
+    stock_map = raw.get("stockMap", {})
+    detratores_skus = level_skus.get("detratores_top", [])
+    filiais_all = regional_data.get("filiais_todas", [])
+
+    # 1. Identificação dos SKUs em Ruptura Crítica
+    ruptura_skus = []
+    for s in detratores_skus:
+        ct = s.get("causa_tipo", "")
+        un_lj = float(s.get("un_por_loja", 0))
+        saldo = float(s.get("saldo", 0))
+        transito = float(s.get("transito", 0))
+        gap = float(s.get("gap_d7_rs", 0))
+        
+        if ct in ("RUPTURA_LOGISTICA", "DUPLO_DETRATOR") or (un_lj < 1.5 and gap < 0):
+            if saldo <= 0:
+                acao = "🚨 Compra Emergencial (Saldo Total Zerado)"
+                status_rup = "RUPTURA_TOTAL"
+            elif transito > 0 and saldo < 500:
+                acao = "📦 Acelerar CD ➔ Lojas (Carga em Trânsito)"
+                status_rup = "EM_TRANSITO"
+            elif saldo > 800 and un_lj < 1.0:
+                acao = "🔄 Remanejo Inter-Lojas (Centralizar em Polos)"
+                status_rup = "DESBALANCEADO"
+            else:
+                acao = "⚠️ Abastecimento Prioritário de Lojas Digitais"
+                status_rup = "ESTOQUE_BAIXO"
+
+            ruptura_skus.append({
+                "sku_id": s.get("sku_id"),
+                "nome": s.get("nome"),
+                "grupo": s.get("grupo", "Geral"),
+                "laboratorio": s.get("laboratorio", "N/A"),
+                "hoje": round(float(s.get("hoje", 0)), 2),
+                "d7": round(float(s.get("d7_exp_corte") or s.get("d7_full") or 0), 2),
+                "gap_d7_rs": round(gap, 2),
+                "gap_d7_pct": round(float(s.get("gap_d7_pct", 0)), 1),
+                "saldo": int(saldo),
+                "transito": int(transito),
+                "un_por_loja": round(un_lj, 2),
+                "status_ruptura": status_rup,
+                "acao_logistica": acao
+            })
+
+    ruptura_skus.sort(key=lambda x: x["gap_d7_rs"])
+
+    # 2. Scorecard Executivo de Impacto de Estoque
+    perda_ruptura_rs = sum(abs(s["gap_d7_rs"]) for s in ruptura_skus)
+    perda_preco_rs = float(estoque_impacto.get("perda_preco_desalinhado_rs", 0))
+    perda_demanda_rs = float(estoque_impacto.get("perda_demanda_comercial_rs", 0))
+    total_detratores_rs = float(estoque_impacto.get("total_perda_detratores", 0)) or (perda_ruptura_rs + perda_preco_rs + perda_demanda_rs)
+
+    pct_ruptura = round((perda_ruptura_rs / total_detratores_rs * 100.0), 1) if total_detratores_rs > 0 else 0.0
+    pct_preco = round((perda_preco_rs / total_detratores_rs * 100.0), 1) if total_detratores_rs > 0 else 0.0
+    pct_demanda = round((perda_demanda_rs / total_detratores_rs * 100.0), 1) if total_detratores_rs > 0 else 0.0
+
+    # 3. Mapeamento de Lojas Físicas Impactadas (Lojas com Queda vs D-7)
+    lojas_com_queda = [f for f in filiais_all if f.get("gap_d7_rs", 0) < 0]
+    total_perda_lojas = sum(abs(f["gap_d7_rs"]) for f in lojas_com_queda)
+
+    # 3.1 Impacto Geográfico: Perda por UF e Municípios
+    ufs_map = {}
+    for f in lojas_com_queda:
+        uf = f["uf"]
+        if uf not in ufs_map:
+            ufs_map[uf] = {
+                "uf": uf,
+                "lojas_com_queda": 0,
+                "total_lojas": 0,
+                "perda_rs": 0.0,
+                "muns_map": {}
+            }
+        u = ufs_map[uf]
+        u["lojas_com_queda"] += 1
+        u["perda_rs"] += abs(f["gap_d7_rs"])
+
+        cidade = f["cidade"]
+        if cidade not in u["muns_map"]:
+            u["muns_map"][cidade] = {
+                "cidade": cidade,
+                "uf": uf,
+                "lojas_com_queda": 0,
+                "perda_rs": 0.0
+            }
+        cm = u["muns_map"][cidade]
+        cm["lojas_com_queda"] += 1
+        cm["perda_rs"] += abs(f["gap_d7_rs"])
+
+    for f in filiais_all:
+        uf = f["uf"]
+        if uf in ufs_map:
+            ufs_map[uf]["total_lojas"] += 1
+
+    impacto_geografico = []
+    for uf, u in ufs_map.items():
+        muns_list = sorted(u["muns_map"].values(), key=lambda x: x["perda_rs"], reverse=True)[:6]
+        for m in muns_list:
+            m["perda_rs"] = round(m["perda_rs"], 2)
+        share_uf = round((u["perda_rs"] / total_perda_lojas * 100.0), 1) if total_perda_lojas > 0 else 0.0
+        impacto_geografico.append({
+            "uf": uf,
+            "perda_rs": round(u["perda_rs"], 2),
+            "share_perda_pct": share_uf,
+            "lojas_com_queda": u["lojas_com_queda"],
+            "total_lojas": u["total_lojas"],
+            "pct_lojas_afetadas": round((u["lojas_com_queda"] / u["total_lojas"] * 100.0), 1) if u["total_lojas"] > 0 else 0.0,
+            "top_municipios_afetados": muns_list
+        })
+    impacto_geografico.sort(key=lambda x: x["perda_rs"], reverse=True)
+
+    # 3.2 Impacto Organizacional: Perda por Diretoria e Coordenações
+    dirs_map = {}
+    for f in lojas_com_queda:
+        d_nome = f.get("diretor") or "Sem Diretoria"
+        if d_nome not in dirs_map:
+            dirs_map[d_nome] = {
+                "diretor": d_nome,
+                "lojas_com_queda": 0,
+                "total_lojas": 0,
+                "perda_rs": 0.0,
+                "coords_map": {}
+            }
+        d = dirs_map[d_nome]
+        d["lojas_com_queda"] += 1
+        d["perda_rs"] += abs(f["gap_d7_rs"])
+
+        c_nome = f.get("coordenador") or "Sem Coordenação"
+        if c_nome not in d["coords_map"]:
+            d["coords_map"][c_nome] = {
+                "coordenador": c_nome,
+                "diretor": d_nome,
+                "uf": f["uf"],
+                "lojas_com_queda": 0,
+                "perda_rs": 0.0
+            }
+        cm = d["coords_map"][c_nome]
+        cm["lojas_com_queda"] += 1
+        cm["perda_rs"] += abs(f["gap_d7_rs"])
+
+    for f in filiais_all:
+        d_nome = f.get("diretor") or "Sem Diretoria"
+        if d_nome in dirs_map:
+            dirs_map[d_nome]["total_lojas"] += 1
+
+    impacto_organizacional = []
+    for d_nome, d in dirs_map.items():
+        coords_list = sorted(d["coords_map"].values(), key=lambda x: x["perda_rs"], reverse=True)[:6]
+        for c in coords_list:
+            c["perda_rs"] = round(c["perda_rs"], 2)
+        share_dir = round((d["perda_rs"] / total_perda_lojas * 100.0), 1) if total_perda_lojas > 0 else 0.0
+        impacto_organizacional.append({
+            "diretor": d_nome,
+            "perda_rs": round(d["perda_rs"], 2),
+            "share_perda_pct": share_dir,
+            "lojas_com_queda": d["lojas_com_queda"],
+            "total_lojas": d["total_lojas"],
+            "pct_lojas_afetadas": round((d["lojas_com_queda"] / d["total_lojas"] * 100.0), 1) if d["total_lojas"] > 0 else 0.0,
+            "top_coordenacoes_afetadas": coords_list
+        })
+    impacto_organizacional.sort(key=lambda x: x["perda_rs"], reverse=True)
+
+    # 3.3 Top 30 Lojas Mais Críticas com Maior Queda Financeira
+    top_lojas_queda = sorted(lojas_com_queda, key=lambda x: x["gap_d7_rs"])[:30]
+    top_lojas_afetadas = []
+    for f in top_lojas_queda:
+        top_lojas_afetadas.append({
+            "filial_id": f["filial_id"],
+            "nome": f["nome"],
+            "cidade": f["cidade"],
+            "uf": f["uf"],
+            "diretor": f.get("diretor", ""),
+            "coordenador": f.get("coordenador", ""),
+            "vendas_hoje": f["vendas_hoje"],
+            "vendas_d7": f["vendas_d7"],
+            "gap_d7_rs": f["gap_d7_rs"],
+            "var_d7_pct": f["var_d7_pct"]
+        })
+
+    return {
+        "scorecard": {
+            "perda_ruptura_rs": round(perda_ruptura_rs, 2),
+            "pct_ruptura": pct_ruptura,
+            "skus_ruptura_critica": len(ruptura_skus),
+            "lojas_afetadas_queda": len(lojas_com_queda),
+            "total_lojas_rede": TOTAL_LOJAS_REDE,
+            "perda_preco_rs": round(perda_preco_rs, 2),
+            "pct_preco": pct_preco,
+            "perda_demanda_rs": round(perda_demanda_rs, 2),
+            "pct_demanda": pct_demanda,
+            "total_perda_detratores_rs": round(total_detratores_rs, 2),
+            "total_perda_lojas_rs": round(total_perda_lojas, 2)
+        },
+        "impacto_geografico": impacto_geografico,
+        "impacto_organizacional": impacto_organizacional,
+        "top_lojas_afetadas": top_lojas_afetadas,
+        "skus_ruptura": ruptura_skus
     }
 
 
@@ -2081,6 +2389,9 @@ def process_analytics():
     # 8.5 Processamento de Inteligência Regional e Concorrência
     regional_data = process_regional_data(raw)
 
+    # 8.6 Processamento de Auditoria & Impacto Financeiro de Estoque por Loja e Hierarquia
+    auditoria_estoque = process_stock_audit_data(raw, precifica_items, regional_data, level_skus, estoque_impacto)
+
     try:
         from extract_precifica import calculate_competitor_loss_ranking
         concorrentes_ranking = calculate_competitor_loss_ranking(precifica_items)
@@ -2138,6 +2449,7 @@ def process_analytics():
         },
         "kpis": executive_kpis,
         "estoque_impacto": estoque_impacto,
+        "auditoria_estoque": auditoria_estoque,
         "radar_alertas": radar_alertas,
         "precifica_catalogo_full": precifica_catalogo_full,
         "concorrentes_ranking": concorrentes_ranking,

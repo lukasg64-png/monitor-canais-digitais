@@ -2625,7 +2625,186 @@
     /* ==========================================================================
        VIEW REGIONAL & LOJAS STYLES
        ========================================================================== */
-    #view-regional-container {
+    #view-regional-container, #view-estoque-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeInView 0.35s ease;
+    }
+
+    /* ESTILOS DA ABA 4: AUDITORIA DE ESTOQUE & RUPTURA */
+    .stock-banner-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--apple-red);
+      border-radius: var(--radius-card);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stock-scorecard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .stock-kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-xs);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .stock-kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .stock-kpi-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stock-kpi-val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.1;
+    }
+    .stock-kpi-sub {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .stock-triade-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+    }
+    .stock-triade-bar-wrap {
+      width: 100%;
+      height: 16px;
+      background: var(--surface-sunken);
+      border-radius: 8px;
+      display: flex;
+      overflow: hidden;
+      margin: 14px 0 16px 0;
+      border: 1px solid var(--border);
+    }
+    .stock-triade-seg {
+      height: 100%;
+      transition: width 0.4s ease;
+    }
+    .stock-triade-seg-ruptura {
+      background: linear-gradient(90deg, #ff3b30, #ff453a);
+    }
+    .stock-triade-seg-preco {
+      background: linear-gradient(90deg, #ff9500, #ff9f0a);
+    }
+    .stock-triade-seg-demanda {
+      background: linear-gradient(90deg, #0071e3, #0a84ff);
+    }
+    .stock-triade-boxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .stock-triade-box {
+      background: var(--surface-sunken);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .stock-triade-box:hover {
+      border-color: var(--border-focus);
+      background: var(--surface);
+      transform: translateY(-1px);
+    }
+    .stock-split-container {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 1024px) {
+      .stock-split-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    .stock-ranking-item {
+      background: var(--surface-sunken);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 8px;
+    }
+    .stock-ranking-item:hover {
+      border-color: var(--apple-blue);
+      background: var(--surface);
+    }
+    .stock-ranking-item.active {
+      border-color: var(--apple-blue);
+      background: var(--apple-blue-soft);
+      border-left: 4px solid var(--apple-blue);
+    }
+    .stock-progress-bg {
+      width: 100%;
+      height: 6px;
+      background: var(--surface-ground);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .stock-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .hierarchy-tree-selector-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+      background: var(--surface-sunken);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 12px;
+      flex-wrap: wrap;
+    }
+    #stock-table-tbody td {
+      padding: 10px 14px;
+      font-size: 12.5px;
+      border-bottom: 1px solid var(--border-soft, #eee);
+      vertical-align: middle;
+    }
+    #stock-table-tbody tr:hover td {
+      background: rgba(255, 59, 48, 0.04);
+    }
+
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -3097,6 +3276,11 @@
           <span>Visão Regional & Lojas</span>
           <span class="view-tab-tag tag-live" style="background: rgba(0, 113, 227, 0.15); color: var(--apple-blue); border: 1px solid rgba(0, 113, 227, 0.3);">ESTADOS & LOJAS</span>
         </button>
+        <button class="view-tab-btn" id="tab-btn-estoque" onclick="switchViewMode('estoque')" title="Auditoria de estoque por loja e SKU, impacto financeiro de ruptura vs preço e diagnóstico de causa-raiz">
+          <span style="font-size: 14px;">📦</span>
+          <span>Estoque & Ruptura</span>
+          <span class="view-tab-tag tag-live" style="background: rgba(255, 59, 48, 0.15); color: var(--apple-red); border: 1px solid rgba(255, 59, 48, 0.3);">AUDITORIA & LOJAS</span>
+        </button>
       </div>
     </div>
 
@@ -3164,7 +3348,7 @@
           </div>
 
           <!-- Card 2: Ruptura Física Real -->
-          <div class="alerta-card alerta-card-ruptura" onclick="filterAndScrollToCausa('RUPTURA')" style="cursor: pointer; background: var(--surface); border: 1px solid rgba(255, 59, 48, 0.35); border-left: 4px solid var(--apple-red); border-radius: 12px; padding: 14px 16px;">
+          <div class="alerta-card alerta-card-ruptura" onclick="switchViewMode('estoque')" " style="cursor: pointer; background: var(--surface); border: 1px solid rgba(255, 59, 48, 0.35); border-left: 4px solid var(--apple-red); border-radius: 12px; padding: 14px 16px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
               <span style="font-size: 11px; font-weight: 700; color: var(--apple-red-text); text-transform: uppercase; letter-spacing: 0.5px;">📦 Ruptura Física Real</span>
               <span class="tag-badge tag-critico" id="alerta-badge-ruptura" style="font-size: 10px; font-weight: 700;">Carregando...</span>
@@ -3175,7 +3359,7 @@
             </div>
             <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255, 59, 48, 0.25); display: flex; align-items: center; justify-content: space-between;">
               <span style="font-size: 10.5px; font-weight: 700; color: var(--apple-red-text);">Ação: Remanejo CD ➔ Lojas Polo</span>
-              <span style="font-size: 11px; color: var(--apple-red-text); font-weight: 700;" id="alerta-btn-ruptura">Ver Itens ➔</span>
+              <span style="font-size: 11px; color: var(--apple-red-text); font-weight: 700;" id="alerta-btn-ruptura" onclick="event.stopPropagation(); switchViewMode('estoque');">Auditar Estoque ➔</span>
             </div>
           </div>
 
@@ -4317,8 +4501,19 @@
             </div>
           </div>
 
+          <!-- SELETOR DE DUPLA HIERARQUIA PARALELA (Geográfica vs Organizacional) -->
+          <div class="hierarchy-tree-selector-bar" style="display: flex; gap: 10px; align-items: center; margin-bottom: 14px; background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; flex-wrap: wrap;">
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Estrutura Hierárquica:</span>
+            <button class="regional-pill-btn active" id="btn-tree-geo" onclick="setHierarchyTreeMode('geo')" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <span>🗺️</span> Árvore Geográfica (UF ➔ Município ➔ Filial)
+            </button>
+            <button class="regional-pill-btn" id="btn-tree-org" onclick="setHierarchyTreeMode('org')" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+              <span>👔</span> Árvore Organizacional (Diretoria ➔ Coordenação ➔ Filial)
+            </button>
+          </div>
+
           <!-- Pills de Nível Hierárquico -->
-          <div class="regional-pills-bar" style="margin-bottom: 14px;">
+          <div class="regional-pills-bar" style="margin-bottom: 14px;" id="regional-sub-pills-container">
             <button class="regional-pill-btn active" id="pill-reg-municipios" onclick="setRegionalLevel('municipios')">🏙️ Por Município</button>
             <button class="regional-pill-btn" id="pill-reg-campeas" onclick="setRegionalLevel('campeas')">🏆 Top 50 Lojas Campeãs</button>
             <button class="regional-pill-btn" id="pill-reg-quedas" onclick="setRegionalLevel('quedas')">⚠️ Top 50 Lojas em Alerta</button>
@@ -4353,6 +4548,304 @@
       </div>
 
     </div><!-- FIM #view-regional-container -->
+
+    <!-- ========================================================================== -->
+    <!-- ABA 4: AUDITORIA DE IMPACTO FINANCEIRO DE ESTOQUE & RUPTURA POR LOJA E SKU -->
+    <!-- ========================================================================== -->
+    <div id="view-estoque-container" style="display: none;">
+
+      <!-- Banner Executivo de Auditoria de Estoque -->
+      <div class="stock-banner-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 59, 48, 0.12); display: flex; align-items: center; justify-content: center; font-size: 24px;">
+              📦
+            </div>
+            <div>
+              <div style="font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px;">
+                Auditoria de Impacto Financeiro de Estoque & Ruptura por Loja
+              </div>
+              <div style="font-size: 13.5px; color: var(--text-secondary); margin-top: 2px;">
+                Diagnóstico factual de causa-raiz (Preço Desalinhado vs Ruptura Logística vs Demanda Comercial) e localização exata de gaps por Geografia e Organização
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <span class="tag-badge tag-critico" id="stock-badge-corte" style="padding: 5px 12px; font-size: 11px;">CORTE QLIK SENSE</span>
+            <span class="tag-badge tag-moderado" style="padding: 5px 12px; font-size: 11px;">1.259 LOJAS AUDITADAS</span>
+            <span class="tag-badge" style="background: rgba(0, 113, 227, 0.12); color: var(--apple-blue); font-weight: 700; padding: 5px 12px; font-size: 11px;">35.074 SKUS MONITORADOS</span>
+          </div>
+        </div>
+
+        <!-- Alerta Executivo de Estoque & Reabastecimento -->
+        <div style="margin-top: 14px; background: rgba(255, 59, 48, 0.04); border: 1px solid rgba(255, 59, 48, 0.16); border-left: 4px solid var(--apple-red); border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">🚨</span>
+            <div>
+              <div style="font-size: 13px; font-weight: 700; color: var(--apple-red);">Diretriz Estratégica de Abastecimento Digital</div>
+              <div id="stock-alerta-texto" style="font-size: 12.5px; color: var(--text-primary);">
+                Identificando produtos onde o giro online travou por falta física nas lojas e lojas com maior retração de faturamento vs D-7.
+              </div>
+            </div>
+          </div>
+          <div class="tag-badge tag-critico" id="stock-alerta-tag">AÇÃO LOGÍSTICA IMEDIATA</div>
+        </div>
+      </div>
+
+      <!-- SCORECARD EXECUTIVO DE ESTOQUE (4 KPIS) -->
+      <div class="stock-scorecard-grid">
+        <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-red);">
+          <div class="stock-kpi-label"><span>🚨</span> Perda por Ruptura Crítica</div>
+          <div class="stock-kpi-val" id="stock-kpi-perda-ruptura" style="color: var(--apple-red);">R$ 0,00</div>
+          <div class="stock-kpi-sub">
+            <span class="tag-badge tag-critico" id="stock-kpi-pct-ruptura">0,0% DO GAP TOTAL</span>
+            <span>Itens &lt;1,5 un/loja</span>
+          </div>
+        </div>
+
+        <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-orange);">
+          <div class="stock-kpi-label"><span>🏷️</span> Perda por Preço Desalinhado</div>
+          <div class="stock-kpi-val" id="stock-kpi-perda-preco" style="color: var(--apple-orange-text);">R$ 0,00</div>
+          <div class="stock-kpi-sub">
+            <span class="tag-badge tag-moderado" id="stock-kpi-pct-preco">0,0% DO GAP</span>
+            <span>Estoque farto em loja</span>
+          </div>
+        </div>
+
+        <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-purple);">
+          <div class="stock-kpi-label"><span>📦</span> SKUs em Ruptura Crítica</div>
+          <div class="stock-kpi-val" id="stock-kpi-skus-criticos">0 SKUs</div>
+          <div class="stock-kpi-sub">
+            <span class="tag-badge tag-critico">DESABASTECIMENTO</span>
+            <span>Ação CD ➔ Lojas</span>
+          </div>
+        </div>
+
+        <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-blue);">
+          <div class="stock-kpi-label"><span>🏢</span> Lojas com Queda vs D-7</div>
+          <div class="stock-kpi-val" id="stock-kpi-lojas-afetadas">0 Filiais</div>
+          <div class="stock-kpi-sub">
+            <span class="tag-badge tag-super" id="stock-kpi-pct-lojas">0,0% DA REDE</span>
+            <span>Operando abaixo do ritmo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD DE DIAGNÓSTICO DE CAUSA-RAIZ (TRÍADE ESTRATÉGICA) -->
+      <div class="stock-triade-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 800; color: var(--text-primary);">
+              🎯 Diagnóstico Executivo de Causa-Raiz: Não estamos vendendo? Entenda a Causa
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 3px;">
+              Decomposição analítica do GAP de vendas vs D-7 em 3 dimensões operacionais independentes:
+            </div>
+          </div>
+          <span class="tag-badge" style="background: rgba(0, 113, 227, 0.12); color: var(--apple-blue); font-weight: 700; font-size: 11px;">
+            100% FATUAL & SEM ESTIMATIVAS
+          </span>
+        </div>
+
+        <!-- Barra Visual Comparativa -->
+        <div class="stock-triade-bar-wrap">
+          <div class="stock-triade-seg stock-triade-seg-ruptura" id="triade-bar-ruptura" style="width: 25%;" title="Ruptura Logística"></div>
+          <div class="stock-triade-seg stock-triade-seg-preco" id="triade-bar-preco" style="width: 35%;" title="Preço Desalinhado"></div>
+          <div class="stock-triade-seg stock-triade-seg-demanda" id="triade-bar-demanda" style="width: 40%;" title="Demanda Comercial"></div>
+        </div>
+
+        <!-- 3 Boxes Interativos de Causa-Raiz -->
+        <div class="stock-triade-boxes">
+          <div class="stock-triade-box" style="border-left: 4px solid var(--apple-red);" onclick="filterStockStatusFilter('TODOS')">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--apple-red); text-transform: uppercase;">🚨 1) Ruptura Logística Real</span>
+              <span class="tag-badge tag-critico" id="triade-badge-ruptura">0,0%</span>
+            </div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--apple-red); font-family: 'Outfit', sans-serif;" id="triade-val-ruptura">R$ 0,00</div>
+            <div style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.45;">
+              Itens com desabastecimento crítico nas lojas (&lt;1,5 un/loja). O cliente tenta comprar online mas a loja física não tem saldo.
+            </div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--apple-red); margin-top: 4px;">
+              ➔ Ação: Compras e transferências CD ➔ Lojas Polo.
+            </div>
+          </div>
+
+          <div class="stock-triade-box" style="border-left: 4px solid var(--apple-orange);" onclick="switchViewMode('live'); setTimeout(() => { filterAndScrollToCausa('PRECO'); }, 300);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--apple-orange-text); text-transform: uppercase;">🏷️ 2) Preço Desalinhado</span>
+              <span class="tag-badge tag-moderado" id="triade-badge-preco">0,0%</span>
+            </div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--apple-orange-text); font-family: 'Outfit', sans-serif;" id="triade-val-preco">R$ 0,00</div>
+            <div style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.45;">
+              Produtos com estoque pleno em loja (≥1,5 un/loja), porém mais caros online que a concorrência direta (Nissei, Panvel, Preço Popular).
+            </div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--apple-orange-text); margin-top: 4px;">
+              ➔ Ação: Reprecificar no App/Site para destravar giro.
+            </div>
+          </div>
+
+          <div class="stock-triade-box" style="border-left: 4px solid var(--apple-blue);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--apple-blue); text-transform: uppercase;">📈 3) Demanda / Ciclo GLP-1</span>
+              <span class="tag-badge tag-super" id="triade-badge-demanda">0,0%</span>
+            </div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--apple-blue); font-family: 'Outfit', sans-serif;" id="triade-val-demanda">R$ 0,00</div>
+            <div style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.45;">
+              Medicamentos regulados e GLP-1 (Mounjaro, Wegovy, Ozempic) com estoque abastecido na rede, sujeitos ao ciclo de recompra mensal de 30 dias.
+            </div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--apple-blue); margin-top: 4px;">
+              ➔ Ação: Campanhas de CRM e recompra no APP.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOCALIZAÇÃO DO PROBLEMA: ONDE ESTÃO AS LOJAS E A HIERARQUIA COM GAP? -->
+      <div class="regional-banner-card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+          <div>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: var(--text-primary);">
+              📍 Onde está o Problema? Localização Precisa do Desvio de Vendas e Estoque
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+              Identifique imediatamente qual Estado/Município ou Diretoria/Coordenação concentra o maior prejuízo financeiro:
+            </div>
+          </div>
+
+          <!-- Seletor de Visão: Geografia vs Organização -->
+          <div style="display: flex; gap: 8px; align-items: center; background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 12px; padding: 6px 10px;">
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Visão:</span>
+            <button class="regional-pill-btn active" id="btn-stock-hier-geo" onclick="setStockHierarchyMode('geo')" style="padding: 5px 12px; font-size: 12px;">
+              <span>🗺️</span> Por Geografia (UF ➔ Município)
+            </button>
+            <button class="regional-pill-btn" id="btn-stock-hier-org" onclick="setStockHierarchyMode('org')" style="padding: 5px 12px; font-size: 12px;">
+              <span>👔</span> Por Organização (Diretoria ➔ Coordenação)
+            </button>
+          </div>
+        </div>
+
+        <!-- Split View: Ranking de Impacto (Esquerda) vs Detalhamento de Lojas (Direita) -->
+        <div class="stock-split-container">
+          
+          <!-- Coluna Esquerda: Lista de Entidades com Barras de Perda -->
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+              <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;" id="stock-ranking-title">Ranking por Estado (UF)</span>
+              <span style="font-size: 11px; color: var(--text-secondary);">Clique para detalhar</span>
+            </div>
+            <div id="stock-ranking-list" style="max-height: 520px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+              <!-- Injetado dinamicamente -->
+            </div>
+          </div>
+
+          <!-- Coluna Direita: Detalhamento da Entidade Selecionada -->
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+              <div>
+                <div style="font-size: 16px; font-weight: 800; color: var(--text-primary); font-family: 'Outfit', sans-serif;" id="stock-detail-title">
+                  Selecione uma entidade à esquerda
+                </div>
+                <div style="font-size: 12.5px; color: var(--text-secondary); margin-top: 2px;" id="stock-detail-sub">
+                  Detalhamento de filiais e municípios afetados
+                </div>
+              </div>
+              <span class="tag-badge tag-critico" id="stock-detail-badge">FOCO OPERACIONAL</span>
+            </div>
+
+            <!-- Subdivisão: Top Municípios ou Coordenações Afetadas -->
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px;" id="stock-detail-sublist-title">
+                Polos / Coordenações Mais Prejudicados:
+              </div>
+              <div id="stock-detail-sublist" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                <!-- Injetado dinamicamente -->
+              </div>
+            </div>
+
+            <!-- Tabela de Top Lojas com Queda nessa Entidade -->
+            <div style="margin-top: 6px;">
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px;">
+                Top Filiais Físicas com Maior Queda Financeira:
+              </div>
+              <div style="overflow-x: auto; max-height: 280px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                  <thead>
+                    <tr style="background: var(--surface-sunken); border-bottom: 1px solid var(--border);">
+                      <th style="padding: 8px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">Filial</th>
+                      <th style="padding: 8px 12px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">Cidade</th>
+                      <th style="padding: 8px 12px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">Hoje</th>
+                      <th style="padding: 8px 12px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">D-7</th>
+                      <th style="padding: 8px 12px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--apple-red);">GAP R$</th>
+                      <th style="padding: 8px 12px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary);">Var %</th>
+                    </tr>
+                  </thead>
+                  <tbody id="stock-detail-stores-tbody">
+                    <!-- Injetado dinamicamente -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MATRIZ ANALÍTICA DE SKUS EM RUPTURA CRÍTICA & AÇÃO LOGÍSTICA -->
+      <div class="regional-banner-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 14px;">
+          <div>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: var(--text-primary);">
+              📋 Matriz Acionável de SKUs em Ruptura Crítica & Estoque Físico da Rede
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+              Lista completa dos produtos em que o desabastecimento causou a maior retração de faturamento digital vs D-7
+            </div>
+          </div>
+          <button class="regional-pill-btn" onclick="exportStockTableCSV()" style="font-size: 12px;">
+            <span>📥</span> Exportar Tabela
+          </button>
+        </div>
+
+        <!-- Barra de Filtros da Matriz de Estoque -->
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;">
+          <input type="text" id="stock-search-input" oninput="filterStockTable()" placeholder="Buscar SKU por código, nome, categoria ou laboratório..." style="flex: 1; min-width: 260px; padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface-sunken); font-size: 13px; color: var(--text-primary); outline: none;">
+          
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="regional-pill-btn active" id="pill-stock-filter-TODOS" onclick="setStockStatusFilter('TODOS')">Todos</button>
+            <button class="regional-pill-btn" id="pill-stock-filter-RUPTURA_TOTAL" onclick="setStockStatusFilter('RUPTURA_TOTAL')">🚨 Saldo 0</button>
+            <button class="regional-pill-btn" id="pill-stock-filter-EM_TRANSITO" onclick="setStockStatusFilter('EM_TRANSITO')">📦 Em Trânsito</button>
+            <button class="regional-pill-btn" id="pill-stock-filter-DESBALANCEADO" onclick="setStockStatusFilter('DESBALANCEADO')">🔄 Remanejamento</button>
+            <button class="regional-pill-btn" id="pill-stock-filter-ESTOQUE_BAIXO" onclick="setStockStatusFilter('ESTOQUE_BAIXO')">⚠️ Estoque Baixo</button>
+          </div>
+        </div>
+
+        <!-- Tabela de Alta Densidade -->
+        <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+            <thead>
+              <tr style="background: var(--surface-sunken); border-bottom: 2px solid var(--border);">
+                <th style="padding: 11px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">SKU</th>
+                <th style="padding: 11px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Produto / Laboratório</th>
+                <th style="padding: 11px 14px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Hoje</th>
+                <th style="padding: 11px 14px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">D-7 Esp.</th>
+                <th style="padding: 11px 14px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--apple-red); font-weight: 700;">GAP R$</th>
+                <th style="padding: 11px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Saldo Rede</th>
+                <th style="padding: 11px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Trânsito CD</th>
+                <th style="padding: 11px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Un / Loja</th>
+                <th style="padding: 11px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Status Ruptura</th>
+                <th style="padding: 11px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Ação Logística Recomendada</th>
+              </tr>
+            </thead>
+            <tbody id="stock-table-tbody">
+              <!-- Injetado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div><!-- FIM #view-estoque-container -->
     <!-- Footer -->
     <footer>
       <div>Farmácias São João — Acompanhamento Online Canais Digitais (App, Site e Marketplace)</div>
@@ -4396,19 +4889,23 @@
       const liveBtn = document.getElementById('tab-btn-live');
       const fechBtn = document.getElementById('tab-btn-fechamento');
       const regBtn = document.getElementById('tab-btn-regional');
+      const estoqueBtn = document.getElementById('tab-btn-estoque');
       const liveContainer = document.getElementById('view-live-container');
       const fechContainer = document.getElementById('view-fechamento-container');
       const regContainer = document.getElementById('view-regional-container');
+      const estoqueContainer = document.getElementById('view-estoque-container');
       const floatingDock = document.getElementById('floating-dock');
 
       if (liveBtn) liveBtn.classList.toggle('active', mode === 'live');
       if (fechBtn) fechBtn.classList.toggle('active', mode === 'fechamento');
       if (regBtn) regBtn.classList.toggle('active', mode === 'regional');
+      if (estoqueBtn) estoqueBtn.classList.toggle('active', mode === 'estoque');
 
       if (liveContainer) liveContainer.style.display = (mode === 'live') ? 'block' : 'none';
       if (fechContainer) fechContainer.style.display = (mode === 'fechamento') ? 'flex' : 'none';
       if (regContainer) regContainer.style.display = (mode === 'regional') ? 'flex' : 'none';
-      if (floatingDock) floatingDock.style.display = (mode === 'regional') ? 'none' : 'flex';
+      if (estoqueContainer) estoqueContainer.style.display = (mode === 'estoque') ? 'flex' : 'none';
+      if (floatingDock) floatingDock.style.display = (mode === 'regional' || mode === 'estoque') ? 'none' : 'flex';
 
       if (mode === 'fechamento') {
         loadFechamentoHistoryList();
@@ -4418,6 +4915,8 @@
         if (leafletMap) {
           setTimeout(() => { leafletMap.invalidateSize(); }, 200);
         }
+      } else if (mode === 'estoque') {
+        renderStockAuditView();
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -6179,6 +6678,9 @@
       if (globalData && globalData.regional && currentViewMode === 'regional') {
         renderRegionalView();
       }
+      if (globalData && currentViewMode === 'estoque') {
+        renderStockAuditView();
+      }
     }
 
     function renderChannelMixAndRadar() {
@@ -7741,6 +8243,376 @@
     }
 
   </script>
+  <!-- DUAL HIERARCHY TREE & STOCK AUDIT CONTROLLER -->
+  <script>
+    function formatMoney(val) {
+      if (val === null || val === undefined || isNaN(val)) return 'R$ 0,00';
+      return 'R$ ' + Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    /* ==========================================================================
+       DUAL HIERARCHY TREE & STOCK AUDIT LOGIC (Apple HIG)
+       ========================================================================== */
+    let currentHierarchyTreeMode = 'geo'; // 'geo' or 'org'
+    let currentStockHierarchyMode = 'geo'; // 'geo' or 'org'
+    let selectedStockEntityId = null;
+    let currentStockStatusFilter = 'TODOS';
+    let stockSearchQuery = '';
+
+    function setHierarchyTreeMode(mode) {
+      currentHierarchyTreeMode = mode;
+      const btnGeo = document.getElementById('btn-tree-geo');
+      const btnOrg = document.getElementById('btn-tree-org');
+      if (btnGeo) btnGeo.classList.toggle('active', mode === 'geo');
+      if (btnOrg) btnOrg.classList.toggle('active', mode === 'org');
+
+      // Atualiza os pills secundários
+      const pContainer = document.getElementById('regional-sub-pills-container');
+      if (pContainer) {
+        if (mode === 'geo') {
+          pContainer.innerHTML = `
+            <button class="regional-pill-btn active" id="pill-reg-municipios" onclick="setRegionalLevel('municipios')">🏙️ Por Município</button>
+            <button class="regional-pill-btn" id="pill-reg-ufs" onclick="setRegionalLevel('ufs')">🏛️ Por Estado (UF)</button>
+            <button class="regional-pill-btn" id="pill-reg-campeas" onclick="setRegionalLevel('campeas')">🏆 Top 50 Lojas Campeãs</button>
+            <button class="regional-pill-btn" id="pill-reg-quedas" onclick="setRegionalLevel('quedas')">⚠️ Top 50 Lojas em Alerta</button>
+            <button class="regional-pill-btn" id="pill-reg-todas" onclick="setRegionalLevel('todas')">🏢 Todas as Lojas</button>
+          `;
+          setRegionalLevel('municipios');
+        } else {
+          pContainer.innerHTML = `
+            <button class="regional-pill-btn active" id="pill-reg-diretorias" onclick="setRegionalLevel('diretorias')">👔 Por Diretoria Regional</button>
+            <button class="regional-pill-btn" id="pill-reg-coordenacoes" onclick="setRegionalLevel('coordenacoes')">🎯 Por Coordenação Distrital</button>
+            <button class="regional-pill-btn" id="pill-reg-campeas" onclick="setRegionalLevel('campeas')">🏆 Top Lojas da Diretoria</button>
+            <button class="regional-pill-btn" id="pill-reg-quedas" onclick="setRegionalLevel('quedas')">⚠️ Filiais com Desvio</button>
+          `;
+          setRegionalLevel('diretorias');
+        }
+      }
+      showToast(mode === 'geo' ? '🗺️ Alternado para Árvore Geográfica (UF ➔ Município ➔ Filial)' : '👔 Alternado para Árvore Organizacional (Diretoria ➔ Coordenação ➔ Filial)');
+    }
+
+    function renderStockAuditView() {
+      if (!globalData || !globalData.auditoria_estoque) return;
+      const ae = globalData.auditoria_estoque;
+      const sc = ae.scorecard || {};
+      const meta = globalData.metadata || {};
+
+      // 1. Badges do topo
+      const bCorte = document.getElementById('stock-badge-corte');
+      if (bCorte && meta.corte_hora) {
+        bCorte.innerText = `CORTE: ${meta.corte_hora}`;
+      }
+
+      // 2. Scorecard KPIs
+      const elPerdaRupt = document.getElementById('stock-kpi-perda-ruptura');
+      if (elPerdaRupt) elPerdaRupt.innerText = formatMoney(sc.perda_ruptura_rs || 0);
+
+      const elPctRupt = document.getElementById('stock-kpi-pct-ruptura');
+      if (elPctRupt) elPctRupt.innerText = `${sc.pct_ruptura || 0}% DO GAP TOTAL`;
+
+      const elPerdaPreco = document.getElementById('stock-kpi-perda-preco');
+      if (elPerdaPreco) elPerdaPreco.innerText = formatMoney(sc.perda_preco_rs || 0);
+
+      const elPctPreco = document.getElementById('stock-kpi-pct-preco');
+      if (elPctPreco) elPctPreco.innerText = `${sc.pct_preco || 0}% DO GAP`;
+
+      const elSkusCrit = document.getElementById('stock-kpi-skus-criticos');
+      if (elSkusCrit) elSkusCrit.innerText = `${sc.skus_ruptura_critica || 0} SKUs`;
+
+      const elLojasAfet = document.getElementById('stock-kpi-lojas-afetadas');
+      if (elLojasAfet) elLojasAfet.innerText = `${sc.lojas_afetadas_queda || 0} Filiais`;
+
+      const elPctLojas = document.getElementById('stock-kpi-pct-lojas');
+      if (elPctLojas && sc.total_lojas_rede) {
+        const pctL = ((sc.lojas_afetadas_queda / sc.total_lojas_rede) * 100).toFixed(1);
+        elPctLojas.innerText = `${pctL}% DA REDE`;
+      }
+
+      // 3. Tríade Bar & Values
+      const barRupt = document.getElementById('triade-bar-ruptura');
+      const barPreco = document.getElementById('triade-bar-preco');
+      const barDem = document.getElementById('triade-bar-demanda');
+      if (barRupt) barRupt.style.width = `${Math.max(5, sc.pct_ruptura || 0)}%`;
+      if (barPreco) barPreco.style.width = `${Math.max(5, sc.pct_preco || 0)}%`;
+      if (barDem) barDem.style.width = `${Math.max(5, sc.pct_demanda || 0)}%`;
+
+      const vRupt = document.getElementById('triade-val-ruptura');
+      const bRupt = document.getElementById('triade-badge-ruptura');
+      if (vRupt) vRupt.innerText = formatMoney(sc.perda_ruptura_rs || 0);
+      if (bRupt) bRupt.innerText = `${sc.pct_ruptura || 0}%`;
+
+      const vPreco = document.getElementById('triade-val-preco');
+      const bPreco = document.getElementById('triade-badge-preco');
+      if (vPreco) vPreco.innerText = formatMoney(sc.perda_preco_rs || 0);
+      if (bPreco) bPreco.innerText = `${sc.pct_preco || 0}%`;
+
+      const vDem = document.getElementById('triade-val-demanda');
+      const bDem = document.getElementById('triade-badge-demanda');
+      if (vDem) vDem.innerText = formatMoney(sc.perda_demanda_rs || 0);
+      if (bDem) bDem.innerText = `${sc.pct_demanda || 0}%`;
+
+      // 4. Renderiza Hierarquia e Tabela de Estoque
+      renderStockHierarchyView();
+      renderStockTable();
+    }
+
+    function setStockHierarchyMode(mode) {
+      currentStockHierarchyMode = mode;
+      selectedStockEntityId = null;
+      const bGeo = document.getElementById('btn-stock-hier-geo');
+      const bOrg = document.getElementById('btn-stock-hier-org');
+      if (bGeo) bGeo.classList.toggle('active', mode === 'geo');
+      if (bOrg) bOrg.classList.toggle('active', mode === 'org');
+
+      const tTitle = document.getElementById('stock-ranking-title');
+      if (tTitle) {
+        tTitle.innerText = (mode === 'geo') ? 'Ranking por Estado (UF)' : 'Ranking por Diretoria Regional';
+      }
+
+      renderStockHierarchyView();
+    }
+
+    function renderStockHierarchyView() {
+      if (!globalData || !globalData.auditoria_estoque) return;
+      const ae = globalData.auditoria_estoque;
+      const listEl = document.getElementById('stock-ranking-list');
+      if (!listEl) return;
+
+      const items = (currentStockHierarchyMode === 'geo') ? (ae.impacto_geografico || []) : (ae.impacto_organizacional || []);
+      if (!items || items.length === 0) {
+        listEl.innerHTML = '<div style="padding: 16px; color: var(--text-secondary); text-align: center;">Nenhum dado hierárquico disponível.</div>';
+        return;
+      }
+
+      if (!selectedStockEntityId) {
+        selectedStockEntityId = (currentStockHierarchyMode === 'geo') ? items[0].uf : items[0].diretor;
+      }
+
+      const maxPerda = Math.max(...items.map(it => it.perda_rs || 0)) || 1;
+      let html = '';
+
+      items.forEach(it => {
+        const idVal = (currentStockHierarchyMode === 'geo') ? it.uf : it.diretor;
+        const isSel = (idVal === selectedStockEntityId);
+        const barPct = Math.min(100, Math.round(((it.perda_rs || 0) / maxPerda) * 100));
+        const colorBar = (currentStockHierarchyMode === 'geo') ? 'var(--apple-blue)' : 'var(--apple-purple)';
+
+        html += `
+          <div class="stock-ranking-item ${isSel ? 'active' : ''}" onclick="selectStockEntity('${idVal}')">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 700; font-size: 13.5px; color: var(--text-primary);">
+                ${currentStockHierarchyMode === 'geo' ? `🏛️ Estado ${it.uf}` : `👔 Diretoria ${it.diretor}`}
+              </span>
+              <span style="font-size: 13px; font-weight: 800; color: var(--apple-red); font-family: 'Outfit', sans-serif;">
+                -${formatMoney(it.perda_rs || 0)}
+              </span>
+            </div>
+            <div class="stock-progress-bg">
+              <div class="stock-progress-fill" style="width: ${barPct}%; background: ${colorBar};"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+              <span>${it.lojas_com_queda} de ${it.total_lojas} lojas com queda (${it.pct_lojas_afetadas}%)</span>
+              <span>${it.share_perda_pct}% da perda rede</span>
+            </div>
+          </div>
+        `;
+      });
+
+      listEl.innerHTML = html;
+      renderStockEntityDetail();
+    }
+
+    function selectStockEntity(idVal) {
+      selectedStockEntityId = idVal;
+      renderStockHierarchyView();
+    }
+
+    function renderStockEntityDetail() {
+      if (!globalData || !globalData.auditoria_estoque) return;
+      const ae = globalData.auditoria_estoque;
+      const items = (currentStockHierarchyMode === 'geo') ? (ae.impacto_geografico || []) : (ae.impacto_organizacional || []);
+      const selItem = items.find(it => ((currentStockHierarchyMode === 'geo') ? it.uf : it.diretor) === selectedStockEntityId) || items[0];
+      if (!selItem) return;
+
+      const titleEl = document.getElementById('stock-detail-title');
+      const subEl = document.getElementById('stock-detail-sub');
+      const sublistTitleEl = document.getElementById('stock-detail-sublist-title');
+      const sublistEl = document.getElementById('stock-detail-sublist');
+      const storesTbody = document.getElementById('stock-detail-stores-tbody');
+
+      if (titleEl) {
+        titleEl.innerText = (currentStockHierarchyMode === 'geo') ? `🏛️ Diagnóstico Estado ${selItem.uf}` : `👔 Diagnóstico Diretoria ${selItem.diretor}`;
+      }
+      if (subEl) {
+        subEl.innerText = `Perda consolidada de -${formatMoney(selItem.perda_rs || 0)} em ${selItem.lojas_com_queda} lojas físicas (${selItem.pct_lojas_afetadas}% da base).`;
+      }
+      if (sublistTitleEl) {
+        sublistTitleEl.innerText = (currentStockHierarchyMode === 'geo') ? 'Polos Municipais Mais Prejudicados:' : 'Coordenações Distritais Mais Prejudicadas:';
+      }
+
+      // Renderiza sublista (Municípios ou Coordenações)
+      if (sublistEl) {
+        const subItems = (currentStockHierarchyMode === 'geo') ? (selItem.top_municipios_afetados || []) : (selItem.top_coordenacoes_afetadas || []);
+        let subHtml = '';
+        subItems.forEach(sub => {
+          const sNome = sub.cidade || sub.coordenador || 'N/A';
+          subHtml += `
+            <div style="background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${sNome}
+              </div>
+              <div style="font-size: 13px; font-weight: 800; color: var(--apple-red); font-family: 'Outfit', sans-serif;">
+                -${formatMoney(sub.perda_rs || 0)}
+              </div>
+              <div style="font-size: 10.5px; color: var(--text-secondary);">
+                ${sub.lojas_com_queda} filial(is) em retração
+              </div>
+            </div>
+          `;
+        });
+        sublistEl.innerHTML = subHtml || '<div style="color: var(--text-secondary); font-size: 12px;">Sem detalhes de polos.</div>';
+      }
+
+      // Renderiza Top Lojas da entidade
+      if (storesTbody) {
+        const allStores = ae.top_lojas_afetadas || [];
+        const filteredStores = allStores.filter(st => {
+          if (currentStockHierarchyMode === 'geo') return st.uf === selItem.uf;
+          return st.diretor === selItem.diretor;
+        });
+
+        const displayStores = filteredStores.length > 0 ? filteredStores : allStores.slice(0, 10);
+        let sHtml = '';
+        displayStores.forEach(st => {
+          sHtml += `
+            <tr>
+              <td style="padding: 8px 12px; font-weight: 600; color: var(--text-primary);">${st.nome}</td>
+              <td style="padding: 8px 12px; color: var(--text-secondary);">${st.cidade} (${st.uf})</td>
+              <td style="padding: 8px 12px; text-align: right; color: var(--text-primary);">${formatMoney(st.vendas_hoje || 0)}</td>
+              <td style="padding: 8px 12px; text-align: right; color: var(--text-secondary);">${formatMoney(st.vendas_d7 || 0)}</td>
+              <td style="padding: 8px 12px; text-align: right; font-weight: 700; color: var(--apple-red);">${formatMoney(st.gap_d7_rs || 0)}</td>
+              <td style="padding: 8px 12px; text-align: center;"><span class="tag-badge tag-critico" style="font-size: 10px;">${st.var_d7_pct || 0}%</span></td>
+            </tr>
+          `;
+        });
+        storesTbody.innerHTML = sHtml || '<tr><td colspan="6" style="padding: 16px; text-align: center; color: var(--text-secondary);">Nenhuma filial em retração neste filtro.</td></tr>';
+      }
+    }
+
+    function setStockStatusFilter(status) {
+      currentStockStatusFilter = status;
+      ['TODOS', 'RUPTURA_TOTAL', 'EM_TRANSITO', 'DESBALANCEADO', 'ESTOQUE_BAIXO'].forEach(st => {
+        const btn = document.getElementById(`pill-stock-filter-${st}`);
+        if (btn) btn.classList.toggle('active', st === status);
+      });
+      renderStockTable();
+    }
+
+    function filterStockTable() {
+      const inp = document.getElementById('stock-search-input');
+      stockSearchQuery = (inp ? inp.value : '').trim().toLowerCase();
+      renderStockTable();
+    }
+
+    function renderStockTable() {
+      if (!globalData || !globalData.auditoria_estoque) return;
+      const tbody = document.getElementById('stock-table-tbody');
+      if (!tbody) return;
+
+      const skus = globalData.auditoria_estoque.skus_ruptura || [];
+      let filtered = skus;
+
+      if (currentStockStatusFilter !== 'TODOS') {
+        filtered = filtered.filter(s => s.status_ruptura === currentStockStatusFilter);
+      }
+
+      if (stockSearchQuery) {
+        filtered = filtered.filter(s => {
+          const n = (s.nome || '').toLowerCase();
+          const k = (s.sku_id || '').toString();
+          const l = (s.laboratorio || '').toLowerCase();
+          const g = (s.grupo || '').toLowerCase();
+          return n.includes(stockSearchQuery) || k.includes(stockSearchQuery) || l.includes(stockSearchQuery) || g.includes(stockSearchQuery);
+        });
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="padding: 24px; text-align: center; color: var(--text-secondary);">Nenhum SKU em ruptura encontrado para este filtro.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      filtered.forEach(s => {
+        let badgeStatus = '';
+        if (s.status_ruptura === 'RUPTURA_TOTAL') {
+          badgeStatus = '<span class="tag-badge tag-critico" style="font-size: 10px;">🚨 Saldo Total 0</span>';
+        } else if (s.status_ruptura === 'EM_TRANSITO') {
+          badgeStatus = '<span class="tag-badge tag-moderado" style="font-size: 10px;">📦 Em Trânsito CD</span>';
+        } else if (s.status_ruptura === 'DESBALANCEADO') {
+          badgeStatus = '<span class="tag-badge" style="background: rgba(88,86,214,0.12); color: var(--apple-indigo); font-size: 10px; font-weight: 700;">🔄 Remanejamento</span>';
+        } else {
+          badgeStatus = '<span class="tag-badge tag-moderado" style="font-size: 10px;">⚠️ Estoque Baixo</span>';
+        }
+
+        html += `
+          <tr>
+            <td style="padding: 10px 14px; font-weight: 700; color: var(--text-secondary); font-family: monospace;">${s.sku_id}</td>
+            <td style="padding: 10px 14px;">
+              <div style="font-weight: 700; color: var(--text-primary); line-height: 1.3;">${s.nome}</div>
+              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${s.laboratorio || 'Geral'} • ${s.grupo || 'Farmácia'}</div>
+            </td>
+            <td style="padding: 10px 14px; text-align: right; font-weight: 600; color: var(--text-primary);">${formatMoney(s.hoje || 0)}</td>
+            <td style="padding: 10px 14px; text-align: right; color: var(--text-secondary);">${formatMoney(s.d7 || 0)}</td>
+            <td style="padding: 10px 14px; text-align: right; font-weight: 800; color: var(--apple-red); font-family: 'Outfit', sans-serif;">
+              ${formatMoney(s.gap_d7_rs || 0)}
+            </td>
+            <td style="padding: 10px 14px; text-align: center; font-weight: 700; color: ${s.saldo <= 0 ? 'var(--apple-red)' : 'var(--text-primary)'};">
+              ${(s.saldo || 0).toLocaleString('pt-BR')} un
+            </td>
+            <td style="padding: 10px 14px; text-align: center; font-weight: 600; color: var(--apple-blue);">
+              ${s.transito > 0 ? `+${(s.transito || 0).toLocaleString('pt-BR')} un` : '-'}
+            </td>
+            <td style="padding: 10px 14px; text-align: center; font-weight: 700; color: ${(s.un_por_loja || 0) < 1.0 ? 'var(--apple-red)' : 'var(--apple-orange-text)'};">
+              ${(s.un_por_loja || 0).toFixed(2)}
+            </td>
+            <td style="padding: 10px 14px; text-align: center;">${badgeStatus}</td>
+            <td style="padding: 10px 14px;">
+              <span style="font-size: 11.5px; font-weight: 600; color: var(--text-primary); background: var(--surface-sunken); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border);">
+                ${s.acao_logistica}
+              </span>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function exportStockTableCSV() {
+      if (!globalData || !globalData.auditoria_estoque) return;
+      const skus = globalData.auditoria_estoque.skus_ruptura || [];
+      if (skus.length === 0) {
+        showToast('Nenhum dado de estoque para exportar.');
+        return;
+      }
+
+      let csv = 'SKU;Produto;Grupo;Laboratorio;Vendas_Hoje;Vendas_D7;GAP_RS;Saldo_Rede;Transito_CD;Un_Por_Loja;Status;Acao_Recomendada\n';
+      skus.forEach(s => {
+        csv += `"${s.sku_id}";"${(s.nome||'').replace(/"/g, '""')}";"${s.grupo||''}";"${s.laboratorio||''}";${s.hoje||0};${s.d7||0};${s.gap_d7_rs||0};${s.saldo||0};${s.transito||0};${s.un_por_loja||0};"${s.status_ruptura||''}";"${(s.acao_logistica||'').replace(/"/g, '""')}"\n`;
+      });
+
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Auditoria_Estoque_Ruptura_SaoJoao_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('📥 Planilha de Auditoria de Estoque exportada com sucesso!');
+    }
+  </script>
+
   <!-- AUTO-REFRESH ENGINE: Polling daemon para atualização automática do dashboard -->
   <script id="auto-refresh-engine">
   (function() {
