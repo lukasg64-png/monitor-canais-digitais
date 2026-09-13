@@ -443,6 +443,48 @@ def process_regional_data(raw):
         if gap_d7 >= 0:
             lojas_superando += 1
 
+        # Dados Fatuais de Estoque e Giro extraídos do Qlik
+        saldo_loja = float(r[7] or 0) if len(r) > 7 and r[7] is not None and str(r[7]) not in ['NaN', '', '-'] else 0.0
+        giro_diario = float(r[8] or 0) if len(r) > 8 and r[8] is not None and str(r[8]) not in ['NaN', '', '-'] else 0.0
+        qtd_digital_hoje = int(float(r[9] or 0)) if len(r) > 9 and r[9] is not None and str(r[9]) not in ['NaN', '', '-'] else 0
+
+        # Cálculo de Dias de Estoque (Cobertura / DOH)
+        if giro_diario > 0:
+            dias_estoque = round(saldo_loja / giro_diario, 1)
+        elif saldo_loja > 0:
+            dias_estoque = 999.0
+        else:
+            dias_estoque = 0.0
+
+        # Classificação de Risco de Cobertura
+        if saldo_loja <= 0:
+            status_cobertura = "RUPTURA_TOTAL"
+        elif dias_estoque < 2.5:
+            status_cobertura = "RUPTURA_CRITICA"
+        elif dias_estoque < 6.0:
+            status_cobertura = "COBERTURA_BAIXA"
+        elif dias_estoque <= 25.0:
+            status_cobertura = "COBERTURA_SAUDAVEL"
+        else:
+            status_cobertura = "EXCEDENTE_PARADO"
+
+        # Papel no Atendimento Digital
+        nome_upper = f_desc.upper()
+        if v_hoje > 2500 or v_d7 > 6000 or "DARK STORE" in nome_upper or "MATRIZ" in nome_upper or qtd_digital_hoje >= 40:
+            papel_digital = "POLO_DIGITAL"
+        elif v_hoje > 400 or v_d7 > 1200 or qtd_digital_hoje >= 5:
+            papel_digital = "LOJA_HIBRIDA"
+        else:
+            papel_digital = "LOJA_BALCAO"
+
+        # Status de Remanejamento Inter-Lojas
+        if papel_digital == "POLO_DIGITAL" and dias_estoque < 3.0:
+            remanejamento_status = "RECEPTORA_URGENTE"
+        elif dias_estoque > 25.0 and papel_digital != "POLO_DIGITAL":
+            remanejamento_status = "DOADORA_POTENCIAL"
+        else:
+            remanejamento_status = "EQUILIBRADA"
+
         # Enriquecer com Dicionário Mestre de Lojas
         geo_info = lojas_master.get(f_num, {})
         cidade = geo_info.get("cidade") or resolve_city_name(f_desc)
@@ -474,7 +516,14 @@ def process_regional_data(raw):
             "share_pct": share_f,
             "gap_d7_rs": gap_d7,
             "var_d7_pct": var_d7,
-            "pacing_status": status
+            "pacing_status": status,
+            "saldo_loja": int(saldo_loja),
+            "giro_diario": round(giro_diario, 1),
+            "dias_estoque": dias_estoque,
+            "status_cobertura": status_cobertura,
+            "papel_digital": papel_digital,
+            "remanejamento_status": remanejamento_status,
+            "qtd_digital_hoje": qtd_digital_hoje
         }
         filiais_all.append(filial_item)
 
@@ -487,6 +536,9 @@ def process_regional_data(raw):
                 "vendas_hoje": 0.0,
                 "vendas_ontem": 0.0,
                 "vendas_d7": 0.0,
+                "saldo_total": 0,
+                "giro_diario_total": 0.0,
+                "filiais": [],
                 "lats": [],
                 "lons": []
             }
@@ -495,12 +547,15 @@ def process_regional_data(raw):
         m["vendas_hoje"] += v_hoje
         m["vendas_ontem"] += v_ontem
         m["vendas_d7"] += v_d7
+        m["saldo_total"] += saldo_loja
+        m["giro_diario_total"] += giro_diario
+        m["filiais"].append(filial_item)
         if lat is not None:
             m["lats"].append(lat)
         if lon is not None:
             m["lons"].append(lon)
 
-    # Consolidação dos Municípios
+    # Consolidação dos Municípios & Diagnóstico "As Outras Suprem?"
     municipios_list = []
     for cid, m in municipios_map.items():
         v_h = m["vendas_hoje"]
@@ -512,6 +567,45 @@ def process_regional_data(raw):
         center_lat = round(sum(m["lats"]) / len(m["lats"]), 5) if m["lats"] else None
         center_lon = round(sum(m["lons"]) / len(m["lons"]), 5) if m["lons"] else None
 
+        fils_mun = m.get("filiais", [])
+        saldo_mun = int(m["saldo_total"])
+        giro_mun = round(m["giro_diario_total"], 1)
+        cobertura_mun_dias = round(saldo_mun / giro_mun, 1) if giro_mun > 0 else 0.0
+
+        lojas_receptoras = [f for f in fils_mun if f["remanejamento_status"] == "RECEPTORA_URGENTE"]
+        lojas_doadoras = [f for f in fils_mun if f["remanejamento_status"] == "DOADORA_POTENCIAL"]
+
+        # Déficit das lojas polo para atingir 7 dias de segurança
+        deficit_un = sum(max(0, int((7.0 - r["dias_estoque"]) * r["giro_diario"])) for r in lojas_receptoras)
+        # Excedente das lojas doadoras (unidades acima de 20 dias de cobertura)
+        excedente_un = sum(max(0, int(d["saldo_loja"] - (20.0 * d["giro_diario"]))) for d in lojas_doadoras)
+
+        if not lojas_receptoras:
+            as_outras_suprem = "SEM_RUPTURA"
+            veredito_label = "Equilibrado"
+            veredito_badge = "badge-neutral"
+            veredito_texto = f"Praça de {cid} opera com abastecimento regular no canal digital ({cobertura_mun_dias}d de cobertura média)."
+        elif excedente_un >= deficit_un:
+            as_outras_suprem = "SIM_100"
+            veredito_label = "✅ As Outras Suprem 100%"
+            veredito_badge = "badge-emerald"
+            rec_nomes = ", ".join(r["nome"].split("—")[-1].strip() for r in lojas_receptoras[:2])
+            veredito_texto = f"✅ Em {cid}, as lojas doadoras ({len(lojas_doadoras)} filiais com {excedente_un:,} un excedentes) suprem 100% do déficit de {deficit_un:,} un da loja polo ({rec_nomes}). Remanejamento local balcão-a-balcão destrava vendas sem esperar o CD!"
+        elif excedente_un > 0:
+            as_outras_suprem = "PARCIAL"
+            pct_cob = round((excedente_un / deficit_un) * 100.0, 1) if deficit_un > 0 else 0.0
+            veredito_label = f"⚠️ Suprem Parcial ({pct_cob}%)"
+            veredito_badge = "badge-warning"
+            veredito_texto = f"⚠️ Em {cid}, o estoque local supre {pct_cob}% ({excedente_un:,} de {deficit_un:,} un) da necessidade da loja polo. Remanejar excedente local e pedir complemento emergencial ao CD."
+        else:
+            as_outras_suprem = "NAO_DEFICIT"
+            veredito_label = "🚨 Não Suprem (Déficit Geral)"
+            veredito_badge = "badge-danger"
+            veredito_texto = f"🚨 Desabastecimento generalizado na praça de {cid}. Nenhuma loja possui estoque excedente para suprir o polo. Demanda abastecimento prioritário via Centro de Distribuição (CD)."
+
+        potencial_remanejamento_un = min(deficit_un, excedente_un) if deficit_un > 0 else 0
+        potencial_remanejamento_rs = round(potencial_remanejamento_un * 35.0, 2)
+
         municipios_list.append({
             "cidade": cid,
             "uf": m["uf"],
@@ -522,6 +616,19 @@ def process_regional_data(raw):
             "gap_d7_rs": gap,
             "var_d7_pct": var_pct,
             "share_pct": sh,
+            "saldo_total": saldo_mun,
+            "giro_diario_total": giro_mun,
+            "cobertura_mun_dias": cobertura_mun_dias,
+            "total_receptoras": len(lojas_receptoras),
+            "total_doadoras": len(lojas_doadoras),
+            "deficit_unidades": deficit_un,
+            "excedente_unidades": excedente_un,
+            "potencial_remanejamento_un": potencial_remanejamento_un,
+            "potencial_remanejamento_rs": potencial_remanejamento_rs,
+            "as_outras_suprem": as_outras_suprem,
+            "veredito_label": veredito_label,
+            "veredito_badge": veredito_badge,
+            "veredito_texto": veredito_texto,
             "center_lat": center_lat,
             "center_lon": center_lon,
             "pacing_status": "SUPEROU" if gap >= 0 else ("MODERADO" if var_pct >= -15 else "CRITICO")
@@ -549,7 +656,12 @@ def process_regional_data(raw):
                 f["var_d7_pct"],
                 f["pacing_status"],
                 f["diretor"],
-                f["coordenador"]
+                f["coordenador"],
+                f["dias_estoque"],
+                f["saldo_loja"],
+                f["giro_diario"],
+                f["status_cobertura"],
+                f["remanejamento_status"]
             ])
 
     pct_superando = round((lojas_superando / len(filiais_all) * 100.0), 1) if filiais_all else 0.0
@@ -852,7 +964,7 @@ def process_stock_audit_data(raw, precifica_items, regional_data, level_skus, es
         })
     impacto_organizacional.sort(key=lambda x: x["perda_rs"], reverse=True)
 
-    # 3.3 Top 30 Lojas Mais Críticas com Maior Queda Financeira
+    # 3.3 Top 30 Lojas Mais Críticas com Maior Queda Financeira & Ficha de Estoque
     top_lojas_queda = sorted(lojas_com_queda, key=lambda x: x["gap_d7_rs"])[:30]
     top_lojas_afetadas = []
     for f in top_lojas_queda:
@@ -866,8 +978,29 @@ def process_stock_audit_data(raw, precifica_items, regional_data, level_skus, es
             "vendas_hoje": f["vendas_hoje"],
             "vendas_d7": f["vendas_d7"],
             "gap_d7_rs": f["gap_d7_rs"],
-            "var_d7_pct": f["var_d7_pct"]
+            "var_d7_pct": f["var_d7_pct"],
+            "saldo_loja": f.get("saldo_loja", 0),
+            "giro_diario": f.get("giro_diario", 0.0),
+            "dias_estoque": f.get("dias_estoque", 0.0),
+            "status_cobertura": f.get("status_cobertura", "SAUDAVEL"),
+            "papel_digital": f.get("papel_digital", "LOJA_BALCAO"),
+            "remanejamento_status": f.get("remanejamento_status", "EQUILIBRADA"),
+            "qtd_digital_hoje": f.get("qtd_digital_hoje", 0)
         })
+
+    # 4. Inteligência Consolidada de Cobertura da Rede & Remanejamento Inter-Lojas ("As Outras Suprem?")
+    total_lojas_polo_criticas = len([f for f in filiais_all if f.get("remanejamento_status") == "RECEPTORA_URGENTE"])
+    total_lojas_doadoras = len([f for f in filiais_all if f.get("remanejamento_status") == "DOADORA_POTENCIAL"])
+    total_saldo_rede = sum(f.get("saldo_loja", 0) for f in filiais_all)
+    total_giro_rede = sum(f.get("giro_diario", 0.0) for f in filiais_all)
+    cobertura_rede_dias = round(total_saldo_rede / total_giro_rede, 1) if total_giro_rede > 0 else 0.0
+
+    all_municipios = regional_data.get("municipios", [])
+    cidades_com_remanejamento = [m for m in all_municipios if m.get("potencial_remanejamento_un", 0) > 0 or m.get("total_receptoras", 0) > 0]
+    cidades_com_remanejamento.sort(key=lambda x: (x.get("potencial_remanejamento_rs", 0), x.get("total_receptoras", 0)), reverse=True)
+
+    potencial_remanejamento_rede_un = sum(m.get("potencial_remanejamento_un", 0) for m in all_municipios)
+    potencial_remanejamento_rede_rs = round(sum(m.get("potencial_remanejamento_rs", 0.0) for m in all_municipios), 2)
 
     return {
         "scorecard": {
@@ -881,12 +1014,19 @@ def process_stock_audit_data(raw, precifica_items, regional_data, level_skus, es
             "perda_demanda_rs": round(perda_demanda_rs, 2),
             "pct_demanda": pct_demanda,
             "total_perda_detratores_rs": round(total_detratores_rs, 2),
-            "total_perda_lojas_rs": round(total_perda_lojas, 2)
+            "total_perda_lojas_rs": round(total_perda_lojas, 2),
+            "cobertura_rede_dias": cobertura_rede_dias,
+            "total_lojas_polo_criticas": total_lojas_polo_criticas,
+            "total_lojas_doadoras": total_lojas_doadoras,
+            "potencial_remanejamento_rede_un": potencial_remanejamento_rede_un,
+            "potencial_remanejamento_rede_rs": potencial_remanejamento_rede_rs,
+            "cidades_com_remanejamento_ativo": len([m for m in all_municipios if m.get("potencial_remanejamento_un", 0) > 0])
         },
         "impacto_geografico": impacto_geografico,
         "impacto_organizacional": impacto_organizacional,
         "top_lojas_afetadas": top_lojas_afetadas,
-        "skus_ruptura": ruptura_skus
+        "skus_ruptura": ruptura_skus,
+        "cidades_as_outras_suprem": cidades_com_remanejamento[:40]
     }
 
 

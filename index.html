@@ -2804,11 +2804,57 @@
     #stock-table-tbody tr:hover td {
       background: rgba(255, 59, 48, 0.04);
     }
-
+    #view-estoque-container {
       display: flex;
       flex-direction: column;
       gap: 20px;
       animation: fadeInView 0.35s ease;
+    }
+    .doh-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'Outfit', sans-serif;
+    }
+    .doh-critico {
+      background: rgba(255, 59, 48, 0.12);
+      color: var(--apple-red);
+      border: 1px solid rgba(255, 59, 48, 0.28);
+    }
+    .doh-alerta {
+      background: rgba(255, 149, 0, 0.12);
+      color: var(--apple-orange-text);
+      border: 1px solid rgba(255, 149, 0, 0.28);
+    }
+    .doh-saudavel {
+      background: rgba(52, 199, 89, 0.12);
+      color: #248A3D;
+      border: 1px solid rgba(52, 199, 89, 0.28);
+    }
+    .doh-excedente {
+      background: rgba(0, 113, 227, 0.12);
+      color: var(--apple-blue);
+      border: 1px solid rgba(0, 113, 227, 0.28);
+    }
+    .remanejamento-item-card {
+      background: var(--surface-sunken);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .remanejamento-item-card:hover {
+      background: var(--surface);
+      border-color: var(--apple-blue);
+      transform: translateY(-1px);
     }
     .regional-banner-card {
       background: var(--surface);
@@ -4592,19 +4638,19 @@
         </div>
       </div>
 
-      <!-- SCORECARD EXECUTIVO DE ESTOQUE (4 KPIS) -->
-      <div class="stock-scorecard-grid">
+      <!-- SCORECARD EXECUTIVO DE ESTOQUE (6 KPIS ESTRATÉGICOS) -->
+      <div class="stock-scorecard-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
         <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-red);">
-          <div class="stock-kpi-label"><span>🚨</span> Perda por Ruptura Crítica</div>
+          <div class="stock-kpi-label"><span>🚨</span> Perda por Ruptura</div>
           <div class="stock-kpi-val" id="stock-kpi-perda-ruptura" style="color: var(--apple-red);">R$ 0,00</div>
           <div class="stock-kpi-sub">
-            <span class="tag-badge tag-critico" id="stock-kpi-pct-ruptura">0,0% DO GAP TOTAL</span>
+            <span class="tag-badge tag-critico" id="stock-kpi-pct-ruptura">0,0% DO GAP</span>
             <span>Itens &lt;1,5 un/loja</span>
           </div>
         </div>
 
         <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-orange);">
-          <div class="stock-kpi-label"><span>🏷️</span> Perda por Preço Desalinhado</div>
+          <div class="stock-kpi-label"><span>🏷️</span> Perda por Preço</div>
           <div class="stock-kpi-val" id="stock-kpi-perda-preco" style="color: var(--apple-orange-text);">R$ 0,00</div>
           <div class="stock-kpi-sub">
             <span class="tag-badge tag-moderado" id="stock-kpi-pct-preco">0,0% DO GAP</span>
@@ -4612,21 +4658,39 @@
           </div>
         </div>
 
-        <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-purple);">
-          <div class="stock-kpi-label"><span>📦</span> SKUs em Ruptura Crítica</div>
-          <div class="stock-kpi-val" id="stock-kpi-skus-criticos">0 SKUs</div>
+        <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-green);">
+          <div class="stock-kpi-label"><span>📊</span> Cobertura Rede</div>
+          <div class="stock-kpi-val" id="stock-kpi-cobertura-rede" style="color: #248A3D;">0,0 dias</div>
           <div class="stock-kpi-sub">
-            <span class="tag-badge tag-critico">DESABASTECIMENTO</span>
-            <span>Ação CD ➔ Lojas</span>
+            <span class="tag-badge tag-super" id="stock-kpi-sub-cobertura">MÉDIA CANAIS</span>
+            <span>Saldo / Giro Diário</span>
+          </div>
+        </div>
+
+        <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-red);">
+          <div class="stock-kpi-label"><span>🛵</span> Polos em Ruptura</div>
+          <div class="stock-kpi-val" id="stock-kpi-polos-criticos" style="color: var(--apple-red);">0 Polos</div>
+          <div class="stock-kpi-sub">
+            <span class="tag-badge tag-critico" id="stock-kpi-sub-polos">&lt; 2,5 DIAS DOH</span>
+            <span>Gargalo Digital</span>
           </div>
         </div>
 
         <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-blue);">
-          <div class="stock-kpi-label"><span>🏢</span> Lojas com Queda vs D-7</div>
-          <div class="stock-kpi-val" id="stock-kpi-lojas-afetadas">0 Filiais</div>
+          <div class="stock-kpi-label"><span>🔵</span> Lojas Doadoras</div>
+          <div class="stock-kpi-val" id="stock-kpi-lojas-doadoras" style="color: var(--apple-blue);">0 Lojas</div>
           <div class="stock-kpi-sub">
-            <span class="tag-badge tag-super" id="stock-kpi-pct-lojas">0,0% DA REDE</span>
-            <span>Operando abaixo do ritmo</span>
+            <span class="tag-badge" style="background: rgba(0, 113, 227, 0.12); color: var(--apple-blue); font-weight: 700;" id="stock-kpi-sub-doadoras">&gt; 25 DIAS DOH</span>
+            <span>Estoque Ocioso</span>
+          </div>
+        </div>
+
+        <div class="stock-kpi-card" style="border-left: 4px solid var(--apple-indigo);">
+          <div class="stock-kpi-label"><span>🔄</span> Remanejamento</div>
+          <div class="stock-kpi-val" id="stock-kpi-remanejamento-rs" style="color: var(--apple-indigo);">R$ 0,00</div>
+          <div class="stock-kpi-sub">
+            <span class="tag-badge" style="background: rgba(88, 86, 214, 0.12); color: var(--apple-indigo); font-weight: 700;" id="stock-kpi-sub-remanejamento">0 UN INTRA-PRAÇA</span>
+            <span>Destravável s/ CD</span>
           </div>
         </div>
       </div>
@@ -4698,6 +4762,108 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- ========================================================================== -->
+      <!-- NOVO PAINEL EXECUTIVO: AS OUTRAS SUPREM? (REMANEJAMENTO INTRA-URBANO)     -->
+      <!-- ========================================================================== -->
+      <div class="regional-banner-card" style="margin-bottom: 20px; border-left: 5px solid var(--apple-indigo);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 22px;">🔄</span>
+              <div style="font-family: 'Outfit', sans-serif; font-size: 19px; font-weight: 800; color: var(--text-primary);">
+                As Outras Suprem? — Diagnóstico de Remanejamento Intra-Urbano
+              </div>
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 3px;">
+              Quando uma filial polo do digital entra em ruptura (&lt; 2,5 dias), as outras lojas da mesma cidade têm saldo excedente (&gt; 25 dias) para suprir?
+            </div>
+          </div>
+
+          <!-- Seletor de Município / Praça -->
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px; background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 12px; padding: 4px 10px;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Praça Urbana:</span>
+              <select id="select-cidade-remanejamento" onchange="renderCidadeRemanejamento(this.value)" style="border: none; background: transparent; font-size: 13px; font-weight: 700; color: var(--text-primary); cursor: pointer; outline: none; padding: 4px 6px;">
+                <!-- Preenchido dinamicamente via JS -->
+              </select>
+            </div>
+            <button class="regional-pill-btn" onclick="exportOrdemRemanejamentoCSV()" style="font-size: 12px; padding: 6px 14px;">
+              <span>📥</span> Exportar Ordem de Transferência (CSV)
+            </button>
+          </div>
+        </div>
+
+        <!-- Box de Veredito Executivo em Destaque -->
+        <div id="cidade-veredito-card" style="background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: flex-start; gap: 14px; flex: 1; min-width: 280px;">
+            <div id="cidade-veredito-icon" style="font-size: 28px; line-height: 1;">✅</div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+                <span id="cidade-veredito-titulo" style="font-size: 15px; font-weight: 800; color: var(--text-primary); font-family: 'Outfit', sans-serif;">
+                  Veredito da Praça
+                </span>
+                <span id="cidade-veredito-badge" class="tag-badge tag-super" style="font-size: 11px; padding: 3px 10px;">
+                  AS OUTRAS SUPREM 100%
+                </span>
+                <span id="cidade-veredito-cobertura" class="tag-badge" style="background: var(--surface); color: var(--text-secondary); font-size: 10.5px;">
+                  Cobertura Média: 0,0d
+                </span>
+              </div>
+              <div id="cidade-veredito-texto" style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                Carregando diagnóstico...
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 16px; align-items: center; border-left: 2px solid var(--border); padding-left: 18px;">
+            <div>
+              <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Potencial Remanejável:</div>
+              <div id="cidade-veredito-potencial-un" style="font-size: 19px; font-weight: 800; color: var(--apple-indigo); font-family: 'Outfit', sans-serif;">
+                0 un
+              </div>
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Receita Destravável:</div>
+              <div id="cidade-veredito-potencial-rs" style="font-size: 19px; font-weight: 800; color: #248A3D; font-family: 'Outfit', sans-serif;">
+                R$ 0,00
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid Comparativo: Lojas Receptoras (Gargalo) vs Lojas Doadoras (Estoque Ocioso) -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 16px;">
+          
+          <!-- Coluna 1: Lojas Polo / Receptoras -->
+          <div style="background: var(--surface); border: 1px solid var(--border); border-top: 4px solid var(--apple-red); border-radius: 12px; padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+              <div style="font-size: 13px; font-weight: 800; color: var(--apple-red); display: flex; align-items: center; gap: 6px;">
+                <span>🔴</span> Lojas Polo Receptoras (Demanda Travada / Ruptura)
+              </div>
+              <span id="remanejamento-receptoras-count" class="tag-badge tag-critico" style="font-size: 10.5px;">0 Lojas</span>
+            </div>
+            <div id="remanejamento-receptoras-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+              <!-- Injetado dinamicamente -->
+            </div>
+          </div>
+
+          <!-- Coluna 2: Lojas Doadoras Locais -->
+          <div style="background: var(--surface); border: 1px solid var(--border); border-top: 4px solid var(--apple-blue); border-radius: 12px; padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+              <div style="font-size: 13px; font-weight: 800; color: var(--apple-blue); display: flex; align-items: center; gap: 6px;">
+                <span>🔵</span> Lojas Doadoras Locais (Estoque Ocioso / Excedente &gt; 25d)
+              </div>
+              <span id="remanejamento-doadoras-count" class="tag-badge" style="background: rgba(0, 113, 227, 0.12); color: var(--apple-blue); font-weight: 700; font-size: 10.5px;">0 Lojas</span>
+            </div>
+            <div id="remanejamento-doadoras-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+              <!-- Injetado dinamicamente -->
+            </div>
+          </div>
+
+        </div>
+
       </div>
 
       <!-- LOCALIZAÇÃO DO PROBLEMA: ONDE ESTÃO AS LOJAS E A HIERARQUIA COM GAP? -->
@@ -4789,6 +4955,69 @@
           </div>
 
         </div>
+      </div>
+
+      <!-- ========================================================================== -->
+      <!-- NOVA TABELA HIERÁRQUICA BOTTOM-UP: COBERTURA POR LOJA, MUNICÍPIO, COORD   -->
+      <!-- ========================================================================== -->
+      <div class="regional-banner-card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 14px;">
+          <div>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: var(--text-primary);">
+              🏢 Visão Bottom-Up de Cobertura de Estoque (Loja ➔ Município ➔ Coordenação ➔ Diretoria)
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+              Auditoria em tempo real de dias de estoque, giro diário e saldo físico em cada nível da rede
+            </div>
+          </div>
+          <button class="regional-pill-btn" onclick="exportBottomUpCSV()" style="font-size: 12px;">
+            <span>📥</span> Exportar Visão Atual (CSV)
+          </button>
+        </div>
+
+        <!-- Seletor de Níveis da Hierarquia Bottom-Up -->
+        <div class="hierarchy-tree-selector-bar">
+          <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Nível:</span>
+          <button class="regional-pill-btn active" id="pill-bu-lojas" onclick="setBottomUpLevel('lojas')">🏪 Por Loja / Filial (1.246)</button>
+          <button class="regional-pill-btn" id="pill-bu-municipios" onclick="setBottomUpLevel('municipios')">🏙️ Por Município / Praça</button>
+          <button class="regional-pill-btn" id="pill-bu-coordenacoes" onclick="setBottomUpLevel('coordenacoes')">🎯 Por Coordenação Distrital</button>
+          <button class="regional-pill-btn" id="pill-bu-diretorias" onclick="setBottomUpLevel('diretorias')">👔 Por Diretoria Regional</button>
+        </div>
+
+        <!-- Barra de Busca e Filtros Rápidos de Cobertura -->
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;">
+          <input type="text" id="bu-search-input" oninput="filterBottomUpTable()" placeholder="Buscar por filial, cidade, coordenação ou diretoria..." style="flex: 1; min-width: 260px; padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface-sunken); font-size: 13px; color: var(--text-primary); outline: none;">
+          
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button class="regional-pill-btn active" id="pill-bu-filter-TODOS" onclick="setBottomUpFilter('TODOS')">Todos</button>
+            <button class="regional-pill-btn" id="pill-bu-filter-CRITICO" onclick="setBottomUpFilter('CRITICO')">🚨 Ruptura (&lt;2,5d)</button>
+            <button class="regional-pill-btn" id="pill-bu-filter-ALERTA" onclick="setBottomUpFilter('ALERTA')">⚠️ Alerta (2,5-6d)</button>
+            <button class="regional-pill-btn" id="pill-bu-filter-SAUDAVEL" onclick="setBottomUpFilter('SAUDAVEL')">🟢 Saudável (6-25d)</button>
+            <button class="regional-pill-btn" id="pill-bu-filter-EXCEDENTE" onclick="setBottomUpFilter('EXCEDENTE')">🔵 Excedente (&gt;25d)</button>
+            <button class="regional-pill-btn" id="pill-bu-filter-POLO" onclick="setBottomUpFilter('POLO')">🛵 Polos Digitais</button>
+            <button class="regional-pill-btn" id="pill-bu-filter-RECEPTORA" onclick="setBottomUpFilter('RECEPTORA')">🔴 Receptoras Urgentes</button>
+          </div>
+        </div>
+
+        <!-- Tabela Bottom-Up Dinâmica -->
+        <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; max-height: 480px; overflow-y: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+            <thead>
+              <tr id="bu-table-thead-tr" style="background: var(--surface-sunken); border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 2;">
+                <!-- Injetado dinamicamente -->
+              </tr>
+            </thead>
+            <tbody id="bu-table-tbody">
+              <!-- Linhas injetadas dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11.5px; color: var(--text-secondary);">
+          <span id="bu-table-count-label">Exibindo registros...</span>
+          <span>Dica: Clique em qualquer filial para abrir a ficha completa e ver as lojas doadoras vizinhas</span>
+        </div>
+
       </div>
 
       <!-- MATRIZ ANALÍTICA DE SKUS EM RUPTURA CRÍTICA & AÇÃO LOGÍSTICA -->
@@ -5132,13 +5361,30 @@
                 <div class="geo-popup-vendas">${fmtMoeda(m.vendas_hoje)}</div>
                 <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">Share Digital: <strong>${(m.share_pct || 0).toFixed(1)}%</strong></div>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 6px;">
                 <span style="color: var(--text-secondary);">vs D-7:</span>
                 <strong style="color: ${corGap}; font-family: 'JetBrains Mono', monospace;">${sinal}${fmtMoeda(m.gap_d7_rs)} (${sinal}${(m.var_d7_pct || 0).toFixed(1)}%)</strong>
               </div>
-              <button onclick="zoomToCity('${m.cidade}')" class="geo-pill-btn active" style="width: 100%; justify-content: center; font-size: 11px; padding: 5px 0;">
-                🔍 Detalhar Lojas deste Município
-              </button>
+              <div style="margin-top: 6px; padding: 6px 8px; background: rgba(0,0,0,0.03); border-radius: 6px; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: var(--text-secondary);">Cobertura Praça:</span>
+                  <span class="doh-badge ${(m.cobertura_mun_dias || 0) < 3.0 ? 'doh-critico' : ((m.cobertura_mun_dias || 0) < 6.0 ? 'doh-alerta' : 'doh-saudavel')}" style="padding: 1px 6px; font-size: 10px;">${(m.cobertura_mun_dias || 0).toFixed(1)} dias</span>
+                </div>
+                ${(m.potencial_remanejamento_rs || 0) > 0 ? `
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                    <span style="color: var(--text-secondary);">Remanejamento:</span>
+                    <strong style="color: var(--apple-blue); font-size: 10.5px;">${fmtMoeda(m.potencial_remanejamento_rs)}</strong>
+                  </div>
+                ` : ''}
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 8px;">
+                <button onclick="zoomToCity('${m.cidade}')" class="geo-pill-btn active" style="width: 100%; justify-content: center; font-size: 11px; padding: 5px 0;">
+                  🔍 Detalhar Lojas deste Município
+                </button>
+                <button onclick="switchViewMode('estoque'); setTimeout(() => { const sel = document.getElementById('select-cidade-remanejamento'); if (sel) { sel.value = '${m.cidade}'; renderCidadeRemanejamento('${m.cidade}'); } }, 200);" class="geo-pill-btn" style="width: 100%; justify-content: center; font-size: 10.5px; padding: 5px 0; background: rgba(0, 113, 227, 0.08); color: var(--apple-blue); border: 1px solid var(--apple-blue-border);">
+                  🔄 Ver Diagnóstico "As Outras Suprem?"
+                </button>
+              </div>
             </div>
           `;
           circle.bindPopup(popupContent);
@@ -5148,8 +5394,8 @@
       } else {
         // MODO 1 & 3: LOJAS INDIVIDUAIS COM PINS DE STATUS
         lojasGeo.forEach(item => {
-          // item: [filial_id, nome, cidade, uf, lat, lon, v_hoje, v_d7, gap, var_pct, status, diretor, coordenador]
-          const [f_id, nome, cidade, uf, lat, lon, v_hoje, v_d7, gap, var_pct, status, diretor, coord] = item;
+          // item: [filial_id, nome, cidade, uf, lat, lon, v_hoje, v_d7, gap, var_pct, status, diretor, coordenador, dias_estoque, saldo_loja, giro_diario, status_cobertura, reman_status]
+          const [f_id, nome, cidade, uf, lat, lon, v_hoje, v_d7, gap, var_pct, status, diretor, coord, dias_estoque, saldo_loja, giro_diario, status_cobertura, reman_status] = item;
 
           if (lat === null || lon === null) return;
           if (mapFilterUF !== 'ALL' && uf !== mapFilterUF) return;
@@ -5201,11 +5447,24 @@
                 <span style="color: var(--text-secondary);">Semana Passada (D-7):</span>
                 <span style="font-family: 'JetBrains Mono', monospace;">${fmtMoeda(v_d7)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 6px;">
                 <span style="color: var(--text-secondary);">GAP vs D-7:</span>
                 <strong style="color: ${corGap}; font-family: 'JetBrains Mono', monospace;">${sinal}${fmtMoeda(gap)} (${sinal}${(var_pct || 0).toFixed(1)}%)</strong>
               </div>
-              ${coord ? `<div style="font-size: 10.5px; color: var(--text-tertiary); border-top: 1px solid var(--border-subtle); padding-top: 6px;">Coord: ${coord} ${diretor ? '• Dir: ' + diretor : ''}</div>` : ''}
+              <div style="margin-top: 6px; padding: 6px 8px; background: rgba(0,0,0,0.03); border-radius: 6px; font-size: 11px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: var(--text-secondary);">Dias de Estoque:</span>
+                  <span class="doh-badge ${(dias_estoque || 0) < 2.5 ? 'doh-critico' : ((dias_estoque || 0) < 6.0 ? 'doh-alerta' : 'doh-saudavel')}" style="padding: 1px 6px; font-size: 10px;">${(dias_estoque || 0).toFixed(1)} dias</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 3px;">
+                  <span style="color: var(--text-secondary);">Saldo / Giro:</span>
+                  <span style="font-size: 10.5px; font-weight: 600;">${(saldo_loja || 0).toLocaleString('pt-BR')} un • ${giro_diario || 0}/dia</span>
+                </div>
+              </div>
+              <button onclick="switchViewMode('estoque'); setTimeout(() => openStoreStockModal('${f_id}'), 200);" class="geo-pill-btn" style="width: 100%; justify-content: center; font-size: 10.5px; padding: 5px 0; margin-top: 8px; background: rgba(0, 113, 227, 0.08); color: var(--apple-blue); border: 1px solid var(--apple-blue-border);">
+                📦 Ficha de Estoque & Lojas Doadoras
+              </button>
+              ${coord ? `<div style="font-size: 10.5px; color: var(--text-tertiary); border-top: 1px solid var(--border-subtle); padding-top: 6px; margin-top: 6px;">Coord: ${coord} ${diretor ? '• Dir: ' + diretor : ''}</div>` : ''}
             </div>
           `;
           marker.bindPopup(popupHtml);
@@ -8291,6 +8550,11 @@
       showToast(mode === 'geo' ? '🗺️ Alternado para Árvore Geográfica (UF ➔ Município ➔ Filial)' : '👔 Alternado para Árvore Organizacional (Diretoria ➔ Coordenação ➔ Filial)');
     }
 
+    let currentBottomUpLevel = 'lojas';
+    let currentBottomUpFilter = 'TODOS';
+    let bottomUpSearchQuery = '';
+    let selectedRemanejamentoCidade = null;
+
     function renderStockAuditView() {
       if (!globalData || !globalData.auditoria_estoque) return;
       const ae = globalData.auditoria_estoque;
@@ -8303,12 +8567,12 @@
         bCorte.innerText = `CORTE: ${meta.corte_hora}`;
       }
 
-      // 2. Scorecard KPIs
+      // 2. Scorecard KPIs (6 Indicadores Estratégicos)
       const elPerdaRupt = document.getElementById('stock-kpi-perda-ruptura');
       if (elPerdaRupt) elPerdaRupt.innerText = formatMoney(sc.perda_ruptura_rs || 0);
 
       const elPctRupt = document.getElementById('stock-kpi-pct-ruptura');
-      if (elPctRupt) elPctRupt.innerText = `${sc.pct_ruptura || 0}% DO GAP TOTAL`;
+      if (elPctRupt) elPctRupt.innerText = `${sc.pct_ruptura || 0}% DO GAP`;
 
       const elPerdaPreco = document.getElementById('stock-kpi-perda-preco');
       if (elPerdaPreco) elPerdaPreco.innerText = formatMoney(sc.perda_preco_rs || 0);
@@ -8316,16 +8580,27 @@
       const elPctPreco = document.getElementById('stock-kpi-pct-preco');
       if (elPctPreco) elPctPreco.innerText = `${sc.pct_preco || 0}% DO GAP`;
 
-      const elSkusCrit = document.getElementById('stock-kpi-skus-criticos');
-      if (elSkusCrit) elSkusCrit.innerText = `${sc.skus_ruptura_critica || 0} SKUs`;
+      const elCobRede = document.getElementById('stock-kpi-cobertura-rede');
+      if (elCobRede) elCobRede.innerText = `${(sc.cobertura_rede_dias || 0).toFixed(1).replace('.', ',')} dias`;
 
-      const elLojasAfet = document.getElementById('stock-kpi-lojas-afetadas');
-      if (elLojasAfet) elLojasAfet.innerText = `${sc.lojas_afetadas_queda || 0} Filiais`;
+      const elPolosCrit = document.getElementById('stock-kpi-polos-criticos');
+      if (elPolosCrit) elPolosCrit.innerText = `${sc.total_lojas_polo_criticas || 0} Polos`;
 
-      const elPctLojas = document.getElementById('stock-kpi-pct-lojas');
-      if (elPctLojas && sc.total_lojas_rede) {
-        const pctL = ((sc.lojas_afetadas_queda / sc.total_lojas_rede) * 100).toFixed(1);
-        elPctLojas.innerText = `${pctL}% DA REDE`;
+      const elLojasDoad = document.getElementById('stock-kpi-lojas-doadoras');
+      if (elLojasDoad) elLojasDoad.innerText = `${sc.total_lojas_doadoras || 0} Filiais`;
+
+      const elRemanRs = document.getElementById('stock-kpi-remanejamento-rs');
+      if (elRemanRs) elRemanRs.innerText = formatMoney(sc.potencial_remanejamento_rede_rs || 0);
+
+      const elSubReman = document.getElementById('stock-kpi-sub-remanejamento');
+      if (elSubReman && sc.potencial_remanejamento_rede_un) {
+        elSubReman.innerText = `${sc.potencial_remanejamento_rede_un.toLocaleString('pt-BR')} UN INTRA-PRAÇA`;
+      }
+
+      // Diretriz textual do topo
+      const elAlertaTxt = document.getElementById('stock-alerta-texto');
+      if (elAlertaTxt) {
+        elAlertaTxt.innerText = `Auditamos 1.259 filiais físicas. Identificamos ${sc.total_lojas_polo_criticas || 0} polos de entrega em risco (< 2,5 dias), com potencial de remanejamento local de ${formatMoney(sc.potencial_remanejamento_rede_rs || 0)} (${(sc.potencial_remanejamento_rede_un || 0).toLocaleString('pt-BR')} un) sem depender do CD.`;
       }
 
       // 3. Tríade Bar & Values
@@ -8351,8 +8626,10 @@
       if (vDem) vDem.innerText = formatMoney(sc.perda_demanda_rs || 0);
       if (bDem) bDem.innerText = `${sc.pct_demanda || 0}%`;
 
-      // 4. Renderiza Hierarquia e Tabela de Estoque
+      // 4. Renderiza Remanejamento, Hierarquia, Bottom-Up e Tabela de Estoque
+      initCidadesRemanejamento();
       renderStockHierarchyView();
+      renderBottomUpStockTable();
       renderStockTable();
     }
 
@@ -8588,6 +8865,547 @@
       tbody.innerHTML = html;
     }
 
+
+    /* ======================================================================
+       DIAGNÓSTICO "AS OUTRAS SUPREM?" (REMANEJAMENTO INTRA-URBANO)
+       ====================================================================== */
+    function initCidadesRemanejamento() {
+      if (!globalData || !globalData.auditoria_estoque) return;
+      const ae = globalData.auditoria_estoque;
+      const cidades = ae.cidades_as_outras_suprem || [];
+      const sel = document.getElementById('select-cidade-remanejamento');
+      if (!sel) return;
+
+      if (cidades.length === 0) {
+        sel.innerHTML = '<option value="">Nenhuma praça com remanejamento ativo</option>';
+        return;
+      }
+
+      let optsHtml = '';
+      cidades.forEach((c, idx) => {
+        const isSel = (!selectedRemanejamentoCidade && idx === 0) || (c.cidade === selectedRemanejamentoCidade);
+        const badgeTxt = c.as_outras_suprem === 'SIM_100' ? '✅ Suprem 100%' : (c.as_outras_suprem === 'PARCIAL' ? '⚠️ Parcial' : '🚨 Déficit');
+        optsHtml += `<option value="${c.cidade}" ${isSel ? 'selected' : ''}>${c.cidade} (${c.uf}) — ${badgeTxt} [${c.total_lojas} Lojas]</option>`;
+      });
+      sel.innerHTML = optsHtml;
+
+      if (!selectedRemanejamentoCidade && cidades.length > 0) {
+        selectedRemanejamentoCidade = cidades[0].cidade;
+      }
+      renderCidadeRemanejamento(selectedRemanejamentoCidade);
+    }
+
+    function renderCidadeRemanejamento(cidadeNome) {
+      if (!cidadeNome || !globalData || !globalData.auditoria_estoque) return;
+      selectedRemanejamentoCidade = cidadeNome;
+
+      const ae = globalData.auditoria_estoque;
+      const cidades = ae.cidades_as_outras_suprem || [];
+      const city = cidades.find(c => c.cidade.toLowerCase() === cidadeNome.toLowerCase()) || cidades[0];
+      if (!city) return;
+
+      // Card de Veredito
+      const elIcon = document.getElementById('cidade-veredito-icon');
+      const elTitulo = document.getElementById('cidade-veredito-titulo');
+      const elBadge = document.getElementById('cidade-veredito-badge');
+      const elCob = document.getElementById('cidade-veredito-cobertura');
+      const elTexto = document.getElementById('cidade-veredito-texto');
+      const elPotUn = document.getElementById('cidade-veredito-potencial-un');
+      const elPotRs = document.getElementById('cidade-veredito-potencial-rs');
+
+      if (elTitulo) elTitulo.innerText = `Veredito para ${city.cidade} (${city.uf})`;
+      if (elCob) elCob.innerText = `Cobertura Média: ${(city.cobertura_mun_dias || 0).toFixed(1)} dias`;
+      if (elTexto) elTexto.innerText = city.veredito_texto || '';
+      if (elPotUn) elPotUn.innerText = `${(city.potencial_remanejamento_un || 0).toLocaleString('pt-BR')} un`;
+      if (elPotRs) elPotRs.innerText = formatMoney(city.potencial_remanejamento_rs || 0);
+
+      if (city.as_outras_suprem === 'SIM_100') {
+        if (elIcon) elIcon.innerText = '✅';
+        if (elBadge) {
+          elBadge.className = 'tag-badge tag-super';
+          elBadge.innerText = 'AS OUTRAS SUPREM 100%';
+        }
+      } else if (city.as_outras_suprem === 'PARCIAL') {
+        if (elIcon) elIcon.innerText = '⚠️';
+        if (elBadge) {
+          elBadge.className = 'tag-badge tag-moderado';
+          elBadge.innerText = 'SUPREM PARCIALMENTE';
+        }
+      } else {
+        if (elIcon) elIcon.innerText = '🚨';
+        if (elBadge) {
+          elBadge.className = 'tag-badge tag-critico';
+          elBadge.innerText = 'DÉFICIT GERAL (DEMANDA CD)';
+        }
+      }
+
+      // Lojas do município
+      const reg = globalData.regional || {};
+      const allFiliais = reg.filiais_todas || [];
+      const filsCity = allFiliais.filter(f => (f.cidade || '').toLowerCase() === city.cidade.toLowerCase());
+
+      const receptoras = filsCity.filter(f => f.remanejamento_status === 'RECEPTORA_URGENTE' || (f.dias_estoque < 3.0 && (f.vendas_hoje > 500 || f.vendas_d7 > 1500)));
+      const doadoras = filsCity.filter(f => f.remanejamento_status === 'DOADORA_POTENCIAL' || (f.dias_estoque > 25.0 && f.saldo_loja > 500));
+
+      const countRec = document.getElementById('remanejamento-receptoras-count');
+      const countDoad = document.getElementById('remanejamento-doadoras-count');
+      if (countRec) countRec.innerText = `${receptoras.length} Loja(s)`;
+      if (countDoad) countDoad.innerText = `${doadoras.length} Loja(s)`;
+
+      // Renderiza Receptoras
+      const boxRec = document.getElementById('remanejamento-receptoras-container');
+      if (boxRec) {
+        if (receptoras.length === 0) {
+          boxRec.innerHTML = '<div style="padding: 14px; text-align: center; color: var(--text-secondary); font-size: 12px;">Nenhuma loja polo em ruptura nesta praça.</div>';
+        } else {
+          let hRec = '';
+          receptoras.forEach(f => {
+            const defUn = Math.max(0, Math.round((7.0 - f.dias_estoque) * f.giro_diario));
+            hRec += `
+              <div class="remanejamento-item-card" onclick="openStoreStockModal('${f.filial_id}')" title="Clique para ver ficha completa">
+                <div>
+                  <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">${f.nome}</div>
+                  <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+                    Saldo: <strong>${f.saldo_loja.toLocaleString('pt-BR')} un</strong> • Giro: <strong>${f.giro_diario} un/dia</strong>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <span class="doh-badge doh-critico">${f.dias_estoque.toFixed(1)} dias</span>
+                  <div style="font-size: 10.5px; font-weight: 700; color: var(--apple-red); margin-top: 2px;">
+                    Déficit: -${defUn.toLocaleString('pt-BR')} un
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          boxRec.innerHTML = hRec;
+        }
+      }
+
+      // Renderiza Doadoras
+      const boxDoad = document.getElementById('remanejamento-doadoras-container');
+      if (boxDoad) {
+        if (doadoras.length === 0) {
+          boxDoad.innerHTML = '<div style="padding: 14px; text-align: center; color: var(--text-secondary); font-size: 12px;">Nenhuma loja com estoque excedente &gt; 25 dias nesta praça.</div>';
+        } else {
+          let hDoad = '';
+          doadoras.forEach(f => {
+            const excUn = Math.max(0, Math.round(f.saldo_loja - (20.0 * f.giro_diario)));
+            hDoad += `
+              <div class="remanejamento-item-card" onclick="openStoreStockModal('${f.filial_id}')" title="Clique para ver ficha completa">
+                <div>
+                  <div style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">${f.nome}</div>
+                  <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+                    Saldo: <strong>${f.saldo_loja.toLocaleString('pt-BR')} un</strong> • Giro: <strong>${f.giro_diario} un/dia</strong>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <span class="doh-badge doh-excedente">${f.dias_estoque.toFixed(1)} dias</span>
+                  <div style="font-size: 10.5px; font-weight: 700; color: var(--apple-blue); margin-top: 2px;">
+                    Disponível: +${excUn.toLocaleString('pt-BR')} un
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          boxDoad.innerHTML = hDoad;
+        }
+      }
+    }
+
+    function exportOrdemRemanejamentoCSV() {
+      if (!globalData || !globalData.auditoria_estoque) return;
+      const ae = globalData.auditoria_estoque;
+      const cidades = ae.cidades_as_outras_suprem || [];
+      if (cidades.length === 0) {
+        showToast('Nenhum dado de remanejamento disponível.');
+        return;
+      }
+
+      let csv = 'Praca;UF;Total_Lojas;Cobertura_Dias;Veredito;Deficit_Unidades;Excedente_Unidades;Potencial_Remanejo_Un;Receita_Destravavel_RS;Diagnostico\n';
+      cidades.forEach(c => {
+        csv += `"${c.cidade}";"${c.uf}";${c.total_lojas};${c.cobertura_mun_dias};"${c.as_outras_suprem}";${c.deficit_unidades};${c.excedente_unidades};${c.potencial_remanejamento_un};${c.potencial_remanejamento_rs};"${(c.veredito_texto||'').replace(/"/g, '""')}"\n`;
+      });
+
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Ordem_Remanejamento_Intra_Urbano_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('📥 Ordem de Remanejamento exportada com sucesso!');
+    }
+
+    /* ======================================================================
+       TABELA BOTTOM-UP DE COBERTURA (LOJA ➔ MUNICÍPIO ➔ COORD ➔ DIRETORIA)
+       ====================================================================== */
+    function setBottomUpLevel(level) {
+      currentBottomUpLevel = level;
+      ['lojas', 'municipios', 'coordenacoes', 'diretorias'].forEach(lvl => {
+        const btn = document.getElementById(`pill-bu-${lvl}`);
+        if (btn) btn.classList.toggle('active', lvl === level);
+      });
+      renderBottomUpStockTable();
+    }
+
+    function setBottomUpFilter(filter) {
+      currentBottomUpFilter = filter;
+      ['TODOS', 'CRITICO', 'ALERTA', 'SAUDAVEL', 'EXCEDENTE', 'POLO', 'RECEPTORA'].forEach(f => {
+        const btn = document.getElementById(`pill-bu-filter-${f}`);
+        if (btn) btn.classList.toggle('active', f === filter);
+      });
+      renderBottomUpStockTable();
+    }
+
+    function filterBottomUpTable() {
+      const inp = document.getElementById('bu-search-input');
+      bottomUpSearchQuery = (inp ? inp.value : '').trim().toLowerCase();
+      renderBottomUpStockTable();
+    }
+
+    function renderBottomUpStockTable() {
+      if (!globalData || !globalData.regional) return;
+      const reg = globalData.regional;
+      const thead = document.getElementById('bu-table-thead-tr');
+      const tbody = document.getElementById('bu-table-tbody');
+      const countEl = document.getElementById('bu-table-count-label');
+      if (!thead || !tbody) return;
+
+      let htmlHead = '';
+      let htmlBody = '';
+
+      if (currentBottomUpLevel === 'lojas') {
+        htmlHead = `
+          <th style="padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Filial</th>
+          <th style="padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Município / UF</th>
+          <th style="padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Diretoria / Coord</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Papel Digital</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Saldo Loja</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Giro Diário</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Dias de Estoque</th>
+          <th style="padding: 10px 14px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Venda Digital</th>
+          <th style="padding: 10px 14px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--apple-red); font-weight: 700;">GAP vs D-7</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Remanejamento</th>
+        `;
+        thead.innerHTML = htmlHead;
+
+        let items = reg.filiais_todas || [];
+
+        // Filtro de status
+        if (currentBottomUpFilter === 'CRITICO') {
+          items = items.filter(f => f.status_cobertura === 'RUPTURA_CRITICA' || f.status_cobertura === 'RUPTURA_TOTAL');
+        } else if (currentBottomUpFilter === 'ALERTA') {
+          items = items.filter(f => f.status_cobertura === 'COBERTURA_BAIXA');
+        } else if (currentBottomUpFilter === 'SAUDAVEL') {
+          items = items.filter(f => f.status_cobertura === 'COBERTURA_SAUDAVEL');
+        } else if (currentBottomUpFilter === 'EXCEDENTE') {
+          items = items.filter(f => f.status_cobertura === 'EXCEDENTE_PARADO');
+        } else if (currentBottomUpFilter === 'POLO') {
+          items = items.filter(f => f.papel_digital === 'POLO_DIGITAL');
+        } else if (currentBottomUpFilter === 'RECEPTORA') {
+          items = items.filter(f => f.remanejamento_status === 'RECEPTORA_URGENTE');
+        }
+
+        // Busca
+        if (bottomUpSearchQuery) {
+          items = items.filter(f => {
+            const s = `${f.filial_id} ${f.nome} ${f.cidade} ${f.uf} ${f.diretor} ${f.coordenador}`.toLowerCase();
+            return s.includes(bottomUpSearchQuery);
+          });
+        }
+
+        if (countEl) countEl.innerText = `Exibindo ${items.length.toLocaleString('pt-BR')} filiais de 1.246 auditadas`;
+
+        items.slice(0, 150).forEach(f => {
+          let badgeDoh = '';
+          if (f.dias_estoque < 2.5) badgeDoh = `<span class="doh-badge doh-critico">🚨 ${f.dias_estoque.toFixed(1)}d Crítico</span>`;
+          else if (f.dias_estoque < 6.0) badgeDoh = `<span class="doh-badge doh-alerta">⚠️ ${f.dias_estoque.toFixed(1)}d Alerta</span>`;
+          else if (f.dias_estoque <= 25.0) badgeDoh = `<span class="doh-badge doh-saudavel">🟢 ${f.dias_estoque.toFixed(1)}d Saudável</span>`;
+          else badgeDoh = `<span class="doh-badge doh-excedente">🔵 ${f.dias_estoque.toFixed(1)}d Excedente</span>`;
+
+          let badgePapel = '';
+          if (f.papel_digital === 'POLO_DIGITAL') badgePapel = '<span class="tag-badge tag-super" style="font-size: 10px;">🛵 Polo Digital</span>';
+          else if (f.papel_digital === 'LOJA_HIBRIDA') badgePapel = '<span class="tag-badge tag-moderado" style="font-size: 10px;">🏪 Híbrida</span>';
+          else badgePapel = '<span class="tag-badge tag-neutro" style="font-size: 10px;">Balcão</span>';
+
+          let badgeReman = '';
+          if (f.remanejamento_status === 'RECEPTORA_URGENTE') badgeReman = '<span class="tag-badge tag-critico" style="font-size: 10px;">🔴 Receptora Urgente</span>';
+          else if (f.remanejamento_status === 'DOADORA_POTENCIAL') badgeReman = '<span class="tag-badge" style="background: rgba(0, 113, 227, 0.12); color: var(--apple-blue); font-weight: 700; font-size: 10px;">🔵 Doadora Local</span>';
+          else badgeReman = '<span style="color: var(--text-tertiary); font-size: 11px;">Equilibrada</span>';
+
+          htmlBody += `
+            <tr style="cursor: pointer;" onclick="openStoreStockModal('${f.filial_id}')" title="Clique para ver ficha completa">
+              <td style="padding: 10px 14px; font-weight: 700; color: var(--text-primary);">
+                ${f.nome}
+              </td>
+              <td style="padding: 10px 14px; color: var(--text-secondary);">
+                ${f.cidade} (${f.uf})
+              </td>
+              <td style="padding: 10px 14px; font-size: 11px; color: var(--text-secondary);">
+                ${f.diretor || 'Geral'} • ${f.coordenador || '-'}
+              </td>
+              <td style="padding: 10px 14px; text-align: center;">${badgePapel}</td>
+              <td style="padding: 10px 14px; text-align: center; font-weight: 700;">${(f.saldo_loja || 0).toLocaleString('pt-BR')} un</td>
+              <td style="padding: 10px 14px; text-align: center; color: var(--text-secondary);">${f.giro_diario || 0} un/dia</td>
+              <td style="padding: 10px 14px; text-align: center;">${badgeDoh}</td>
+              <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: var(--text-primary);">${formatMoney(f.vendas_hoje || 0)}</td>
+              <td style="padding: 10px 14px; text-align: right; font-weight: 800; color: ${f.gap_d7_rs < 0 ? 'var(--apple-red)' : '#248A3D'}; font-family: 'Outfit', sans-serif;">
+                ${f.gap_d7_rs >= 0 ? '+' : ''}${formatMoney(f.gap_d7_rs || 0)}
+              </td>
+              <td style="padding: 10px 14px; text-align: center;">${badgeReman}</td>
+            </tr>
+          `;
+        });
+        tbody.innerHTML = htmlBody || '<tr><td colspan="10" style="padding: 24px; text-align: center; color: var(--text-secondary);">Nenhuma filial encontrada para este filtro.</td></tr>';
+
+      } else if (currentBottomUpLevel === 'municipios') {
+        htmlHead = `
+          <th style="padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Município / Praça</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Lojas</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Saldo Total</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Giro Diário</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Cobertura Praça</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Receptoras / Doadoras</th>
+          <th style="padding: 10px 14px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Potencial Remanejo</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Veredito "As Outras Suprem?"</th>
+        `;
+        thead.innerHTML = htmlHead;
+
+        let items = reg.municipios || [];
+        if (bottomUpSearchQuery) {
+          items = items.filter(m => `${m.cidade} ${m.uf}`.toLowerCase().includes(bottomUpSearchQuery));
+        }
+        if (countEl) countEl.innerText = `Exibindo ${items.length} municípios`;
+
+        items.forEach(m => {
+          let badgeVeredito = '';
+          if (m.as_outras_suprem === 'SIM_100') badgeVeredito = '<span class="tag-badge tag-super">✅ As Outras Suprem 100%</span>';
+          else if (m.as_outras_suprem === 'PARCIAL') badgeVeredito = `<span class="tag-badge tag-moderado">${m.veredito_label}</span>`;
+          else if (m.as_outras_suprem === 'NAO_DEFICIT') badgeVeredito = '<span class="tag-badge tag-critico">🚨 Déficit Geral CD</span>';
+          else badgeVeredito = '<span class="tag-badge tag-neutro">Equilibrado</span>';
+
+          htmlBody += `
+            <tr style="cursor: pointer;" onclick="renderCidadeRemanejamento('${m.cidade}'); document.getElementById('select-cidade-remanejamento').value = '${m.cidade}';">
+              <td style="padding: 10px 14px; font-weight: 700; color: var(--text-primary);">${m.cidade} (${m.uf})</td>
+              <td style="padding: 10px 14px; text-align: center;">${m.total_lojas} lj</td>
+              <td style="padding: 10px 14px; text-align: center; font-weight: 600;">${(m.saldo_total || 0).toLocaleString('pt-BR')} un</td>
+              <td style="padding: 10px 14px; text-align: center; color: var(--text-secondary);">${m.giro_diario_total || 0} un/dia</td>
+              <td style="padding: 10px 14px; text-align: center;">
+                <span class="doh-badge ${m.cobertura_mun_dias < 3 ? 'doh-critico' : (m.cobertura_mun_dias > 25 ? 'doh-excedente' : 'doh-saudavel')}">
+                  ${(m.cobertura_mun_dias || 0).toFixed(1)} dias
+                </span>
+              </td>
+              <td style="padding: 10px 14px; text-align: center; font-size: 11.5px;">
+                <span style="color: var(--apple-red); font-weight: 700;">${m.total_receptoras || 0} rec</span> / <span style="color: var(--apple-blue); font-weight: 700;">${m.total_doadoras || 0} doad</span>
+              </td>
+              <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: var(--apple-indigo);">
+                ${m.potencial_remanejamento_un > 0 ? `${(m.potencial_remanejamento_un || 0).toLocaleString('pt-BR')} un (${formatMoney(m.potencial_remanejamento_rs)})` : '-'}
+              </td>
+              <td style="padding: 10px 14px; text-align: center;">${badgeVeredito}</td>
+            </tr>
+          `;
+        });
+        tbody.innerHTML = htmlBody;
+
+      } else if (currentBottomUpLevel === 'coordenacoes') {
+        htmlHead = `
+          <th style="padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Coordenação Distrital</th>
+          <th style="padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Diretoria / UF</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Lojas</th>
+          <th style="padding: 10px 14px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Vendas Digitais Hoje</th>
+          <th style="padding: 10px 14px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--apple-red); font-weight: 700;">GAP vs D-7</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Var %</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Status Pacing</th>
+        `;
+        thead.innerHTML = htmlHead;
+
+        let items = reg.coordenacoes || [];
+        if (bottomUpSearchQuery) {
+          items = items.filter(c => `${c.coordenador} ${c.diretor} ${c.uf}`.toLowerCase().includes(bottomUpSearchQuery));
+        }
+        if (countEl) countEl.innerText = `Exibindo ${items.length} coordenações`;
+
+        items.forEach(c => {
+          htmlBody += `
+            <tr>
+              <td style="padding: 10px 14px; font-weight: 700; color: var(--text-primary);">${c.coordenador}</td>
+              <td style="padding: 10px 14px; color: var(--text-secondary);">${c.diretor || 'Geral'} (${c.uf})</td>
+              <td style="padding: 10px 14px; text-align: center;">${c.total_lojas} lj</td>
+              <td style="padding: 10px 14px; text-align: right; font-weight: 700;">${formatMoney(c.vendas_hoje || 0)}</td>
+              <td style="padding: 10px 14px; text-align: right; font-weight: 800; color: ${c.gap_d7_rs < 0 ? 'var(--apple-red)' : '#248A3D'}; font-family: 'Outfit', sans-serif;">
+                ${c.gap_d7_rs >= 0 ? '+' : ''}${formatMoney(c.gap_d7_rs || 0)}
+              </td>
+              <td style="padding: 10px 14px; text-align: center; font-weight: 700;">${(c.var_d7_pct || 0).toFixed(1)}%</td>
+              <td style="padding: 10px 14px; text-align: center;">
+                <span class="tag-badge ${c.pacing_status === 'SUPEROU' ? 'tag-super' : (c.pacing_status === 'MODERADO' ? 'tag-moderado' : 'tag-critico')}">
+                  ${c.pacing_status}
+                </span>
+              </td>
+            </tr>
+          `;
+        });
+        tbody.innerHTML = htmlBody;
+
+      } else if (currentBottomUpLevel === 'diretorias') {
+        htmlHead = `
+          <th style="padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Diretoria Regional</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Coordenações</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Total Lojas</th>
+          <th style="padding: 10px 14px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Vendas Digitais Hoje</th>
+          <th style="padding: 10px 14px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--apple-red); font-weight: 700;">GAP vs D-7</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Var %</th>
+          <th style="padding: 10px 14px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">Status Pacing</th>
+        `;
+        thead.innerHTML = htmlHead;
+
+        let items = reg.hierarquia_organizacional || [];
+        if (countEl) countEl.innerText = `Exibindo ${items.length} diretorias regionais`;
+
+        items.forEach(d => {
+          htmlBody += `
+            <tr>
+              <td style="padding: 10px 14px; font-weight: 800; font-size: 13.5px; color: var(--text-primary);">👔 ${d.diretor}</td>
+              <td style="padding: 10px 14px; text-align: center;">${d.total_coordenacoes} coord</td>
+              <td style="padding: 10px 14px; text-align: center;">${d.total_lojas} filiais</td>
+              <td style="padding: 10px 14px; text-align: right; font-weight: 700;">${formatMoney(d.vendas_hoje || 0)}</td>
+              <td style="padding: 10px 14px; text-align: right; font-weight: 800; color: ${d.gap_d7_rs < 0 ? 'var(--apple-red)' : '#248A3D'}; font-family: 'Outfit', sans-serif;">
+                ${d.gap_d7_rs >= 0 ? '+' : ''}${formatMoney(d.gap_d7_rs || 0)}
+              </td>
+              <td style="padding: 10px 14px; text-align: center; font-weight: 700;">${(d.var_d7_pct || 0).toFixed(1)}%</td>
+              <td style="padding: 10px 14px; text-align: center;">
+                <span class="tag-badge ${d.pacing_status === 'SUPEROU' ? 'tag-super' : (d.pacing_status === 'MODERADO' ? 'tag-moderado' : 'tag-critico')}">
+                  ${d.pacing_status}
+                </span>
+              </td>
+            </tr>
+          `;
+        });
+        tbody.innerHTML = htmlBody;
+      }
+    }
+
+    function exportBottomUpCSV() {
+      if (!globalData || !globalData.regional) return;
+      const filiais = globalData.regional.filiais_todas || [];
+      if (filiais.length === 0) {
+        showToast('Nenhum dado para exportar.');
+        return;
+      }
+
+      let csv = 'Filial_ID;Nome;Cidade;UF;Diretoria;Coordenador;Papel_Digital;Saldo_Loja;Giro_Diario;Dias_Estoque;Status_Cobertura;Vendas_Hoje;Vendas_D7;GAP_RS;Var_Pct;Status_Remanejo\n';
+      filiais.forEach(f => {
+        csv += `"${f.filial_id}";"${(f.nome||'').replace(/"/g, '""')}";"${f.cidade||''}";"${f.uf||''}";"${f.diretor||''}";"${f.coordenador||''}";"${f.papel_digital||''}";${f.saldo_loja||0};${f.giro_diario||0};${f.dias_estoque||0};"${f.status_cobertura||''}";${f.vendas_hoje||0};${f.vendas_d7||0};${f.gap_d7_rs||0};${f.var_d7_pct||0};"${f.remanejamento_status||''}"\n`;
+      });
+
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Auditoria_Cobertura_Filiais_SaoJoao_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('📥 Tabela de Cobertura de Filiais exportada com sucesso!');
+    }
+
+    /* ======================================================================
+       MODAL DRILLDOWN DE FICHA DE ESTOQUE DA LOJA
+       ====================================================================== */
+    function openStoreStockModal(filialId) {
+      if (!globalData || !globalData.regional) return;
+      const filiais = globalData.regional.filiais_todas || [];
+      const filial = filiais.find(f => String(f.filial_id) === String(filialId) || String(f.raw_id) === String(filialId));
+      if (!filial) return;
+
+      // Busca doadoras no mesmo município
+      const doadorasVizinhas = filiais.filter(f => (f.cidade || '').toLowerCase() === (filial.cidade || '').toLowerCase() && String(f.filial_id) !== String(filial.filial_id) && f.dias_estoque > 20.0);
+
+      const modalEl = document.getElementById('modal-loja-estoque-backdrop');
+      const contentEl = document.getElementById('modal-loja-estoque-content');
+      if (!modalEl || !contentEl) return;
+
+      let vizinhasHtml = '';
+      if (doadorasVizinhas.length === 0) {
+        vizinhasHtml = '<div style="font-size: 12px; color: var(--text-secondary); padding: 8px 0;">Nenhuma outra filial com estoque excedente (&gt; 20 dias) em ' + filial.cidade + '.</div>';
+      } else {
+        doadorasVizinhas.slice(0, 5).forEach(dv => {
+          vizinhasHtml += `
+            <div style="background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div>
+                <div style="font-weight: 700; font-size: 12.5px; color: var(--text-primary);">${dv.nome}</div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Saldo: ${dv.saldo_loja.toLocaleString('pt-BR')} un • Giro: ${dv.giro_diario} un/dia</div>
+              </div>
+              <span class="doh-badge doh-excedente">${dv.dias_estoque.toFixed(1)} dias</span>
+            </div>
+          `;
+        });
+      }
+
+      contentEl.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 113, 227, 0.12); display: flex; align-items: center; justify-content: center; font-size: 22px;">
+            🏪
+          </div>
+          <div>
+            <div style="font-family: 'Outfit', sans-serif; font-size: 19px; font-weight: 800; color: var(--text-primary);">${filial.nome}</div>
+            <div style="font-size: 12.5px; color: var(--text-secondary);">${filial.cidade} (${filial.uf}) • Dir: ${filial.diretor || 'Geral'} • Coord: ${filial.coordenador || '-'}</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 18px;">
+          <div style="background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Dias de Estoque</div>
+            <div style="font-size: 20px; font-weight: 800; font-family: 'Outfit', sans-serif; color: ${filial.dias_estoque < 2.5 ? 'var(--apple-red)' : '#248A3D'}; margin-top: 4px;">
+              ${filial.dias_estoque.toFixed(1)} dias
+            </div>
+            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">${filial.status_cobertura}</div>
+          </div>
+
+          <div style="background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Saldo Físico</div>
+            <div style="font-size: 20px; font-weight: 800; font-family: 'Outfit', sans-serif; color: var(--text-primary); margin-top: 4px;">
+              ${filial.saldo_loja.toLocaleString('pt-BR')} un
+            </div>
+            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">Estoque em Loja</div>
+          </div>
+
+          <div style="background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Giro Médio</div>
+            <div style="font-size: 20px; font-weight: 800; font-family: 'Outfit', sans-serif; color: var(--apple-blue); margin-top: 4px;">
+              ${filial.giro_diario} un/dia
+            </div>
+            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">Média Diária</div>
+          </div>
+
+          <div style="background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">Venda Digital Hoje</div>
+            <div style="font-size: 20px; font-weight: 800; font-family: 'Outfit', sans-serif; color: var(--text-primary); margin-top: 4px;">
+              ${formatMoney(filial.vendas_hoje)}
+            </div>
+            <div style="font-size: 10px; color: ${filial.gap_d7_rs < 0 ? 'var(--apple-red)' : '#248A3D'}; margin-top: 2px; font-weight: 700;">
+              ${filial.gap_d7_rs >= 0 ? '+' : ''}${formatMoney(filial.gap_d7_rs)} vs D-7
+            </div>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid var(--border); padding-top: 16px;">
+          <div style="font-size: 13px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">
+            🔄 Lojas Doadoras Vizinhas em ${filial.cidade} (Estoque Excedente):
+          </div>
+          ${vizinhasHtml}
+        </div>
+      `;
+
+      modalEl.style.display = 'flex';
+    }
+
+    function closeStoreStockModal() {
+      const modalEl = document.getElementById('modal-loja-estoque-backdrop');
+      if (modalEl) modalEl.style.display = 'none';
+    }
+
     function exportStockTableCSV() {
       if (!globalData || !globalData.auditoria_estoque) return;
       const skus = globalData.auditoria_estoque.skus_ruptura || [];
@@ -8612,6 +9430,16 @@
       showToast('📥 Planilha de Auditoria de Estoque exportada com sucesso!');
     }
   </script>
+
+  <!-- MODAL DRILLDOWN DE FICHA DE ESTOQUE DA LOJA -->
+  <div id="modal-loja-estoque-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 20px;">
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 18px; max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); padding: 24px; position: relative; animation: fadeInView 0.25s ease;">
+      <button onclick="closeStoreStockModal()" style="position: absolute; top: 18px; right: 18px; background: var(--surface-sunken); border: 1px solid var(--border); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">&times;</button>
+      <div id="modal-loja-estoque-content">
+        <!-- Injetado dinamicamente -->
+      </div>
+    </div>
+  </div>
 
   <!-- AUTO-REFRESH ENGINE: Polling daemon para atualização automática do dashboard -->
   <script id="auto-refresh-engine">

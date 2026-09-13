@@ -420,16 +420,19 @@ JS_TEMPLATE = """async () => {
                         "qMeasures": [
                             { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
                             { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
+                            { "qDef": { "qDef": "Sum({1} [Quantidade Saldo])" } },
+                            { "qDef": { "qDef": "Sum({1<[Ano-Mes]={'%%ANO_MES_ANTERIOR%%'}>} [Quantidade Produto]) / 31" } },
+                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
                         ],
-                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 250, "qWidth": 7 }],
+                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 250, "qWidth": 10 }],
                         "qSuppressZero": true
                     }
                 }]);
                 const hFil = cFil.result.qReturn.qHandle;
                 const lFil = await send("GetLayout", hFil, []);
                 const totFil = lFil.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsFiliais = await fetchAllHyperCubeRows(hFil, totFil, 7, 1000, "Filiais");
+                resData.rowsFiliais = await fetchAllHyperCubeRows(hFil, totFil, 10, 1000, "Filiais");
 
                 ws.close();
 
