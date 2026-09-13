@@ -4415,6 +4415,9 @@
         renderFechamentoView();
       } else if (mode === 'regional') {
         renderRegionalView();
+        if (leafletMap) {
+          setTimeout(() => { leafletMap.invalidateSize(); }, 200);
+        }
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -6169,11 +6172,11 @@
       renderMatrixTable();
       renderHourlyTable();
       filterPrecificaTable();
-      if (globalData && globalData.fechamento_ontem) {
+      if (globalData && globalData.fechamento_ontem && currentViewMode === 'fechamento') {
         loadFechamentoHistoryList();
         renderFechamentoView();
       }
-      if (globalData && globalData.regional) {
+      if (globalData && globalData.regional && currentViewMode === 'regional') {
         renderRegionalView();
       }
     }

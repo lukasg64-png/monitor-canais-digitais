@@ -33,7 +33,7 @@ def is_pid_running(pid):
         return False
 
 def acquire_lock(timeout_sec=300):
-    for _ in range(6):
+    for attempt in range(35):
         if os.path.exists(LOCK_FILE):
             try:
                 with open(LOCK_FILE, 'r', encoding='utf-8') as f:
@@ -41,7 +41,7 @@ def acquire_lock(timeout_sec=300):
                 lock_pid = data.get('pid')
                 lock_time = data.get('time', 0)
                 if time.time() - lock_time < timeout_sec and lock_pid and is_pid_running(lock_pid):
-                    time.sleep(2.5)
+                    time.sleep(2.0)
                     continue
             except Exception:
                 pass
@@ -52,7 +52,7 @@ def acquire_lock(timeout_sec=300):
                 with open(LOCK_FILE, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 lock_pid = data.get('pid')
-                print(f"⚠️ Sincronização já em execução no processo PID {lock_pid}. Ignorando chamada concorrente.")
+                print(f"⚠️ Sincronização em execução no processo PID {lock_pid}. Aguardou 70s.")
                 return False
             except Exception:
                 pass
@@ -641,7 +641,10 @@ async def fetch_intraday_data(target_dt=None):
 
         async with async_playwright() as p:
             print("1/4 Conectando ao Qlik Sense Enterprise...", flush=True)
-            browser = await p.chromium.launch(headless=True, args=['--ignore-certificate-errors'])
+            browser = await p.chromium.launch(
+                headless=True,
+                args=['--ignore-certificate-errors', '--disable-dev-shm-usage', '--no-sandbox']
+            )
             try:
                 context = await browser.new_context(
                     ignore_https_errors=True,
@@ -650,7 +653,21 @@ async def fetch_intraday_data(target_dt=None):
                 )
                 page = await context.new_page()
                 page.on("console", lambda msg: print(f"   [Qlik] {msg.text}", flush=True))
-                await page.goto(SHEET_URL, timeout=90000)
+
+                nav_ok = False
+                for att in range(1, 3):
+                    try:
+                        await page.goto(SHEET_URL, timeout=60000, wait_until="domcontentloaded")
+                        nav_ok = True
+                        break
+                    except Exception as e_nav:
+                        print(f"   ⚠️ Tentativa {att}/2 de conexão falhou ({e_nav}). Aguardando 3s...", flush=True)
+                        if att < 2:
+                            await page.wait_for_timeout(3000)
+
+                if not nav_ok:
+                    raise ConnectionError("Timeout ao conectar ao Qlik Sense Enterprise.")
+
                 try:
                     await page.wait_for_selector('.qv-panel-sheet', timeout=30000)
                 except Exception:
@@ -689,7 +706,7 @@ async def fetch_intraday_data(target_dt=None):
 if __name__ == '__main__':
     res = asyncio.run(fetch_intraday_data())
     if res is None:
-        if os.path.exists(RAW_FILE) and (time.time() - os.path.getmtime(RAW_FILE) < 180):
+        if os.path.exists(RAW_FILE) and (time.time() - os.path.getmtime(RAW_FILE) < 600):
             print("ℹ️ Dados brutos atualizados recentemente por processo concorrente. Prosseguindo.")
             sys.exit(0)
         else:

@@ -235,14 +235,18 @@ def background_daemon_worker():
     """Worker em segundo plano que sincroniza rigorosamente aos minutos :20 e :50 de cada hora"""
     print(f"[{datetime.now().strftime('%H:%M:%S')}] Daemon contínuo iniciado. Sincronizações nos minutos :20 e :50 de cada hora.")
     while True:
-        seconds_left = get_seconds_until_next_sync()
-        while seconds_left > 0:
-            daemon_state["next_sync_in"] = seconds_left
-            time.sleep(1)
-            seconds_left -= 1
-        
-        run_sync()
-        time.sleep(2)
+        try:
+            seconds_left = get_seconds_until_next_sync()
+            while seconds_left > 0:
+                daemon_state["next_sync_in"] = seconds_left
+                time.sleep(1)
+                seconds_left -= 1
+            
+            run_sync()
+            time.sleep(5)
+        except Exception as e_worker:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Erro recuperável no loop do worker: {e_worker}")
+            time.sleep(10)
 
 class IntranetRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
