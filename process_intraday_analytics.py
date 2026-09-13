@@ -856,6 +856,9 @@ def process_stock_audit_data(raw, precifica_items, regional_data, level_skus, es
             ruptura_skus.append({
                 "sku_id": s.get("sku_id"),
                 "nome": s.get("nome"),
+                "curva_abc": s.get("curva_abc", "C"),
+                "opportunity_score_rs": s.get("opportunity_score_rs", 0.0),
+                "prioridade_reprecificacao": s.get("prioridade_reprecificacao", "MONITORAR"),
                 "grupo": s.get("grupo", "Geral"),
                 "laboratorio": s.get("laboratorio", "N/A"),
                 "hoje": round(float(s.get("hoje", 0)), 2),
@@ -2192,6 +2195,10 @@ def process_analytics():
             dif_rs = round(nosso_p - menor_p, 2)
             marca_limpa = str(v.get("brand", "")).split("(")[0].strip() if v.get("brand") else ""
             
+            sku_curva = abc_map.get(ref) or abc_map.get(ref.lstrip("0")) or abc_map.get(ref.zfill(8)) or "C"
+            opp_score = round(dif_rs * (1.5 if sku_curva == "A" else 1.0), 2) if dif_rs > 0 else 0.0
+            prioridade = "CRÍTICA" if (dif_rs > 0 and (sku_curva == "A" or (v.get("spread_pct") or 0) > 25.0)) else ("MODERADA" if dif_rs > 0 else "MONITORAR")
+            
             precifica_catalogo_full.append({
                 "sku": ref,
                 "nome": v.get("title", ""),
@@ -2202,7 +2209,10 @@ def process_analytics():
                 "menor_preco": menor_p,
                 "spread_pct": v.get("spread_pct"),
                 "spread_rs": dif_rs,
-                "status": v.get("status")
+                "status": v.get("status"),
+                "curva_abc": sku_curva,
+                "opportunity_score_rs": opp_score,
+                "prioridade_reprecificacao": prioridade
             })
 
     # Ordenar por maior spread (mais caros no topo)

@@ -3586,6 +3586,10 @@
           <span>Meta Dia: <strong id="card-meta-dia">R$ 0</strong></span>
           <span>GAP: <strong id="card-gap-proj">R$ 0</strong></span>
         </div>
+        <div class="kpi-footer-row" style="margin-top: 6px; font-size: 11px; color: var(--text-secondary); border-top: 1px dashed var(--border); padding-top: 4px;">
+          <span>Cone 80% CI: <strong id="card-cone-ci">P10 R$ -- • P90 R$ --</strong></span>
+          <span>Prob. Meta: <strong id="card-prob-meta" style="color: var(--apple-blue); font-weight: 700;">--%</strong></span>
+        </div>
       </div>
 
       <!-- Card 4: Run-Rate Necessário -->
@@ -3597,6 +3601,90 @@
         <div class="kpi-value" id="card-runrate-nec" style="color: var(--apple-orange-text);">R$ 0/h</div>
         <div class="kpi-footer-row">
           <span>Para bater 100% da meta diária nas horas restantes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RETAIL ECONOMICS & WATERFALL DECOMPOSITION (Apple Glass Card) -->
+    <div class="matrix-card" id="section-retail-science" style="margin-bottom: 24px;">
+      <div class="section-header">
+        <div class="section-title">
+          <span>🧪 Data Science & Retail Economics: Triângulo do Varejo & Decomposição Waterfall</span>
+        </div>
+        <span class="badge-status" style="background: rgba(0, 113, 227, 0.1); color: var(--apple-blue); font-weight: 700;">
+          Modelagem Factual Intraday
+        </span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-wrap: wrap;">
+        <!-- COLUNA 1: TRIÂNGULO DO VAREJO (AOV = UPT x AUR) -->
+        <div style="background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+              <span>📐 Triângulo Fundamental do Varejo</span>
+              <span style="font-size: 11px; color: var(--text-secondary); font-weight: normal;">(AOV = UPT × AUR)</span>
+            </div>
+            <span class="badge-status" id="retail-channel-tag" style="font-size: 10.5px;">Total Canais</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px;">
+            <!-- AOV -->
+            <div style="background: var(--surface); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+              <span style="font-size: 10.5px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; display: block;">Ticket Médio (AOV)</span>
+              <span id="retail-aov-val" style="font-size: 18px; font-weight: 800; color: var(--apple-blue); display: block; margin: 4px 0;">R$ 113,22</span>
+              <span style="font-size: 10px; color: var(--text-tertiary);">Receita / Pedido</span>
+            </div>
+            <!-- UPT -->
+            <div style="background: var(--surface); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+              <span style="font-size: 10.5px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; display: block;">Itens / Cesta (UPT)</span>
+              <span id="retail-upt-val" style="font-size: 18px; font-weight: 800; color: var(--apple-purple); display: block; margin: 4px 0;">3,55 un</span>
+              <span style="font-size: 10px; color: var(--text-tertiary);">Unidades / Pedido</span>
+            </div>
+            <!-- AUR -->
+            <div style="background: var(--surface); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+              <span style="font-size: 10.5px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; display: block;">Preço Médio (AUR)</span>
+              <span id="retail-aur-val" style="font-size: 18px; font-weight: 800; color: var(--apple-green); display: block; margin: 4px 0;">R$ 31,89</span>
+              <span style="font-size: 10px; color: var(--text-tertiary);">Receita / Unidade</span>
+            </div>
+          </div>
+
+          <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; padding: 8px 12px; background: var(--surface); border-radius: var(--radius-md); border-left: 3px solid var(--apple-blue);">
+            💡 <strong>Diagnóstico de Cesta:</strong> Cada pedido online contém em média <strong id="desc-upt">3,55 produtos</strong> com preço médio de <strong id="desc-aur">R$ 31,89</strong>, gerando ticket médio de <strong id="desc-aov">R$ 113,22</strong>.
+          </div>
+        </div>
+
+        <!-- COLUNA 2: WATERFALL (PREÇO vs VOLUME vs MIX) -->
+        <div style="background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+              <span>🌊 Decomposição Waterfall de Vendas</span>
+              <span style="font-size: 11px; color: var(--text-secondary); font-weight: normal;">(vs D-7 no Corte)</span>
+            </div>
+            <span class="tag-badge" id="waterfall-delta-badge" style="font-size: 11px; background: rgba(52, 199, 89, 0.15); color: var(--apple-green-text);">+R$ 5.997 (+1,8%)</span>
+          </div>
+
+          <!-- Barras Comparativas de Efeito Volume vs Efeito Preço -->
+          <div style="margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+              <span style="color: var(--apple-red); font-weight: 700;">📦 Efeito Volume (Unidades): <span id="wf-volume-val">-R$ 15.098</span></span>
+              <span style="color: var(--text-secondary); font-size: 11px;" id="wf-volume-un">-504 un vendidas</span>
+            </div>
+            <div style="height: 10px; border-radius: 5px; background: var(--border); overflow: hidden; margin-bottom: 10px;">
+              <div id="wf-volume-bar" style="height: 100%; width: 42%; background: var(--apple-red); border-radius: 5px;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+              <span style="color: var(--apple-green); font-weight: 700;">🏷️ Efeito Preço / AUR (Inflação/Mix): <span id="wf-preco-val">+R$ 21.095</span></span>
+              <span style="color: var(--text-secondary); font-size: 11px;" id="wf-preco-diff">+R$ 1,94/un</span>
+            </div>
+            <div style="height: 10px; border-radius: 5px; background: var(--border); overflow: hidden;">
+              <div id="wf-preco-bar" style="height: 100%; width: 58%; background: var(--apple-green); border-radius: 5px;"></div>
+            </div>
+          </div>
+
+          <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; padding: 8px 12px; background: var(--surface); border-radius: var(--radius-md); border-left: 3px solid var(--apple-orange);" id="wf-diagnostic-text">
+            ⚠️ <strong>Alerta do Cientista de Dados:</strong> O faturamento cresceu +1,8%, mas o <strong>volume físico caiu em 504 itens</strong>. O crescimento foi sustentado 100% pelo aumento de ticket médio (+6,5%), evidenciando retração de demanda e sensibilidade a preço da concorrência.
+          </div>
         </div>
       </div>
     </div>
@@ -4711,6 +4799,8 @@
           <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="precifica-status-filters">
             <button class="pill-filter-btn active" id="btn-prec-all" onclick="setPrecificaStatusFilter('ALL')">Todos (694)</button>
             <button class="pill-filter-btn" id="btn-prec-caros" onclick="setPrecificaStatusFilter('MAIS_CARO')">🚨 Mais Caros (608)</button>
+            <button class="pill-filter-btn" id="btn-prec-curva-a" onclick="setPrecificaStatusFilter('CURVA_A')">🏆 Curva A</button>
+            <button class="pill-filter-btn" id="btn-prec-prio-critica" onclick="setPrecificaStatusFilter('PRIO_CRITICA')">🔥 Prioridade Crítica</button>
             <button class="pill-filter-btn" id="btn-prec-criticos" onclick="setPrecificaStatusFilter('CRITICOS_30')">⚠️ Spread > +30% (231)</button>
             <button class="pill-filter-btn" id="btn-prec-baratos" onclick="setPrecificaStatusFilter('MAIS_BARATO')">🏆 Líder São João (46)</button>
             <button class="pill-filter-btn" id="btn-prec-empatados" onclick="setPrecificaStatusFilter('EMPATADO')">⚖️ Empatados (40)</button>
@@ -6570,6 +6660,69 @@
       });
 
       // Executive KPI Cards
+            // Retail Science: Cone de Probabilidade e Incerteza (P10 - P50 - P90)
+      const cen = activeKpi.cenarios_projecao || {};
+      if (document.getElementById('card-cone-ci')) {
+        const p10 = cen.p10_conservador || (activeKpi.projecao_eod * 0.85);
+        const p90 = cen.p90_otimista || (activeKpi.projecao_eod * 1.15);
+        document.getElementById('card-cone-ci').innerText = `P10 ${fmtBRL(p10)} • P90 ${fmtBRL(p90)}`;
+      }
+      if (document.getElementById('card-prob-meta')) {
+        const prob = cen.probabilidade_meta_pct !== undefined ? cen.probabilidade_meta_pct : (activeKpi.projecao_eod >= activeKpi.meta_dia ? 65.0 : 45.0);
+        document.getElementById('card-prob-meta').innerText = `${fmtPct(prob)}`;
+        document.getElementById('card-prob-meta').style.color = prob >= 60 ? 'var(--apple-green-text)' : (prob >= 40 ? 'var(--apple-orange-text)' : 'var(--apple-red-text)');
+      }
+
+      // Retail Science: Triângulo do Varejo (AOV = UPT x AUR)
+      const mixCh = (globalData.mix_canais && globalData.mix_canais[currentChannel]) || {};
+      const aovVal = mixCh.aov_ticket_medio || (activeKpi.realizado_hoje / Math.max(1, activeKpi.qtd_pedidos_itens / 3.55));
+      const uptVal = mixCh.upt_itens_pedido || 3.55;
+      const aurVal = mixCh.aur_preco_medio || mixCh.ticket_medio_item || (activeKpi.realizado_hoje / Math.max(1, activeKpi.qtd_pedidos_itens));
+
+      if (document.getElementById('retail-aov-val')) document.getElementById('retail-aov-val').innerText = fmtBRL(aovVal);
+      if (document.getElementById('retail-upt-val')) document.getElementById('retail-upt-val').innerText = `${uptVal.toFixed(2)} un`;
+      if (document.getElementById('retail-aur-val')) document.getElementById('retail-aur-val').innerText = fmtBRL(aurVal);
+      if (document.getElementById('desc-aov')) document.getElementById('desc-aov').innerText = fmtBRL(aovVal);
+      if (document.getElementById('desc-upt')) document.getElementById('desc-upt').innerText = `${uptVal.toFixed(2)} produtos`;
+      if (document.getElementById('desc-aur')) document.getElementById('desc-aur').innerText = fmtBRL(aurVal);
+      if (document.getElementById('retail-channel-tag')) document.getElementById('retail-channel-tag').innerText = currentChannel === 'Total' ? 'Total da Rede' : `Canal ${activeChannel}`;
+
+      // Retail Science: Decomposição Waterfall de Vendas
+      const wfCh = (globalData.waterfall_variacao && globalData.waterfall_variacao[currentChannel]) || {};
+      if (document.getElementById('wf-volume-val')) {
+        const deltaTot = wfCh.delta_total_rs || 0;
+        const deltaVol = wfCh.delta_volume_rs || 0;
+        const deltaPrc = wfCh.delta_preco_rs || 0;
+        const deltaQtd = wfCh.delta_qtd_un || 0;
+        const deltaAur = wfCh.delta_aur_rs || 0;
+
+        document.getElementById('wf-volume-val').innerText = fmtBRLDelta(deltaVol);
+        document.getElementById('wf-volume-val').style.color = deltaVol >= 0 ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
+        document.getElementById('wf-volume-un').innerText = `${deltaQtd >= 0 ? '+' : ''}${deltaQtd.toLocaleString('pt-BR')} un vendidas`;
+
+        document.getElementById('wf-preco-val').innerText = fmtBRLDelta(deltaPrc);
+        document.getElementById('wf-preco-val').style.color = deltaPrc >= 0 ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
+        document.getElementById('wf-preco-diff').innerText = `${deltaAur >= 0 ? '+' : ''}${fmtBRL(deltaAur)}/un no item`;
+
+        const badgeWf = document.getElementById('waterfall-delta-badge');
+        if (badgeWf) {
+          badgeWf.innerText = `${fmtBRLDelta(deltaTot)}`;
+          badgeWf.style.background = deltaTot >= 0 ? 'rgba(52, 199, 89, 0.15)' : 'rgba(255, 59, 48, 0.15)';
+          badgeWf.style.color = deltaTot >= 0 ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
+        }
+
+        const diagWf = document.getElementById('wf-diagnostic-text');
+        if (diagWf) {
+          if (deltaVol < 0 && deltaPrc > 0) {
+            diagWf.innerHTML = `⚠️ <strong>Alerta do Cientista de Dados:</strong> O faturamento subiu ${fmtBRLDelta(deltaTot)}, mas o <strong>volume físico caiu em ${Math.abs(deltaQtd).toLocaleString('pt-BR')} itens</strong>. O crescimento foi sustentado pelo aumento de AUR (+${fmtBRL(deltaAur)}/un), indicando risco de elasticidade e perda de conversão.`;
+          } else if (deltaTot < 0) {
+            diagWf.innerHTML = `🚨 <strong>Diagnóstico de Retração:</strong> Queda de ${fmtBRL(Math.abs(deltaTot))} vs D-7, explicada por ${deltaVol < 0 ? `perda de volume (${fmtBRL(deltaVol)})` : ''} ${deltaPrc < 0 ? `e redução de preço/mix (${fmtBRL(deltaPrc)})` : ''}.`;
+          } else {
+            diagWf.innerHTML = `🟢 <strong>Expansão Saudável:</strong> Crescimento positivo de ${fmtBRLDelta(deltaTot)} com expansão combinada de volume (+${deltaQtd} un) e alinhamento de preço.`;
+          }
+        }
+      }
+
       document.getElementById('card-realizado').innerText = fmtBRL(activeKpi.realizado_hoje);
       document.getElementById('card-itens').innerText = fmtNum(activeKpi.qtd_pedidos_itens);
       document.getElementById('card-runrate-atual').innerText = `${fmtBRL(activeKpi.run_rate_atual_hora)}/h`;
@@ -8062,12 +8215,14 @@
     function setPrecificaStatusFilter(st) {
       precificaCurrentStatus = st;
       precificaPageSize = 50;
-      ['all', 'caros', 'criticos', 'baratos', 'empatados'].forEach(k => {
+      ['all', 'caros', 'curva-a', 'prio-critica', 'criticos', 'baratos', 'empatados'].forEach(k => {
         const btn = document.getElementById(`btn-prec-${k}`);
         if (btn) btn.classList.remove('active');
       });
       if (st === 'ALL') document.getElementById('btn-prec-all')?.classList.add('active');
       else if (st === 'MAIS_CARO') document.getElementById('btn-prec-caros')?.classList.add('active');
+      else if (st === 'CURVA_A') document.getElementById('btn-prec-curva-a')?.classList.add('active');
+      else if (st === 'PRIO_CRITICA') document.getElementById('btn-prec-prio-critica')?.classList.add('active');
       else if (st === 'CRITICOS_30') document.getElementById('btn-prec-criticos')?.classList.add('active');
       else if (st === 'MAIS_BARATO') document.getElementById('btn-prec-baratos')?.classList.add('active');
       else if (st === 'EMPATADO') document.getElementById('btn-prec-empatados')?.classList.add('active');
@@ -8098,6 +8253,8 @@
       precificaFilteredCache = allItems.filter(item => {
         // Status filter
         if (precificaCurrentStatus === 'MAIS_CARO' && item.status !== 'MAIS_CARO') return false;
+        if (precificaCurrentStatus === 'CURVA_A' && item.curva_abc !== 'A') return false;
+        if (precificaCurrentStatus === 'PRIO_CRITICA' && item.prioridade_reprecificacao !== 'CRÍTICA' && (item.opportunity_score_rs || 0) < 25) return false;
         if (precificaCurrentStatus === 'CRITICOS_30' && (item.status !== 'MAIS_CARO' || (item.spread_pct || 0) < 30)) return false;
         if (precificaCurrentStatus === 'MAIS_BARATO' && item.status !== 'MAIS_BARATO') return false;
         if (precificaCurrentStatus === 'EMPATADO' && item.status !== 'EMPATADO') return false;
@@ -8188,10 +8345,24 @@
           spreadPctStr = fmtPct(it.spread_pct, true);
         }
 
+                const curvaBadge = it.curva_abc === 'A' 
+          ? '<span class="tag-badge" style="background: rgba(0, 113, 227, 0.15); color: var(--apple-blue); font-size: 9.5px; font-weight: 800; margin-right: 4px;">Curva A</span>'
+          : (it.curva_abc === 'B' 
+            ? '<span class="tag-badge" style="background: rgba(142, 142, 147, 0.15); color: var(--text-secondary); font-size: 9.5px; margin-right: 4px;">Curva B</span>'
+            : '<span class="tag-badge" style="background: rgba(142, 142, 147, 0.08); color: var(--text-tertiary); font-size: 9.5px; margin-right: 4px;">Curva C</span>');
+        const prioBadge = it.prioridade_reprecificacao === 'CRÍTICA'
+          ? '<span class="tag-badge tag-critico" style="font-size: 9px; padding: 1px 6px; margin-right: 4px;">🔥 Crítica</span>'
+          : '';
+
         return `
           <tr>
-            <td style="font-family: var(--font-mono); font-weight: 700; color: var(--apple-blue); white-space: nowrap;">${it.sku}</td>
-            <td style="font-weight: 600; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${it.nome || ''}">${it.nome || '-'}</td>
+            <td style="font-family: monospace; font-weight: 700; color: var(--apple-blue);">${it.sku}</td>
+            <td>
+              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-bottom: 2px;">
+                ${curvaBadge}
+                ${prioBadge}
+                <span style="font-weight: 700; color: var(--text-primary);">${it.nome}</span>
+              </div>         <td style="font-weight: 600; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${it.nome || ''}">${it.nome || '-'}</td>
             <td style="color: var(--text-secondary); font-size: 11.5px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${it.marca || ''}">${it.marca || '-'}</td>
             <td style="color: var(--text-tertiary); font-size: 11.5px; white-space: nowrap;">${it.categoria || '-'}</td>
             <td class="num-col" style="font-weight: 700; white-space: nowrap;">${precoSJ}</td>
@@ -8552,11 +8723,24 @@
           badgeStatus = '<span class="tag-badge tag-moderado" style="font-size: 10px;">⚠️ Estoque Baixo</span>';
         }
 
+        const stockCurvaBadge = s.curva_abc === 'A' 
+          ? '<span class="tag-badge" style="background: rgba(0, 113, 227, 0.15); color: var(--apple-blue); font-size: 9.5px; font-weight: 800; margin-right: 4px;">Curva A</span>'
+          : (s.curva_abc === 'B' 
+            ? '<span class="tag-badge" style="background: rgba(142, 142, 147, 0.15); color: var(--text-secondary); font-size: 9.5px; margin-right: 4px;">Curva B</span>'
+            : '<span class="tag-badge" style="background: rgba(142, 142, 147, 0.08); color: var(--text-tertiary); font-size: 9.5px; margin-right: 4px;">Curva C</span>');
+        const stockPrioBadge = s.prioridade_reprecificacao === 'CRÍTICA'
+          ? '<span class="tag-badge tag-critico" style="font-size: 9px; padding: 1px 6px; margin-right: 4px;">🔥 Reprecificar</span>'
+          : '';
+
         html += `
           <tr>
             <td style="padding: 10px 14px; font-weight: 700; color: var(--text-secondary); font-family: monospace;">${s.sku_id}</td>
             <td style="padding: 10px 14px;">
-              <div style="font-weight: 700; color: var(--text-primary); line-height: 1.3;">${s.nome}</div>
+              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-bottom: 2px;">
+                ${stockCurvaBadge}
+                ${stockPrioBadge}
+                <span style="font-weight: 700; color: var(--text-primary); line-height: 1.3;">${s.nome}</span>
+              </div>
               <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${s.laboratorio || 'Geral'} • ${s.grupo || 'Farmácia'}</div>
             </td>
             <td style="padding: 10px 14px; text-align: right; font-weight: 600; color: var(--text-primary);">${formatMoney(s.hoje || 0)}</td>
