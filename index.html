@@ -3601,73 +3601,6 @@
       </div>
     </div>
 
-    <!-- PAINEL DE AUDITORIA DE RUPTURA & CAPILARIDADE DE ESTOQUE (1.147 LOJAS) -->
-    <div class="matrix-card" id="section-cockpit" style="margin-bottom: 24px;">
-      <div class="section-header">
-        <div class="section-title">
-          <span>📦 Cockpit Executivo: Diagnóstico de Causa-Raiz do GAP (Tríade Estoque x Preço)</span>
-        </div>
-        <span class="badge-status" style="background: var(--apple-blue-soft); color: var(--apple-blue);">Auditoria Unificada</span>
-      </div>
-      <div style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5;">
-        Decomposição financeira rigorosa do déficit de vendas dos canais digitais. Cruza a disponibilidade física da rede (1.147 lojas com delivery/ship-from-store) com a inteligência de preços da concorrência (API Precifica).
-      </div>
-
-      <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
-        <!-- Card 1: Ruptura Logística Pura -->
-        <div class="kpi-card" style="border-left: 4px solid var(--apple-red);">
-          <div class="kpi-label-row">
-            <span class="kpi-title">Ruptura Logística Pura</span>
-            <span class="tag-badge tag-critico" id="kpi-est-pct-ruptura">81,8% DO GAP</span>
-          </div>
-          <div class="kpi-value" id="kpi-est-perda-ruptura" style="color: var(--apple-red-text);">-R$ 13.514</div>
-          <div class="kpi-footer-row">
-            <span id="kpi-est-sub-ruptura"><strong>18 Top SKUs</strong> • Lojas s/ estoque</span>
-            <span>&lt; 1,5 un/loja</span>
-          </div>
-        </div>
-
-        <!-- Card 2: Duplo Detrator (Ruptura + Preço) -->
-        <div class="kpi-card" style="border-left: 4px solid var(--apple-orange);">
-          <div class="kpi-label-row">
-            <span class="kpi-title">Duplo Detrator</span>
-            <span class="tag-badge tag-moderado" id="kpi-est-pct-duplo">14,2% DO GAP</span>
-          </div>
-          <div class="kpi-value" id="kpi-est-perda-duplo" style="color: var(--apple-orange-text);">-R$ 2.353</div>
-          <div class="kpi-footer-row">
-            <span id="kpi-est-sub-duplo"><strong>10 Top SKUs</strong> • Ruptura + Caro</span>
-            <span>Estoque & Preço</span>
-          </div>
-        </div>
-
-        <!-- Card 3: Preço Desalinhado (Rede Abastecida) -->
-        <div class="kpi-card" style="border-left: 4px solid var(--apple-blue);">
-          <div class="kpi-label-row">
-            <span class="kpi-title">Preço Desalinhado</span>
-            <span class="tag-badge tag-alavancador" id="kpi-est-pct-preco">2,2% DO GAP</span>
-          </div>
-          <div class="kpi-value" id="kpi-est-perda-preco" style="color: var(--apple-blue);">-R$ 369</div>
-          <div class="kpi-footer-row">
-            <span id="kpi-est-sub-preco"><strong>2 Top SKUs</strong> • Abastecido, caro</span>
-            <span>&ge; 1,5 un/loja</span>
-          </div>
-        </div>
-
-        <!-- Card 4: Radar de Preços (Precifica) -->
-        <div class="kpi-card" style="border-left: 4px solid var(--apple-purple);">
-          <div class="kpi-label-row">
-            <span class="kpi-title">Competitividade Precifica</span>
-            <span class="tag-badge tag-super" id="kpi-preco-badge">+30,1% SPREAD</span>
-          </div>
-          <div class="kpi-value" id="kpi-preco-val" style="color: var(--apple-purple);">87,6% Mais Caros</div>
-          <div class="kpi-footer-row">
-            <span id="kpi-preco-sub">Base: <strong>694 Itens</strong></span>
-            <span id="kpi-preco-agressor">Agressor: <strong>NISSEI / PREÇO POP</strong></span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 3 COMPARISON WINDOWS BANNER -->
     <div class="windows-container">
       <div class="section-header">
@@ -3983,83 +3916,6 @@
           </thead>
           <tbody id="hourly-tbody"></tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- DEDICATED PRECIFICA COMPETITOR INTELLIGENCE TABLE -->
-    <div class="matrix-card" id="precifica-table-section">
-      <div class="section-header" style="flex-direction: column; align-items: flex-start; gap: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 10px;">
-          <div class="section-title">
-            <span>🏷️ Monitor Geral de Competitividade de Preços & Concorrência (API Precifica — 694 Itens Ativos)</span>
-          </div>
-          <div style="font-size: 12px; color: var(--text-tertiary); font-weight: 600;" id="precifica-table-count-label">
-            Carregando catálogo de preços...
-          </div>
-        </div>
-        <div style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5;">
-          Auditoria completa SKU a SKU monitorados com concorrência ativa nas praças online (<strong>Nissei, Preço Popular, Amazon, Panvel, Droga Raia</strong>). Identifique sobrepreços críticos, disparidades de margem e produtos onde a Farmácias São João lidera o preço.
-        </div>
-      </div>
-
-      <!-- Precifica Filters & Search -->
-      <div style="display: flex; flex-direction: column; gap: 10px; margin: 12px 0 16px 0;">
-        <!-- Search bar + Status pills -->
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-          <input type="text" class="apple-search-input" id="precifica-search-input" placeholder="🔍 Buscar por SKU, descrição do produto ou marca..." oninput="filterPrecificaTable()" style="max-width: 420px; flex: 1 1 280px;">
-          
-          <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="precifica-status-filters">
-            <button class="pill-filter-btn active" id="btn-prec-all" onclick="setPrecificaStatusFilter('ALL')">Todos (694)</button>
-            <button class="pill-filter-btn" id="btn-prec-caros" onclick="setPrecificaStatusFilter('MAIS_CARO')">🚨 Mais Caros (608)</button>
-            <button class="pill-filter-btn" id="btn-prec-criticos" onclick="setPrecificaStatusFilter('CRITICOS_30')">⚠️ Spread > +30% (231)</button>
-            <button class="pill-filter-btn" id="btn-prec-baratos" onclick="setPrecificaStatusFilter('MAIS_BARATO')">🏆 Líder São João (46)</button>
-            <button class="pill-filter-btn" id="btn-prec-empatados" onclick="setPrecificaStatusFilter('EMPATADO')">⚖️ Empatados (40)</button>
-          </div>
-
-          <button class="pill-filter-btn" onclick="exportPrecificaToExcel()" style="background: rgba(10, 132, 255, 0.12); color: var(--apple-blue); border: 1px solid rgba(10, 132, 255, 0.35); font-weight: 700; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; margin-left: auto;" title="Exportar catálogo filtrado de concorrência Precifica para Excel (CSV formatado)">
-            📥 Baixar Preços Precifica (CSV)
-          </button>
-        </div>
-
-        <!-- Competitor Chain pills -->
-        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-          <span style="font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px;">Concorrente Agressor:</span>
-          <button class="pill-filter-btn active" id="btn-prec-rede-all" onclick="setPrecificaRedeFilter('ALL')">Todas as Redes</button>
-          <button class="pill-filter-btn" id="btn-prec-rede-nissei" onclick="setPrecificaRedeFilter('farmaciasnissei')">Nissei (218)</button>
-          <button class="pill-filter-btn" id="btn-prec-rede-pop" onclick="setPrecificaRedeFilter('precopopular')">Preço Pop (149)</button>
-          <button class="pill-filter-btn" id="btn-prec-rede-amazon" onclick="setPrecificaRedeFilter('amazon')">Amazon (128)</button>
-          <button class="pill-filter-btn" id="btn-prec-rede-panvel" onclick="setPrecificaRedeFilter('panvel')">Panvel (111)</button>
-          <button class="pill-filter-btn" id="btn-prec-rede-raia" onclick="setPrecificaRedeFilter('drogaraia')">Droga Raia (88)</button>
-        </div>
-      </div>
-
-      <div class="mobile-table-hint">👉 Deslize para o lado para comparar Preço SJ, Menor Concorrente e Spread</div>
-      <div class="table-container" style="max-height: 520px;">
-        <table class="apple-table" style="min-width: 1600px;">
-          <thead>
-            <tr>
-              <th style="width: 100px; min-width: 100px; white-space: nowrap;">Código</th>
-              <th style="width: 320px; min-width: 320px; white-space: nowrap;">Produto / Descrição</th>
-              <th style="width: 200px; min-width: 200px; white-space: nowrap;">Marca</th>
-              <th style="width: 150px; min-width: 150px; white-space: nowrap;">Categoria</th>
-              <th class="num-col" style="width: 110px; min-width: 110px; white-space: nowrap;">Preço SJ</th>
-              <th style="width: 150px; min-width: 150px; white-space: nowrap;">Menor Concorrente</th>
-              <th class="num-col" style="width: 130px; min-width: 130px; white-space: nowrap;">Preço Concorrência</th>
-              <th class="num-col" style="width: 120px; min-width: 120px; white-space: nowrap;">Spread (R$)</th>
-              <th class="num-col" style="width: 110px; min-width: 110px; white-space: nowrap;">Spread (%)</th>
-              <th style="width: 180px; min-width: 180px; white-space: nowrap;">Status Competitivo</th>
-            </tr>
-          </thead>
-          <tbody id="precifica-tbody"></tbody>
-        </table>
-      </div>
-
-      <!-- Pagination / Load More Bar for Extreme 60FPS Performance -->
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 8px 6px 8px; flex-wrap: wrap; gap: 10px; border-top: 1px solid var(--border-color); margin-top: 10px;">
-        <span id="precifica-showing-info" style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Mostrando 50 de 694 produtos</span>
-        <button id="btn-load-more-precifica" onclick="loadMorePrecifica()" class="pill-filter-btn" style="background: var(--bg-card-secondary); border: 1px solid var(--border-color); font-weight: 700; padding: 8px 18px;">
-          ⬇️ Carregar mais 50 produtos
-        </button>
       </div>
     </div>
 
@@ -4828,6 +4684,85 @@
 
       </div>
 
+      
+
+      <!-- DEDICATED PRECIFICA COMPETITOR INTELLIGENCE TABLE -->
+    <div class="matrix-card" id="precifica-table-section">
+      <div class="section-header" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 10px;">
+          <div class="section-title">
+            <span>🏷️ Monitor Geral de Competitividade de Preços & Concorrência (API Precifica — 694 Itens Ativos)</span>
+          </div>
+          <div style="font-size: 12px; color: var(--text-tertiary); font-weight: 600;" id="precifica-table-count-label">
+            Carregando catálogo de preços...
+          </div>
+        </div>
+        <div style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5;">
+          Auditoria completa SKU a SKU monitorados com concorrência ativa nas praças online (<strong>Nissei, Preço Popular, Amazon, Panvel, Droga Raia</strong>). Identifique sobrepreços críticos, disparidades de margem e produtos onde a Farmácias São João lidera o preço.
+        </div>
+      </div>
+
+      <!-- Precifica Filters & Search -->
+      <div style="display: flex; flex-direction: column; gap: 10px; margin: 12px 0 16px 0;">
+        <!-- Search bar + Status pills -->
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <input type="text" class="apple-search-input" id="precifica-search-input" placeholder="🔍 Buscar por SKU, descrição do produto ou marca..." oninput="filterPrecificaTable()" style="max-width: 420px; flex: 1 1 280px;">
+          
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="precifica-status-filters">
+            <button class="pill-filter-btn active" id="btn-prec-all" onclick="setPrecificaStatusFilter('ALL')">Todos (694)</button>
+            <button class="pill-filter-btn" id="btn-prec-caros" onclick="setPrecificaStatusFilter('MAIS_CARO')">🚨 Mais Caros (608)</button>
+            <button class="pill-filter-btn" id="btn-prec-criticos" onclick="setPrecificaStatusFilter('CRITICOS_30')">⚠️ Spread > +30% (231)</button>
+            <button class="pill-filter-btn" id="btn-prec-baratos" onclick="setPrecificaStatusFilter('MAIS_BARATO')">🏆 Líder São João (46)</button>
+            <button class="pill-filter-btn" id="btn-prec-empatados" onclick="setPrecificaStatusFilter('EMPATADO')">⚖️ Empatados (40)</button>
+          </div>
+
+          <button class="pill-filter-btn" onclick="exportPrecificaToExcel()" style="background: rgba(10, 132, 255, 0.12); color: var(--apple-blue); border: 1px solid rgba(10, 132, 255, 0.35); font-weight: 700; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; margin-left: auto;" title="Exportar catálogo filtrado de concorrência Precifica para Excel (CSV formatado)">
+            📥 Baixar Preços Precifica (CSV)
+          </button>
+        </div>
+
+        <!-- Competitor Chain pills -->
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+          <span style="font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px;">Concorrente Agressor:</span>
+          <button class="pill-filter-btn active" id="btn-prec-rede-all" onclick="setPrecificaRedeFilter('ALL')">Todas as Redes</button>
+          <button class="pill-filter-btn" id="btn-prec-rede-nissei" onclick="setPrecificaRedeFilter('farmaciasnissei')">Nissei (218)</button>
+          <button class="pill-filter-btn" id="btn-prec-rede-pop" onclick="setPrecificaRedeFilter('precopopular')">Preço Pop (149)</button>
+          <button class="pill-filter-btn" id="btn-prec-rede-amazon" onclick="setPrecificaRedeFilter('amazon')">Amazon (128)</button>
+          <button class="pill-filter-btn" id="btn-prec-rede-panvel" onclick="setPrecificaRedeFilter('panvel')">Panvel (111)</button>
+          <button class="pill-filter-btn" id="btn-prec-rede-raia" onclick="setPrecificaRedeFilter('drogaraia')">Droga Raia (88)</button>
+        </div>
+      </div>
+
+      <div class="mobile-table-hint">👉 Deslize para o lado para comparar Preço SJ, Menor Concorrente e Spread</div>
+      <div class="table-container" style="max-height: 520px;">
+        <table class="apple-table" style="min-width: 1600px;">
+          <thead>
+            <tr>
+              <th style="width: 100px; min-width: 100px; white-space: nowrap;">Código</th>
+              <th style="width: 320px; min-width: 320px; white-space: nowrap;">Produto / Descrição</th>
+              <th style="width: 200px; min-width: 200px; white-space: nowrap;">Marca</th>
+              <th style="width: 150px; min-width: 150px; white-space: nowrap;">Categoria</th>
+              <th class="num-col" style="width: 110px; min-width: 110px; white-space: nowrap;">Preço SJ</th>
+              <th style="width: 150px; min-width: 150px; white-space: nowrap;">Menor Concorrente</th>
+              <th class="num-col" style="width: 130px; min-width: 130px; white-space: nowrap;">Preço Concorrência</th>
+              <th class="num-col" style="width: 120px; min-width: 120px; white-space: nowrap;">Spread (R$)</th>
+              <th class="num-col" style="width: 110px; min-width: 110px; white-space: nowrap;">Spread (%)</th>
+              <th style="width: 180px; min-width: 180px; white-space: nowrap;">Status Competitivo</th>
+            </tr>
+          </thead>
+          <tbody id="precifica-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Pagination / Load More Bar for Extreme 60FPS Performance -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 8px 6px 8px; flex-wrap: wrap; gap: 10px; border-top: 1px solid var(--border-color); margin-top: 10px;">
+        <span id="precifica-showing-info" style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Mostrando 50 de 694 produtos</span>
+        <button id="btn-load-more-precifica" onclick="loadMorePrecifica()" class="pill-filter-btn" style="background: var(--bg-card-secondary); border: 1px solid var(--border-color); font-weight: 700; padding: 8px 18px;">
+          ⬇️ Carregar mais 50 produtos
+        </button>
+      </div>
+    </div>
+
       <!-- NOVO PAINEL EXECUTIVO: AS OUTRAS SUPREM? (REMANEJAMENTO INTRA-URBANO)     -->
       <!-- ========================================================================== -->
       <div class="regional-banner-card" style="margin-bottom: 20px; border-left: 5px solid var(--apple-indigo);">
@@ -5051,7 +4986,7 @@
       if (fechContainer) fechContainer.style.display = (mode === 'fechamento') ? 'flex' : 'none';
       if (regContainer) regContainer.style.display = (mode === 'regional') ? 'flex' : 'none';
       if (estoqueContainer) estoqueContainer.style.display = (mode === 'estoque') ? 'flex' : 'none';
-      if (floatingDock) floatingDock.style.display = (mode === 'regional' || mode === 'estoque') ? 'none' : 'flex';
+      if (floatingDock) floatingDock.style.display = 'flex';
 
       if (mode === 'fechamento') {
         loadFechamentoHistoryList();
@@ -7033,8 +6968,21 @@
     // Rolagem Suave para Seções
     function scrollToSection(sectionId) {
       const el = document.getElementById(sectionId);
-      if (el) {
-        const offset = 80; // Compensação da barra fixa de topo
+      if (!el) return;
+
+      // Se o elemento estiver dentro de um container oculto, ativa a aba correspondente
+      if (el.closest('#view-regional-container')) {
+        switchViewMode('regional');
+      } else if (el.closest('#view-estoque-container')) {
+        switchViewMode('estoque');
+      } else if (el.closest('#view-fechamento-container')) {
+        switchViewMode('fechamento');
+      } else if (el.closest('#view-live-container')) {
+        switchViewMode('live');
+      }
+
+      setTimeout(() => {
+        const offset = 80;
         const bodyRect = document.body.getBoundingClientRect().top;
         const elementRect = el.getBoundingClientRect().top;
         const elementPosition = elementRect - bodyRect;
@@ -7043,7 +6991,7 @@
           top: offsetPosition,
           behavior: 'smooth'
         });
-      }
+      }, 60);
     }
 
     // Copiar Resumo Executivo para WhatsApp
@@ -9382,19 +9330,23 @@
 
   <!-- BARRA FLUTUANTE DE ATALHOS RÁPIDOS & VOLTAR AO TOPO (Apple Floating Glass Dock) -->
   <nav class="floating-quick-dock" id="floating-dock">
-    <button class="dock-item" onclick="scrollToSection('section-cockpit')" title="Ir para o Cockpit Intraday">
+    <button class="dock-item" onclick="switchViewMode('live'); window.scrollTo({ top: 0, behavior: 'smooth' })" title="Visão do Dia Online (Intraday)">
       <span class="dock-icon">⚡</span>
-      <span class="dock-label">Cockpit</span>
+      <span class="dock-label">Ritmo</span>
     </button>
-    <button class="dock-item" onclick="scrollToSection('section-curva')" title="Ir para a Curva Científica">
+    <button class="dock-item" onclick="switchViewMode('live'); setTimeout(() => scrollToSection('section-curva'), 60)" title="Curva Horária Intraday">
       <span class="dock-icon">📈</span>
       <span class="dock-label">Curvas</span>
     </button>
-    <button class="dock-item" onclick="scrollToSection('section-matriz')" title="Ir para Matriz de Detratores">
-      <span class="dock-icon">🔍</span>
-      <span class="dock-label">Detratores</span>
+    <button class="dock-item" onclick="switchViewMode('regional')" title="Hierarquia & Localização (Mapa & Diretorias)">
+      <span class="dock-icon">🗺️</span>
+      <span class="dock-label">Território</span>
     </button>
-    <button class="dock-item" onclick="scrollToSection('precifica-table-section')" title="Ir para Monitor Precifica">
+    <button class="dock-item" onclick="switchViewMode('estoque')" title="Preço & Estoque (Causa-Raiz & Ruptura)">
+      <span class="dock-icon">⚖️</span>
+      <span class="dock-label">Estoque</span>
+    </button>
+    <button class="dock-item" onclick="switchViewMode('estoque'); setTimeout(() => scrollToSection('precifica-table-section'), 60)" title="Radar Concorrencial Precifica">
       <span class="dock-icon">🏷️</span>
       <span class="dock-label">Precifica</span>
     </button>
