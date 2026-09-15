@@ -303,11 +303,16 @@
     /* Channel Selector (Apple Segmented Cards) */
     .channel-nav-container {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 14px;
     }
 
-    @media (max-width: 992px) {
+    @media (max-width: 1200px) {
+      .channel-nav-container {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (max-width: 768px) {
       .channel-nav-container {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -316,6 +321,66 @@
       .channel-nav-container {
         grid-template-columns: 1fr;
       }
+    }
+
+    .figital-toggle-pill {
+      display: inline-flex;
+      background: var(--surface-sunken, rgba(0,0,0,0.05));
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill, 20px);
+      padding: 2px;
+      gap: 2px;
+      margin-left: auto;
+      vertical-align: middle;
+    }
+
+    .fig-toggle-btn {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: var(--radius-pill, 20px);
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .fig-toggle-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .fig-toggle-btn.active {
+      background: var(--apple-blue);
+      color: #FFFFFF;
+      box-shadow: 0 1px 4px rgba(0, 113, 227, 0.25);
+    }
+
+    .figital-header-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 980px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .figital-header-btn:hover {
+      border-color: var(--apple-blue);
+      transform: translateY(-1px);
+    }
+
+    .figital-header-btn.active {
+      background: rgba(0, 113, 227, 0.12);
+      border-color: var(--apple-blue);
+      color: var(--apple-blue);
     }
 
     .channel-tab {
@@ -3256,15 +3321,20 @@
             <span>Monitor Online — Canais Digitais</span>
             <span style="font-size: 11px; font-weight: 700; color: var(--apple-blue); background: var(--apple-blue-soft); padding: 2px 8px; border-radius: var(--radius-pill);">INTRADAY</span>
           </div>
-          <div class="brand-subtitle">Farmácias São João • APP (App e App tele entrega), SITE (Site e Site Tele Entrega) e Marketplace (E-Commerce e Ifood)</div>
+          <div class="brand-subtitle">Farmácias São João • APP, SITE, Marketplace e Figital (Omnichannel) • Integrado ao Qlik Cloud SaaS</div>
         </div>
       </div>
 
       <div class="header-actions">
+        <!-- Botão Toggle Canal Figital -->
+        <button class="figital-header-btn" id="header-btn-figital-toggle" onclick="setFigitalInConsolidado(!window.includeFigitalInTotal, event)" title="Ativar ou Desativar o canal Figital no Consolidado Digital">
+          <span>🏪 Figital no Total:</span> <strong id="header-figital-status-txt">Desativado</strong>
+        </button>
+
         <!-- Badge de Automação do Daemon -->
-        <div class="badge-status" id="daemon-badge" style="background: rgba(52, 199, 89, 0.12); border-color: rgba(52, 199, 89, 0.3); color: var(--apple-green-text);" title="Serviço contínuo em background no Qlik Sense">
+        <div class="badge-status" id="daemon-badge" style="background: rgba(52, 199, 89, 0.12); border-color: rgba(52, 199, 89, 0.3); color: var(--apple-green-text);" title="Serviço contínuo em background conectado ao Qlik Cloud">
           <span class="status-dot"></span>
-          <span id="nav-daemon-info">🟢 AUTOMAÇÃO ATIVA</span>
+          <span id="nav-daemon-info">🟢 CLOUD CONECTADO</span>
         </div>
 
         <!-- Badge de Corte dos Dados -->
@@ -3273,8 +3343,8 @@
         </div>
 
         <!-- Contador e Indicador de Auto Refresh -->
-        <div class="badge-status" id="countdown-badge" title="Sincronização com o Qlik Sense agendada para os minutos :20 e :50 de cada hora (a cada 30 minutos)">
-          <span>⏰ Sync Qlik: <strong>:20 e :50</strong> (<span id="countdown-timer">45s</span>)</span>
+        <div class="badge-status" id="countdown-badge" title="Sincronização com o Qlik Cloud SaaS a cada 30 minutos">
+          <span>⏰ Qlik Cloud: <strong>A cada 30 min</strong> (<span id="countdown-timer">45s</span>)</span>
         </div>
 
         <!-- Botão Compartilhar na Rede (Para outros acessarem) -->
@@ -3290,9 +3360,9 @@
         </button>
 
         <!-- Botão Atualizar Qlik -->
-        <button class="btn-action-apple" onclick="triggerManualSync()" title="Consultar dados mais recentes no Qlik Sense">
+        <button class="btn-action-apple" onclick="triggerManualSync()" title="Consultar dados mais recentes no Qlik Cloud SaaS">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
-          Sincronizar Qlik
+          Sincronizar Cloud
         </button>
 
         <button class="theme-toggle-btn" id="theme-btn" onclick="toggleTheme()" title="Alternar Tema">☀️</button>
@@ -3467,6 +3537,10 @@
             <div class="channel-name">🌐 Consolidado Digital</div>
             <div style="font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-top: 2px;">Todos os Canais Digitais</div>
           </div>
+          <div class="figital-toggle-pill" onclick="event.stopPropagation();" title="Alternar canal Figital no Consolidado">
+            <span class="fig-toggle-btn active" id="btnFigSem" onclick="setFigitalInConsolidado(false, event)">Sem Figital</span>
+            <span class="fig-toggle-btn" id="btnFigCom" onclick="setFigitalInConsolidado(true, event)">Com Figital</span>
+          </div>
           <div class="channel-badge tag-alavancador" id="tab-badge-Total">100%</div>
         </div>
         <div class="channel-sales" id="tab-sales-Total">R$ 0</div>
@@ -3477,6 +3551,10 @@
         <div class="channel-deltas-line">
           <span>vs Ontem: <strong id="tab-d1-Total">+0%</strong></span>
           <span>vs D-7: <strong id="tab-d7-Total">+0%</strong></span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; padding-top: 5px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between;">
+          <span>Sem Figital: <strong id="valSemFig" style="color: var(--text-primary);">R$ 0</strong></span>
+          <span>Com Figital: <strong id="valComFig" style="color: var(--apple-blue);">R$ 0</strong></span>
         </div>
       </div>
 
@@ -3537,6 +3615,30 @@
         <div class="channel-deltas-line">
           <span>vs Ontem: <strong id="tab-d1-MKP">+0%</strong></span>
           <span>vs D-7: <strong id="tab-d7-MKP">+0%</strong></span>
+        </div>
+      </div>
+
+      <!-- 5. FIGITAL (Canal Exclusivo) -->
+      <div class="channel-tab" data-channel="Figital" onclick="setChannel('Figital')">
+        <div class="channel-tab-header">
+          <div>
+            <div class="channel-name">🏪 Figital</div>
+            <div style="font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-top: 2px;">Venda Física Omnichannel</div>
+          </div>
+          <div class="channel-badge tag-alavancador" id="tab-badge-Figital">100%</div>
+        </div>
+        <div class="channel-sales" id="tab-sales-Figital" style="color: var(--apple-indigo, #5856D6);">R$ 0</div>
+        <div class="channel-meta-sub">
+          <span>Meta Corte: <strong id="tab-exp-Figital">R$ 0,00</strong></span>
+          <span id="tab-gap-Figital" style="font-weight: 700; color: var(--apple-green-text);">+R$ 0</span>
+        </div>
+        <div class="channel-deltas-line">
+          <span>vs Ontem: <strong id="tab-d1-Figital">+0%</strong></span>
+          <span>vs D-7: <strong id="tab-d7-Figital">+0%</strong></span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; padding-top: 5px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between;">
+          <span>Omnichannel Integrado</span>
+          <span style="color: var(--apple-green-text); font-weight: 600;">100% Adicional</span>
         </div>
       </div>
     </div>
@@ -6534,6 +6636,29 @@
       }
     }
 
+    window.includeFigitalInTotal = false;
+
+    function setFigitalInConsolidado(include, ev) {
+      if (ev) ev.stopPropagation();
+      window.includeFigitalInTotal = !!include;
+
+      const btnCom = document.getElementById('btnFigCom');
+      const btnSem = document.getElementById('btnFigSem');
+      if (btnCom) btnCom.classList.toggle('active', window.includeFigitalInTotal);
+      if (btnSem) btnSem.classList.toggle('active', !window.includeFigitalInTotal);
+
+      const btnTopFig = document.getElementById('header-btn-figital-toggle');
+      const txtTopFig = document.getElementById('header-figital-status-txt');
+      if (btnTopFig) {
+        btnTopFig.classList.toggle('active', window.includeFigitalInTotal);
+      }
+      if (txtTopFig) {
+        txtTopFig.innerText = window.includeFigitalInTotal ? 'Ativado' : 'Desativado';
+      }
+
+      renderDashboard();
+    }
+
     function setChannel(ch) {
       currentChannel = ch;
       document.querySelectorAll('.channel-tab').forEach(el => {
@@ -6596,7 +6721,8 @@
 
       const meta = globalData.metadata || {};
       const kpis = globalData.kpis || {};
-      const activeKpi = kpis[currentChannel] || kpis['Total'] || {};
+      const activeChannelKey = (currentChannel === 'Total' && window.includeFigitalInTotal) ? 'TotalComFigital' : currentChannel;
+      const activeKpi = kpis[activeChannelKey] || kpis['Total'] || {};
 
       // Header info com cálculo de defasagem do corte
       const corteStamp = meta.corte_timestamp || '';
@@ -6641,22 +6767,69 @@
       checkDaemonStatus();
 
       // Update Channel Tabs Header
-      ['Total', 'APP', 'Site', 'MKP'].forEach(ch => {
+      ['Total', 'APP', 'Site', 'MKP', 'Figital'].forEach(ch => {
         const cKpi = kpis[ch];
         if (!cKpi) return;
-        document.getElementById(`tab-sales-${ch}`).innerText = fmtBRL(cKpi.realizado_hoje);
-        document.getElementById(`tab-exp-${ch}`).innerText = fmtBRL(cKpi.meta_esperada_corte);
-        
+        const salesEl = document.getElementById(`tab-sales-${ch}`);
+        const expEl = document.getElementById(`tab-exp-${ch}`);
         const gapEl = document.getElementById(`tab-gap-${ch}`);
-        gapEl.innerText = `GAP: ${fmtBRLDelta(cKpi.gap_corte_rs)}`;
-        gapEl.style.color = cKpi.gap_corte_rs >= 0 ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
-
         const badgeEl = document.getElementById(`tab-badge-${ch}`);
-        badgeEl.innerText = fmtPct(cKpi.pacing_corte_pct);
-        badgeEl.className = `channel-badge ${cKpi.pacing_corte_pct >= 100 ? 'tag-alavancador' : (cKpi.pacing_corte_pct >= 90 ? 'tag-super' : 'tag-critico')}`;
 
-        document.getElementById(`tab-d1-${ch}`).innerText = fmtPct(cKpi.janela_d1.var_pct, true);
-        document.getElementById(`tab-d7-${ch}`).innerText = fmtPct(cKpi.janela_d7.var_pct, true);
+        if (ch === 'Total') {
+          const totalDisplayKpi = window.includeFigitalInTotal ? (kpis['TotalComFigital'] || cKpi) : cKpi;
+          if (salesEl) salesEl.innerText = fmtBRL(totalDisplayKpi.realizado_hoje);
+          if (expEl) expEl.innerText = fmtBRL(totalDisplayKpi.meta_esperada_corte);
+          if (gapEl) {
+            gapEl.innerText = `GAP: ${fmtBRLDelta(totalDisplayKpi.gap_corte_rs)}`;
+            gapEl.style.color = totalDisplayKpi.gap_corte_rs >= 0 ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
+          }
+          if (badgeEl) {
+            badgeEl.innerText = fmtPct(totalDisplayKpi.pacing_corte_pct);
+            badgeEl.className = `channel-badge ${totalDisplayKpi.pacing_corte_pct >= 100 ? 'tag-alavancador' : (totalDisplayKpi.pacing_corte_pct >= 90 ? 'tag-super' : 'tag-critico')}`;
+          }
+          if (document.getElementById('tab-d1-Total')) document.getElementById('tab-d1-Total').innerText = fmtPct(totalDisplayKpi.janela_d1.var_pct, true);
+          if (document.getElementById('tab-d7-Total')) document.getElementById('tab-d7-Total').innerText = fmtPct(totalDisplayKpi.janela_d7.var_pct, true);
+
+          if (document.getElementById('valSemFig') && kpis['Total']) {
+            document.getElementById('valSemFig').innerText = fmtBRL(kpis['Total'].realizado_hoje);
+          }
+          if (document.getElementById('valComFig') && kpis['TotalComFigital']) {
+            document.getElementById('valComFig').innerText = fmtBRL(kpis['TotalComFigital'].realizado_hoje);
+          }
+          return;
+        }
+
+        if (ch === 'Figital') {
+          if (salesEl) salesEl.innerText = fmtBRL(cKpi.realizado_hoje);
+          if (expEl) expEl.innerText = 'Sem Meta Fixa';
+          if (gapEl) {
+            gapEl.innerText = `+${fmtBRL(cKpi.realizado_hoje)} (100% Adicional)`;
+            gapEl.style.color = 'var(--apple-green-text)';
+          }
+          if (badgeEl) {
+            badgeEl.innerText = 'Superávit 🚀';
+            badgeEl.className = 'channel-badge tag-alavancador';
+          }
+          if (document.getElementById('tab-d1-Figital')) document.getElementById('tab-d1-Figital').innerText = fmtPct(cKpi.janela_d1.var_pct, true);
+          if (document.getElementById('tab-d7-Figital')) document.getElementById('tab-d7-Figital').innerText = fmtPct(cKpi.janela_d7.var_pct, true);
+          return;
+        }
+
+        if (salesEl) salesEl.innerText = fmtBRL(cKpi.realizado_hoje);
+        if (expEl) expEl.innerText = fmtBRL(cKpi.meta_esperada_corte);
+        
+        if (gapEl) {
+          gapEl.innerText = `GAP: ${fmtBRLDelta(cKpi.gap_corte_rs)}`;
+          gapEl.style.color = cKpi.gap_corte_rs >= 0 ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
+        }
+
+        if (badgeEl) {
+          badgeEl.innerText = fmtPct(cKpi.pacing_corte_pct);
+          badgeEl.className = `channel-badge ${cKpi.pacing_corte_pct >= 100 ? 'tag-alavancador' : (cKpi.pacing_corte_pct >= 90 ? 'tag-super' : 'tag-critico')}`;
+        }
+
+        if (document.getElementById(`tab-d1-${ch}`)) document.getElementById(`tab-d1-${ch}`).innerText = fmtPct(cKpi.janela_d1.var_pct, true);
+        if (document.getElementById(`tab-d7-${ch}`)) document.getElementById(`tab-d7-${ch}`).innerText = fmtPct(cKpi.janela_d7.var_pct, true);
       });
 
       // Executive KPI Cards
@@ -6674,7 +6847,7 @@
       }
 
       // Retail Science: Triângulo do Varejo (AOV = UPT x AUR)
-      const mixCh = (globalData.mix_canais && globalData.mix_canais[currentChannel]) || {};
+      const mixCh = (globalData.mix_canais && globalData.mix_canais[activeChannelKey]) || {};
       const aovVal = mixCh.aov_ticket_medio || (activeKpi.realizado_hoje / Math.max(1, activeKpi.qtd_pedidos_itens / 3.55));
       const uptVal = mixCh.upt_itens_pedido || 3.55;
       const aurVal = mixCh.aur_preco_medio || mixCh.ticket_medio_item || (activeKpi.realizado_hoje / Math.max(1, activeKpi.qtd_pedidos_itens));
@@ -6685,10 +6858,13 @@
       if (document.getElementById('desc-aov')) document.getElementById('desc-aov').innerText = fmtBRL(aovVal);
       if (document.getElementById('desc-upt')) document.getElementById('desc-upt').innerText = `${uptVal.toFixed(2)} produtos`;
       if (document.getElementById('desc-aur')) document.getElementById('desc-aur').innerText = fmtBRL(aurVal);
-      if (document.getElementById('retail-channel-tag')) document.getElementById('retail-channel-tag').innerText = currentChannel === 'Total' ? 'Total da Rede' : `Canal ${activeChannel}`;
+      if (document.getElementById('retail-channel-tag')) {
+        const chLabel = currentChannel === 'Total' ? (window.includeFigitalInTotal ? 'Consolidado Digital (Com Figital)' : 'Consolidado Digital (Sem Figital)') : `Canal ${currentChannel}`;
+        document.getElementById('retail-channel-tag').innerText = chLabel;
+      }
 
       // Retail Science: Decomposição Waterfall de Vendas
-      const wfCh = (globalData.waterfall_variacao && globalData.waterfall_variacao[currentChannel]) || {};
+      const wfCh = (globalData.waterfall_variacao && globalData.waterfall_variacao[activeChannelKey]) || {};
       if (document.getElementById('wf-volume-val')) {
         const deltaTot = wfCh.delta_total_rs || 0;
         const deltaVol = wfCh.delta_volume_rs || 0;
@@ -6752,6 +6928,24 @@
       const gapProjEl = document.getElementById('card-gap-proj');
       gapProjEl.innerText = fmtBRLDelta(activeKpi.gap_projecao_rs);
       gapProjEl.style.color = activeKpi.gap_projecao_rs >= 0 ? 'var(--apple-green-text)' : 'var(--apple-red-text)';
+
+      if (currentChannel === 'Figital') {
+        document.getElementById('card-meta-esperada').innerText = fmtBRL(activeKpi.realizado_hoje);
+        pacingBadge.innerText = '100% SUPERÁVIT';
+        pacingBadge.className = 'tag-badge tag-alavancador';
+        document.getElementById('card-pacing-bar').style.width = '100%';
+        document.getElementById('card-pacing-bar').style.backgroundColor = 'var(--apple-green)';
+        gapCorteEl.innerText = `+${fmtBRL(activeKpi.realizado_hoje)}`;
+        gapCorteEl.style.color = 'var(--apple-green-text)';
+
+        document.getElementById('card-meta-dia').innerText = 'Omnichannel (Sem Meta Fixa)';
+        gapProjEl.innerText = `+${fmtBRL(activeKpi.projecao_eod)}`;
+        gapProjEl.style.color = 'var(--apple-green-text)';
+        projBadge.innerText = 'EXPANSÃO';
+        projBadge.className = 'tag-badge tag-alavancador';
+        document.getElementById('card-proj-bar').style.width = '100%';
+        document.getElementById('card-proj-bar').style.backgroundColor = 'var(--apple-green)';
+      }
 
       document.getElementById('card-runrate-nec').innerText = `${fmtBRL(activeKpi.run_rate_necessario_hora)}/h`;
       document.getElementById('card-horas-rest').innerText = `${Math.round(meta.horas_restantes || 7)}h restantes`;
@@ -7077,7 +7271,8 @@
     function renderGauges() {
       if (!globalData || !globalData.kpis) return;
       const kpis = globalData.kpis;
-      const activeKpi = kpis[currentChannel] || kpis['Total'] || {};
+      const activeChannelKey = (currentChannel === 'Total' && window.includeFigitalInTotal) ? 'TotalComFigital' : currentChannel;
+      const activeKpi = kpis[activeChannelKey] || kpis['Total'] || {};
 
       // 1. Velocímetro: Pacing no Corte
       const pacing = activeKpi.pacing_corte_pct || 0;
@@ -7085,35 +7280,35 @@
       const corteColor = pacing >= 100 ? '#34C759' : (pacing >= 85 ? '#0071E3' : (pacing >= 70 ? '#FF9500' : '#FF3B30'));
       const corteWrap = document.getElementById('gauge-corte-wrap');
       if (corteWrap) corteWrap.innerHTML = createGaugeSvg(pacingPctForArc, corteColor, 'corte');
-      document.getElementById('gauge-corte-val').innerText = fmtPct(pacing);
-      document.getElementById('gauge-corte-sub').innerText = `${fmtBRL(activeKpi.realizado_hoje)} / ${fmtBRL(activeKpi.meta_esperada_corte)}`;
+      document.getElementById('gauge-corte-val').innerText = currentChannel === 'Figital' ? '100%' : fmtPct(pacing);
+      document.getElementById('gauge-corte-sub').innerText = currentChannel === 'Figital' ? `${fmtBRL(activeKpi.realizado_hoje)} (100% Adicional)` : `${fmtBRL(activeKpi.realizado_hoje)} / ${fmtBRL(activeKpi.meta_esperada_corte)}`;
       const corteChip = document.getElementById('gauge-corte-chip');
-      corteChip.innerText = `GAP: ${fmtBRLDelta(activeKpi.gap_corte_rs)}`;
-      corteChip.className = `tag-badge gauge-chip ${activeKpi.gap_corte_rs >= 0 ? 'tag-alavancador' : 'tag-critico'}`;
+      corteChip.innerText = currentChannel === 'Figital' ? `+${fmtBRL(activeKpi.realizado_hoje)}` : `GAP: ${fmtBRLDelta(activeKpi.gap_corte_rs)}`;
+      corteChip.className = `tag-badge gauge-chip ${(activeKpi.gap_corte_rs >= 0 || currentChannel === 'Figital') ? 'tag-alavancador' : 'tag-critico'}`;
 
       // 2. Velocímetro: Projeção Fim do Dia (EOD)
       const projPacing = activeKpi.projecao_pacing_pct || 0;
       const projPctForArc = Math.min(100, Math.max(0, (projPacing / 120) * 100));
-      const eodColor = projPacing >= 100 ? '#34C759' : (projPacing >= 85 ? '#0071E3' : '#FF9500');
+      const eodColor = (projPacing >= 100 || currentChannel === 'Figital') ? '#34C759' : (projPacing >= 85 ? '#0071E3' : '#FF9500');
       const eodWrap = document.getElementById('gauge-eod-wrap');
       if (eodWrap) eodWrap.innerHTML = createGaugeSvg(projPctForArc, eodColor, 'eod');
-      document.getElementById('gauge-eod-val').innerText = fmtPct(projPacing);
-      document.getElementById('gauge-eod-sub').innerText = `Proj: ${fmtBRL(activeKpi.projecao_eod)} / Meta: ${fmtBRL(activeKpi.meta_dia)}`;
+      document.getElementById('gauge-eod-val').innerText = currentChannel === 'Figital' ? 'Expansão' : fmtPct(projPacing);
+      document.getElementById('gauge-eod-sub').innerText = currentChannel === 'Figital' ? `Proj EOD: ${fmtBRL(activeKpi.projecao_eod)}` : `Proj: ${fmtBRL(activeKpi.projecao_eod)} / Meta: ${fmtBRL(activeKpi.meta_dia)}`;
       const eodChip = document.getElementById('gauge-eod-chip');
-      eodChip.innerText = `GAP EOD: ${fmtBRLDelta(activeKpi.gap_projecao_rs)}`;
-      eodChip.className = `tag-badge gauge-chip ${activeKpi.gap_projecao_rs >= 0 ? 'tag-alavancador' : 'tag-critico'}`;
+      eodChip.innerText = currentChannel === 'Figital' ? `+${fmtBRL(activeKpi.projecao_eod)}` : `GAP EOD: ${fmtBRLDelta(activeKpi.gap_projecao_rs)}`;
+      eodChip.className = `tag-badge gauge-chip ${(activeKpi.gap_projecao_rs >= 0 || currentChannel === 'Figital') ? 'tag-alavancador' : 'tag-critico'}`;
 
       // 3. Velocímetro: Velocidade Horária Atual vs Necessária
       const rAtual = activeKpi.run_rate_atual_hora || 0;
       const rNec = activeKpi.run_rate_necessario_hora || 1;
-      const speedPct = Math.min(100, Math.max(0, (rAtual / rNec) * 100));
-      const speedColor = speedPct >= 90 ? '#34C759' : (speedPct >= 60 ? '#FF9500' : '#FF3B30');
+      const speedPct = currentChannel === 'Figital' ? 100 : Math.min(100, Math.max(0, (rAtual / rNec) * 100));
+      const speedColor = (speedPct >= 90 || currentChannel === 'Figital') ? '#34C759' : (speedPct >= 60 ? '#FF9500' : '#FF3B30');
       const speedWrap = document.getElementById('gauge-speed-wrap');
       if (speedWrap) speedWrap.innerHTML = createGaugeSvg(speedPct, speedColor, 'speed');
       document.getElementById('gauge-speed-val').innerText = `${fmtBRL(rAtual)}/h`;
-      document.getElementById('gauge-speed-sub').innerText = `Alvo: ${fmtBRL(rNec)}/h`;
+      document.getElementById('gauge-speed-sub').innerText = currentChannel === 'Figital' ? 'Venda Contínua' : `Alvo: ${fmtBRL(rNec)}/h`;
       const speedChip = document.getElementById('gauge-speed-chip');
-      speedChip.innerText = `Ritmo: ${fmtPct(speedPct)} da meta/h`;
+      speedChip.innerText = currentChannel === 'Figital' ? `Ritmo: ${fmtBRL(rAtual)}/h` : `Ritmo: ${fmtPct(speedPct)} da meta/h`;
       speedChip.className = `tag-badge gauge-chip ${speedPct >= 80 ? 'tag-alavancador' : 'tag-moderado'}`;
     }
 
@@ -7325,7 +7520,7 @@
     // ==========================================
     function getMetaMilestoneInfo(channel) {
       if (!globalData || !globalData.kpis || !globalData.hourly_curve) return null;
-      const ch = channel || currentChannel || 'Total';
+      const ch = channel || ((currentChannel === 'Total' && window.includeFigitalInTotal) ? 'TotalComFigital' : currentChannel) || 'Total';
       const kpi = globalData.kpis[ch] || globalData.kpis['Total'] || {};
       const curve = globalData.hourly_curve || [];
       const meta = globalData.metadata || {};
@@ -7489,7 +7684,8 @@
       const container = document.getElementById('milestone-widget-container');
       if (!container) return;
 
-      const ms = getMetaMilestoneInfo(currentChannel);
+      const targetCh = (currentChannel === 'Total' && window.includeFigitalInTotal) ? 'TotalComFigital' : currentChannel;
+      const ms = getMetaMilestoneInfo(targetCh);
       if (!ms) {
         container.innerHTML = '';
         return;
@@ -7572,7 +7768,8 @@
       id: 'metaMilestoneLine',
       afterDatasetsDraw(chart, args, pluginOptions) {
         if (!globalData || !chart || !chart.chartArea) return;
-        const ms = getMetaMilestoneInfo(currentChannel);
+        const targetCh = (currentChannel === 'Total' && window.includeFigitalInTotal) ? 'TotalComFigital' : currentChannel;
+        const ms = getMetaMilestoneInfo(targetCh);
         if (!ms || ms.exactHour == null) return;
 
         const { ctx, chartArea, scales } = chart;
@@ -7634,14 +7831,14 @@
         }
 
         // 4. Selo / Badge no topo da barrinha (exibido apenas no gráfico panorâmico acumulado para não sobrepor as curvas do gráfico de ritmo)
-        if (pluginOptions && (pluginOptions.isAccumChart || pluginOptions.isTopChart)) {
+        if (pluginOptions && pluginOptions.showBadge !== false) {
           const badgeText = isReached
-            ? `🏆 Meta Batida: ${ms.timeStr}`
-            : `🎯 Meta Prevista: ${ms.timeStr}`;
+            ? `🏁 META BATIDA ÀS ${ms.timeStr}`
+            : `🎯 META ESTIMADA ÀS ${ms.timeStr}`;
 
-          ctx.font = 'bold 11px Inter, -apple-system, sans-serif';
+          ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
           const textMetrics = ctx.measureText(badgeText);
-          const badgeW = textMetrics.width + 18;
+          const badgeW = textMetrics.width + 16;
           const badgeH = 22;
 
           // Garantir que não estoure as bordas do gráfico
@@ -7689,7 +7886,7 @@
 
     function renderCharts() {
       const curveData = globalData.hourly_curve || [];
-      const ch = currentChannel;
+      const ch = (currentChannel === 'Total' && window.includeFigitalInTotal) ? 'TotalComFigital' : currentChannel;
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
       const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
@@ -8179,7 +8376,7 @@
 
     function renderHourlyTable() {
       const curve = globalData.hourly_curve || [];
-      const ch = currentChannel;
+      const ch = (currentChannel === 'Total' && window.includeFigitalInTotal) ? 'TotalComFigital' : currentChannel;
       const tbody = document.getElementById('hourly-tbody');
 
       tbody.innerHTML = curve.map(d => {

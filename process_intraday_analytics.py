@@ -81,7 +81,9 @@ def load_metas(dia_alvo=7):
         "Total": 1560604.42,
         "APP": 739532.77,
         "Site": 413172.55,
-        "MKP": 407899.10
+        "MKP": 407899.10,
+        "Figital": 0.0,
+        "TotalComFigital": 1560604.42
     }
     if not os.path.exists(EXCEL_META):
         return metas
@@ -97,6 +99,8 @@ def load_metas(dia_alvo=7):
                 metas["Site"] = float(row[6] or 0)
                 metas["MKP"] = float(row[7] or 0)
                 metas["Total"] = metas["APP"] + metas["Site"] + metas["MKP"]
+                metas["Figital"] = 0.0
+                metas["TotalComFigital"] = metas["Total"]
                 found = True
                 break
         if not found:
@@ -1092,9 +1096,9 @@ def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, b
     dia_ontem_int = int(dia_ontem_str)
 
     # 2. Consolidação de Vendas 24h de Ontem por Canal
-    canais_ontem = {"Total": 0.0, "APP": 0.0, "Site": 0.0, "MKP": 0.0}
-    qtd_ontem = {"Total": 0.0, "APP": 0.0, "Site": 0.0, "MKP": 0.0}
-    hourly_ontem = defaultdict(lambda: {"Total": 0.0, "APP": 0.0, "Site": 0.0, "MKP": 0.0})
+    canais_ontem = {"Total": 0.0, "APP": 0.0, "Site": 0.0, "MKP": 0.0, "Figital": 0.0, "TotalComFigital": 0.0}
+    qtd_ontem = {"Total": 0.0, "APP": 0.0, "Site": 0.0, "MKP": 0.0, "Figital": 0.0, "TotalComFigital": 0.0}
+    hourly_ontem = defaultdict(lambda: {"Total": 0.0, "APP": 0.0, "Site": 0.0, "MKP": 0.0, "Figital": 0.0, "TotalComFigital": 0.0})
 
     for r in raw.get("rowsOntem", []):
         c = norm_canal(r[0])
@@ -1105,12 +1109,19 @@ def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, b
         h = get_minute_of_day(r[1]) // 60 if len(r) > 1 else 0
 
         canais_ontem[c] += val
-        canais_ontem["Total"] += val
+        if c != "Figital":
+            canais_ontem["Total"] += val
+        canais_ontem["TotalComFigital"] += val
+
         qtd_ontem[c] += qty
-        qtd_ontem["Total"] += qty
+        if c != "Figital":
+            qtd_ontem["Total"] += qty
+        qtd_ontem["TotalComFigital"] += qty
 
         hourly_ontem[h][c] += val
-        hourly_ontem[h]["Total"] += val
+        if c != "Figital":
+            hourly_ontem[h]["Total"] += val
+        hourly_ontem[h]["TotalComFigital"] += val
 
     # 3. Metas Oficiais do Dia de Ontem
     metas_ontem = load_metas(dia_alvo=dia_ontem_int)
@@ -1133,12 +1144,13 @@ def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, b
                 pass
         return None
 
-    for ch in ["Total", "APP", "Site", "MKP"]:
+    for ch in ["Total", "TotalComFigital", "APP", "Site", "MKP", "Figital"]:
         rec = round(canais_ontem[ch], 2)
         meta = round(metas_ontem.get(ch, 0.0), 2)
-        pacing = round((rec / meta * 100), 1) if meta > 0 else 0.0
-        gap_rs = round(rec - meta, 2)
-        share_rec = round((rec / tot_rec * 100), 1) if tot_rec > 0 else 0.0
+        pacing = round((rec / meta * 100), 1) if meta > 0 else (100.0 if rec > 0 else 0.0)
+        gap_rs = round(rec - meta, 2) if meta > 0 else rec
+        share_base = tot_rec if ch != "TotalComFigital" else canais_ontem["TotalComFigital"]
+        share_rec = round((rec / share_base * 100), 1) if share_base > 0 else 0.0
         share_meta = round((meta / tot_meta * 100), 1) if tot_meta > 0 else 0.0
         qtd = qtd_ontem[ch]
         ticket = round(rec / qtd, 2) if qtd > 0 else 0.0
@@ -1149,7 +1161,7 @@ def generate_daily_closure(raw, precifica_items, stock_map, data_dir=DATA_DIR, b
             "meta_dia_rs": meta,
             "pacing_pct": pacing,
             "gap_rs": gap_rs,
-            "bateu_meta": rec >= meta,
+            "bateu_meta": rec >= meta if meta > 0 else True,
             "share_realizado_pct": share_rec,
             "share_meta_pct": share_meta,
             "qtd_itens": int(qtd),
@@ -1567,9 +1579,13 @@ def process_analytics():
         val = float(r[2] or 0)
         qtd = float(r[3] or 0)
         hoje_cut[c] += val
-        hoje_cut["Total"] += val
+        if c != "Figital":
+            hoje_cut["Total"] += val
+        hoje_cut["TotalComFigital"] += val
         hoje_qtd[c] += qtd
-        hoje_qtd["Total"] += qtd
+        if c != "Figital":
+            hoje_qtd["Total"] += qtd
+        hoje_qtd["TotalComFigital"] += qtd
 
     ontem_cut = defaultdict(float)
     ontem_full = defaultdict(float)
@@ -1583,14 +1599,25 @@ def process_analytics():
         val = float(r[2] or 0)
         qtd = float(r[3] or 0)
         ontem_full[c] += val
-        ontem_full["Total"] += val
+        if c != "Figital":
+            ontem_full["Total"] += val
+        ontem_full["TotalComFigital"] += val
+
         ontem_qtd_full[c] += qtd
-        ontem_qtd_full["Total"] += qtd
+        if c != "Figital":
+            ontem_qtd_full["Total"] += qtd
+        ontem_qtd_full["TotalComFigital"] += qtd
+
         if m <= max_minute:
             ontem_cut[c] += val
-            ontem_cut["Total"] += val
+            if c != "Figital":
+                ontem_cut["Total"] += val
+            ontem_cut["TotalComFigital"] += val
+
             ontem_qtd_cut[c] += qtd
-            ontem_qtd_cut["Total"] += qtd
+            if c != "Figital":
+                ontem_qtd_cut["Total"] += qtd
+            ontem_qtd_cut["TotalComFigital"] += qtd
 
     d7_cut = defaultdict(float)
     d7_full = defaultdict(float)
@@ -1604,14 +1631,25 @@ def process_analytics():
         val = float(r[2] or 0)
         qtd = float(r[3] or 0)
         d7_full[c] += val
-        d7_full["Total"] += val
+        if c != "Figital":
+            d7_full["Total"] += val
+        d7_full["TotalComFigital"] += val
+
         d7_qtd_full[c] += qtd
-        d7_qtd_full["Total"] += qtd
+        if c != "Figital":
+            d7_qtd_full["Total"] += qtd
+        d7_qtd_full["TotalComFigital"] += qtd
+
         if m <= max_minute:
             d7_cut[c] += val
-            d7_cut["Total"] += val
+            if c != "Figital":
+                d7_cut["Total"] += val
+            d7_cut["TotalComFigital"] += val
+
             d7_qtd_cut[c] += qtd
-            d7_qtd_cut["Total"] += qtd
+            if c != "Figital":
+                d7_qtd_cut["Total"] += qtd
+            d7_qtd_cut["TotalComFigital"] += qtd
 
     # 2. Histórico dos últimos 7 dias completos (TOTALMENTE DINÂMICO PARA QUALQUER DIA)
     ano_mes_ref = f"{dt_ref.year}-{dt_ref.month:02d}"
@@ -1636,11 +1674,15 @@ def process_analytics():
         if (dia_num, ano_mes_ref) in dias_anteriores:
             day_key = f"{ano_mes_ref}_{dia_num:02d}"
             hist_days[day_key][c] += val_curr
-            hist_days[day_key]["Total"] += val_curr
+            if c != "Figital":
+                hist_days[day_key]["Total"] += val_curr
+            hist_days[day_key]["TotalComFigital"] += val_curr
         elif (dia_num, ano_mes_prev) in dias_anteriores:
             day_key = f"{ano_mes_prev}_{dia_num:02d}"
             hist_days[day_key][c] += val_prev
-            hist_days[day_key]["Total"] += val_prev
+            if c != "Figital":
+                hist_days[day_key]["Total"] += val_prev
+            hist_days[day_key]["TotalComFigital"] += val_prev
 
     media_7d_full = defaultdict(float)
     n_dias_hist = max(1, len(hist_days))
@@ -1657,13 +1699,19 @@ def process_analytics():
                 media_recentes_full[ch] += v / n_recentes
 
     metas_ponderadas = {}
-    for ch in ["APP", "Site", "MKP"]:
-        metas_ponderadas[ch] = round(0.70 * d7_full[ch] + 0.30 * (media_recentes_full[ch] or d7_full[ch]), 2)
+    for ch in ["APP", "Site", "MKP", "Figital"]:
+        if ch == "Figital":
+            metas_ponderadas["Figital"] = 0.0
+        else:
+            metas_ponderadas[ch] = round(0.70 * d7_full[ch] + 0.30 * (media_recentes_full[ch] or d7_full[ch]), 2)
     metas_ponderadas["Total"] = round(metas_ponderadas["APP"] + metas_ponderadas["Site"] + metas_ponderadas["MKP"], 2)
+    metas_ponderadas["TotalComFigital"] = metas_ponderadas["Total"]
+
+    CHANNELS_ALL = ["Total", "TotalComFigital", "APP", "Site", "MKP", "Figital"]
 
     # 4. Pesos e Curva Científica de Distribuição Horária
     curve_weights_cut = {}
-    for ch in ["Total", "APP", "Site", "MKP"]:
+    for ch in CHANNELS_ALL:
         w_d7 = (d7_cut[ch] / d7_full[ch]) if d7_full[ch] > 0 else 0
         w_ontem = (ontem_cut[ch] / ontem_full[ch]) if ontem_full[ch] > 0 else 0
         w_blend = (w_d7 * 0.7 + w_ontem * 0.3) if (w_d7 > 0 and w_ontem > 0) else (w_d7 or w_ontem or (elapsed_hours / 24.0))
@@ -1671,7 +1719,7 @@ def process_analytics():
         curve_weights_cut[ch] = max(0.005, min(1.0, w_blend))
 
     media_7d_cut = defaultdict(float)
-    for ch in ["Total", "APP", "Site", "MKP"]:
+    for ch in CHANNELS_ALL:
         media_7d_cut[ch] = media_7d_full[ch] * curve_weights_cut[ch]
 
     # 5. Curva Horária Consolidada e por Canal (00h..23h)
@@ -1684,24 +1732,33 @@ def process_analytics():
         if not c:
             continue
         h = get_minute_of_day(r[1]) // 60
-        hourly_hoje[h][c] += float(r[2] or 0)
-        hourly_hoje[h]["Total"] += float(r[2] or 0)
+        val = float(r[2] or 0)
+        hourly_hoje[h][c] += val
+        if c != "Figital":
+            hourly_hoje[h]["Total"] += val
+        hourly_hoje[h]["TotalComFigital"] += val
 
     for r in raw.get("rowsOntem", []):
         c = norm_canal(r[0])
         if not c:
             continue
         h = get_minute_of_day(r[1]) // 60
-        hourly_ontem[h][c] += float(r[2] or 0)
-        hourly_ontem[h]["Total"] += float(r[2] or 0)
+        val = float(r[2] or 0)
+        hourly_ontem[h][c] += val
+        if c != "Figital":
+            hourly_ontem[h]["Total"] += val
+        hourly_ontem[h]["TotalComFigital"] += val
 
     for r in raw.get("rowsD7", []):
         c = norm_canal(r[0])
         if not c:
             continue
         h = get_minute_of_day(r[1]) // 60
-        hourly_d7[h][c] += float(r[2] or 0)
-        hourly_d7[h]["Total"] += float(r[2] or 0)
+        val = float(r[2] or 0)
+        hourly_d7[h][c] += val
+        if c != "Figital":
+            hourly_d7[h]["Total"] += val
+        hourly_d7[h]["TotalComFigital"] += val
 
     # Distribuição da meta hora a hora ponderada
     hourly_curve_table = []
@@ -1714,12 +1771,12 @@ def process_analytics():
     peso_horario_nobre = 0.0
     for h in range(24):
         w_h = {}
-        for ch in ["Total", "APP", "Site", "MKP"]:
+        for ch in CHANNELS_ALL:
             tot_d7 = d7_full[ch] if d7_full[ch] > 0 else 1.0
             tot_ont = ontem_full[ch] if ontem_full[ch] > 0 else 1.0
             w_d7_h = hourly_d7[h][ch] / tot_d7
             w_ont_h = hourly_ontem[h][ch] / tot_ont
-            w_h[ch] = 0.70 * w_d7_h + 0.30 * w_ont_h
+            w_h[ch] = 0.70 * w_d7_h + 0.30 * w_ont_h if (w_d7_h > 0 or w_ont_h > 0) else (1.0 / 24.0)
 
         if h in [18, 19, 20, 21]:
             peso_horario_nobre += w_h["Total"]
@@ -1730,102 +1787,113 @@ def process_analytics():
             "is_past": h < curr_hour,
             "is_current": h == curr_hour,
             "is_future": h > curr_hour,
-            "weight_pct": {ch: round(w_h[ch] * 100, 2) for ch in w_h},
-            "venda_hoje": {ch: round(hourly_hoje[h][ch], 2) for ch in ["Total", "APP", "Site", "MKP"]},
-            "venda_ontem": {ch: round(hourly_ontem[h][ch], 2) for ch in ["Total", "APP", "Site", "MKP"]},
-            "venda_d7": {ch: round(hourly_d7[h][ch], 2) for ch in ["Total", "APP", "Site", "MKP"]},
-            "meta_esperada_hora": {ch: round(metas[ch] * w_h[ch], 2) for ch in metas}
+            "weight_pct": {ch: round(w_h[ch] * 100, 2) for ch in CHANNELS_ALL},
+            "venda_hoje": {ch: round(hourly_hoje[h][ch], 2) for ch in CHANNELS_ALL},
+            "venda_ontem": {ch: round(hourly_ontem[h][ch], 2) for ch in CHANNELS_ALL},
+            "venda_d7": {ch: round(hourly_d7[h][ch], 2) for ch in CHANNELS_ALL},
+            "meta_esperada_hora": {ch: round(metas.get(ch, 0.0) * w_h[ch], 2) for ch in CHANNELS_ALL}
         }
 
-        for ch in ["Total", "APP", "Site", "MKP"]:
+        for ch in CHANNELS_ALL:
             accum_d7[ch] += hourly_d7[h][ch]
             accum_ontem[ch] += hourly_ontem[h][ch]
-            accum_meta_exp[ch] += metas[ch] * w_h[ch]
+            accum_meta_exp[ch] += metas.get(ch, 0.0) * w_h[ch]
             if h <= curr_hour:
                 accum_hoje[ch] += hourly_hoje[h][ch]
                 accum_proj_base[ch] = accum_hoje[ch]
             else:
-                pacing_atual = (hoje_cut[ch] / (metas[ch] * curve_weights_cut[ch])) if (metas[ch] * curve_weights_cut[ch]) > 0 else 1.0
+                m_exp_ch = metas.get(ch, 0.0) * curve_weights_cut[ch]
+                pacing_atual = (hoje_cut[ch] / m_exp_ch) if m_exp_ch > 0 else 1.0
                 pacing_atual = max(0.2, min(3.0, pacing_atual))
-                accum_proj_base[ch] += metas[ch] * w_h[ch] * pacing_atual
+                if ch == "Figital":
+                    accum_proj_base[ch] += hourly_ontem[h][ch]
+                else:
+                    accum_proj_base[ch] += metas.get(ch, 0.0) * w_h[ch] * pacing_atual
 
-        row_h["accum_hoje"] = {ch: round(accum_hoje[ch], 2) for ch in accum_hoje}
-        row_h["accum_d7"] = {ch: round(accum_d7[ch], 2) for ch in accum_d7}
-        row_h["accum_ontem"] = {ch: round(accum_ontem[ch], 2) for ch in accum_ontem}
-        row_h["accum_meta_exp"] = {ch: round(accum_meta_exp[ch], 2) for ch in accum_meta_exp}
-        row_h["accum_proj_base"] = {ch: round(accum_proj_base[ch], 2) for ch in accum_proj_base}
+        row_h["accum_hoje"] = {ch: round(accum_hoje[ch], 2) for ch in CHANNELS_ALL}
+        row_h["accum_d7"] = {ch: round(accum_d7[ch], 2) for ch in CHANNELS_ALL}
+        row_h["accum_ontem"] = {ch: round(accum_ontem[ch], 2) for ch in CHANNELS_ALL}
+        row_h["accum_meta_exp"] = {ch: round(accum_meta_exp[ch], 2) for ch in CHANNELS_ALL}
+        row_h["accum_proj_base"] = {ch: round(accum_proj_base[ch], 2) for ch in CHANNELS_ALL}
         hourly_curve_table.append(row_h)
 
     # 5. Indicadores Executivos, 3 Janelas e Cenários de Projeção com Proteção Matinal
     executive_kpis = {}
-    # Cálculo Estatístico de Desvio Padrão Histórico (Base para Intervalos de Confiança P10-P50-P90)
     std_dev_hist = {}
-    for ch in ["Total", "APP", "Site", "MKP"]:
+    for ch in CHANNELS_ALL:
         ch_vals = [hist_days[d][ch] for d in hist_days if hist_days[d][ch] > 0]
         if len(ch_vals) >= 2:
             m_val = sum(ch_vals) / len(ch_vals)
             var_val = sum((x - m_val)**2 for x in ch_vals) / (len(ch_vals) - 1)
             std_dev_hist[ch] = math.sqrt(var_val)
         else:
-            std_dev_hist[ch] = metas[ch] * 0.12 # Fallback conservador de 12% de volatilidade
+            std_dev_hist[ch] = metas.get(ch, 0.0) * 0.12 if metas.get(ch, 0.0) > 0 else max(1000.0, hoje_cut[ch] * 0.15)
 
-    for ch in ["Total", "APP", "Site", "MKP"]:
+    for ch in CHANNELS_ALL:
         real = hoje_cut[ch]
-        m_dia = metas[ch]
+        m_dia = metas.get(ch, 0.0)
         w_cut = curve_weights_cut[ch]
         m_exp = m_dia * w_cut
-        gap_corte = real - m_exp
-        pacing_pct = (real / m_exp * 100.0) if m_exp > 0 else 0.0
+        gap_corte = (real - m_exp) if m_dia > 0 else real
+        pacing_pct = (real / m_exp * 100.0) if m_exp > 0 else (100.0 if real > 0 else 0.0)
 
-        # Amortecimento Bayesiano na Projeção EOD para o início da manhã (evita distorções por vendas únicas na madrugada)
-        if w_cut < 0.15:
-            blend_factor = max(0.0, w_cut / 0.15)
-            raw_proj = (real / w_cut) if w_cut > 0.001 else real
-            proj_base = blend_factor * raw_proj + (1.0 - blend_factor) * m_dia
+        # Projeção EOD
+        if ch == "Figital":
+            proj_base = (real / w_cut) if w_cut > 0.001 else real
+            proj_conservadora = real + max(0.0, (proj_base - real)) * 0.90
+            proj_reversao = proj_base
+            gap_proj_base = proj_base
+            proj_pacing_pct = 100.0
         else:
-            proj_base = (real / w_cut) if w_cut > 0 else real
-
-        proj_conservadora = real + max(0.0, (proj_base - real)) * 0.94
-        proj_reversao = real + max(0.0, (m_dia - m_exp))
-
-        gap_proj_base = proj_base - m_dia
-        proj_pacing_pct = (proj_base / m_dia * 100.0) if m_dia > 0 else 0.0
+            if w_cut < 0.15:
+                blend_factor = max(0.0, w_cut / 0.15)
+                raw_proj = (real / w_cut) if w_cut > 0.001 else real
+                proj_base = blend_factor * raw_proj + (1.0 - blend_factor) * m_dia
+            else:
+                proj_base = (real / w_cut) if w_cut > 0 else real
+            proj_conservadora = real + max(0.0, (proj_base - real)) * 0.94
+            proj_reversao = real + max(0.0, (m_dia - m_exp))
+            gap_proj_base = proj_base - m_dia
+            proj_pacing_pct = (proj_base / m_dia * 100.0) if m_dia > 0 else 0.0
 
         run_rate_atual_hora = real / elapsed_hours
-        run_rate_necessario_hora = max(0.0, (m_dia - real)) / remaining_hours
+        run_rate_necessario_hora = (max(0.0, (m_dia - real)) / remaining_hours) if m_dia > 0 else 0.0
 
         # Janela 1: vs Ontem (D-1)
         ont_c = ontem_cut[ch]
         ont_f = ontem_full[ch]
         var_ontem_rs = real - ont_c
-        var_ontem_pct = ((real - ont_c) / ont_c * 100.0) if ont_c > 0 else 0.0
+        var_ontem_pct = ((real - ont_c) / ont_c * 100.0) if ont_c > 0 else (100.0 if real > 0 else 0.0)
 
         # Janela 2: vs D-7 (mesmo dia da semana passada)
         d7_c = d7_cut[ch]
         d7_f = d7_full[ch]
         var_d7_rs = real - d7_c
-        var_d7_pct = ((real - d7_c) / d7_c * 100.0) if d7_c > 0 else 0.0
+        var_d7_pct = ((real - d7_c) / d7_c * 100.0) if d7_c > 0 else (100.0 if real > 0 else 0.0)
 
         # Janela 3: vs Média 7D
         m7_c = media_7d_cut[ch]
         m7_f = media_7d_full[ch]
         var_m7_rs = real - m7_c
-        var_m7_pct = ((real - m7_c) / m7_c * 100.0) if m7_c > 0 else 0.0
+        var_m7_pct = ((real - m7_c) / m7_c * 100.0) if m7_c > 0 else (100.0 if real > 0 else 0.0)
 
-        # Modelagem Estatística: Cone de Incerteza (P10 - P50 - P90) e Probabilidade de Meta
-        sigma_ch = std_dev_hist.get(ch, m_dia * 0.12)
-        # O desvio padrão residual decresce proporcionalmente à raiz do tempo restante:
+        sigma_ch = std_dev_hist.get(ch, m_dia * 0.12 if m_dia > 0 else max(1000.0, real * 0.15))
         sigma_residual = sigma_ch * math.sqrt(max(0.01, 1.0 - w_cut))
         p50 = proj_base
-        p10 = max(real, round(p50 - 1.282 * sigma_residual, 2))  # 80% CI Piso (P10)
-        p90 = round(p50 + 1.282 * sigma_residual, 2)            # 80% CI Teto (P90)
+        p10 = max(real, round(p50 - 1.282 * sigma_residual, 2))
+        p90 = round(p50 + 1.282 * sigma_residual, 2)
 
-        if sigma_residual > 0:
+        if m_dia > 0 and sigma_residual > 0:
             z_meta = (p50 - m_dia) / sigma_residual
             prob_meta = 0.5 * (1.0 + math.erf(z_meta / math.sqrt(2.0))) * 100.0
             prob_meta = max(0.1, min(99.9, round(prob_meta, 1)))
         else:
-            prob_meta = 100.0 if p50 >= m_dia else 0.0
+            prob_meta = 100.0 if (m_dia == 0 or p50 >= m_dia) else 0.0
+
+        m_pond = metas_ponderadas.get(ch, 0.0)
+        m_exc = metas_excel.get(ch, 0.0)
+        pacing_exc = (real / (m_exc * w_cut) * 100.0) if (m_exc * w_cut) > 0 else (100.0 if real > 0 else 0.0)
+        gap_exc = round(real - (m_exc * w_cut), 2) if m_exc > 0 else round(real, 2)
 
         executive_kpis[ch] = {
             "canal": ch,
@@ -1836,12 +1904,12 @@ def process_analytics():
             "meta_esperada_corte": round(m_exp, 2),
             "pacing_corte_pct": round(pacing_pct, 1),
             "gap_corte_rs": round(gap_corte, 2),
-            "meta_dia_ponderada": round(metas_ponderadas[ch], 2),
-            "meta_esperada_ponderada": round(metas_ponderadas[ch] * w_cut, 2),
-            "meta_dia_excel": round(metas_excel[ch], 2),
-            "meta_esperada_excel": round(metas_excel[ch] * w_cut, 2),
-            "pacing_excel_pct": round((real / (metas_excel[ch] * w_cut) * 100.0) if (metas_excel[ch] * w_cut) > 0 else 0.0, 1),
-            "gap_excel_rs": round(real - (metas_excel[ch] * w_cut), 2),
+            "meta_dia_ponderada": round(m_pond, 2),
+            "meta_esperada_ponderada": round(m_pond * w_cut, 2),
+            "meta_dia_excel": round(m_exc, 2),
+            "meta_esperada_excel": round(m_exc * w_cut, 2),
+            "pacing_excel_pct": round(pacing_exc, 1),
+            "gap_excel_rs": gap_exc,
             "projecao_eod": round(proj_base, 2),
             "projecao_pacing_pct": round(proj_pacing_pct, 1),
             "gap_projecao_rs": round(gap_proj_base, 2),
@@ -1881,18 +1949,17 @@ def process_analytics():
     tot_real = hoje_cut["Total"]
     tot_meta = metas["Total"]
     mix_canais = {}
-    for ch in ["Total", "APP", "Site", "MKP"]:
+    for ch in CHANNELS_ALL:
         real_ch = hoje_cut[ch]
-        meta_ch = metas[ch]
+        meta_ch = metas.get(ch, 0.0)
         qtd_ch = hoje_qtd[ch]
-        share_real = (real_ch / tot_real * 100.0) if tot_real > 0 else 0.0
-        share_meta = (meta_ch / tot_meta * 100.0) if tot_meta > 0 else 0.0
+        share_base = tot_real if ch != "TotalComFigital" else hoje_cut["TotalComFigital"]
+        share_real = (real_ch / share_base * 100.0) if share_base > 0 else 0.0
+        share_meta = (meta_ch / tot_meta * 100.0) if (tot_meta > 0 and meta_ch > 0) else 0.0
         desvio_mix = share_real - share_meta
         ticket_item = (real_ch / qtd_ch) if qtd_ch > 0 else 0.0
 
-        # Triângulo Fundamental do Varejo Farma (AOV = UPT x AUR)
-        # Estimativa de pedidos por proxy de transações reais
-        pedidos_est = max(1, int(round(qtd_ch / 3.55))) if ch != "Total" else int(round(qtd_ch / 3.55))
+        pedidos_est = max(1, int(round(qtd_ch / 3.55))) if not ch.startswith("Total") else int(round(qtd_ch / 3.55))
         aur_item = (real_ch / qtd_ch) if qtd_ch > 0 else 0.0
         upt_cesta = (qtd_ch / pedidos_est) if pedidos_est > 0 else 0.0
         aov_ticket = (real_ch / pedidos_est) if pedidos_est > 0 else 0.0
@@ -1911,7 +1978,7 @@ def process_analytics():
 
     # Decomposição Waterfall de Vendas (Efeito Volume vs Efeito Preço vs Efeito Mix vs D-7)
     waterfall_variacao = {}
-    for ch in ["Total", "APP", "Site", "MKP"]:
+    for ch in CHANNELS_ALL:
         v_h = hoje_cut[ch]
         q_h = hoje_qtd[ch]
         v_7 = d7_cut[ch]
@@ -2720,7 +2787,7 @@ def process_analytics():
             "label_hoje": f"Hoje ({dow_short} {dt_ref.strftime('%d/%m')})",
             "label_ontem": f"Ontem ({ontem_dow_short} {dt_ontem.strftime('%d/%m')})",
             "label_d7": f"D-7 ({d7_dow_short} {dt_d7.strftime('%d/%m')})",
-            "canais_monitorados": ["Site", "APP", "MKP"],
+            "canais_monitorados": ["Site", "APP", "MKP", "Figital"],
             "gerado_em": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         },
         "kpis": executive_kpis,
