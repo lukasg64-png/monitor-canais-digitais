@@ -38,55 +38,52 @@ async def inspect():
                         const openRes = await send("OpenDoc", -1, [appId]);
                         const docHandle = openRes.result.qReturn.qHandle;
 
-                        // Master measures
-                        let measures = [];
-                        try {
-                            const mmObj = await send("CreateSessionObject", docHandle, [{
-                                "qInfo": { "qType": "MeasureList" },
-                                "qMeasureListDef": { "qType": "measure" }
-                            }]);
-                            const mmLayout = await send("GetLayout", mmObj.result.qReturn.qHandle, []);
-                            measures = (mmLayout.result.qLayout.qMeasureList.qItems || []).map(m => ({
-                                title: m.qMeta?.title,
-                                expr: m.qData?.qMeasure?.qDef || m.qMeta?.qDef || ''
-                            }));
-                        } catch(e) {
-                            console.error('measures err', e);
-                        }
+                        // Field list
+                        const flObj = await send("CreateSessionObject", docHandle, [{
+                            "qInfo": { "qType": "FieldList" },
+                            "qFieldListDef": { "qShowSystem": false, "qShowHidden": true }
+                        }]);
+                        const flHandle = flObj.result.qReturn.qHandle;
+                        const flLayout = await send("GetLayout", flHandle, []);
+                        const fields = (flLayout.result.qLayout.qFieldList.qItems || []).map(f => f.qName);
 
-                        // Distinct values of Tipo Venda, Tipo Venda Reduzido, Venda Digital?
-                        async function getDistinct(fieldName) {
-                            const obj = await send("CreateSessionObject", docHandle, [{
-                                "qInfo": { "qType": "distinct_" + fieldName },
+                        // Max Data Venda e Max Hora Venda hoje
+                        const evalMaxData = await send("Evaluate", docHandle, ["Date(Max([Data Venda]), 'DD/MM/YYYY')"]);
+                        const evalMaxHora = await send("Evaluate", docHandle, ["Max([Hora Venda])"]);
+
+                        // Procurar campo de Canal
+                        let canalField = fields.find(f => f.toLowerCase().includes('canal'));
+
+                        // Canais únicos e venda hoje
+                        let canaisHoje = [];
+                        if (canalField) {
+                            const cObj = await send("CreateSessionObject", docHandle, [{
+                                "qInfo": { "qType": "q_canais_hoje" },
                                 "qHyperCubeDef": {
-                                    "qDimensions": [{ "qDef": { "qFieldDefs": [fieldName] } }],
+                                    "qDimensions": [{ "qDef": { "qFieldDefs": [canalField] } }],
                                     "qMeasures": [
-                                        { "qDef": { "qDef": "Count(1)" } },
-                                        { "qDef": { "qDef": "Sum([Valor Mercadoria] - [Valor Desconto])" } }
+                                        { "qDef": { "qDef": "Sum({1<[Data Venda]={'$(=Date(Max([Data Venda]), \\'DD/MM/YYYY\\'))'}>} [Venda])" } },
+                                        { "qDef": { "qDef": "Sum({1<[Data Venda]={'$(=Date(Max([Data Venda]), \\'DD/MM/YYYY\\'))'}>} [Quantidade])" } }
                                     ],
-                                    "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 100, "qWidth": 3 }]
+                                    "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 50, "qWidth": 3 }],
+                                    "qSuppressZero": false
                                 }
                             }]);
-                            const lay = await send("GetLayout", obj.result.qReturn.qHandle, []);
-                            return (lay.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => ({
-                                val: r[0].qText,
-                                count: r[1].qNum,
-                                totalVenda: r[2].qNum !== 'NaN' && typeof r[2].qNum === 'number' ? r[2].qNum : 0
+                            const lObj = await send("GetLayout", cObj.result.qReturn.qHandle, []);
+                            canaisHoje = (lObj.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => ({
+                                canal: r[0].qText,
+                                venda: r[1].qNum !== 'NaN' && typeof r[1].qNum === 'number' ? r[1].qNum : 0,
+                                qtd: r[2].qNum !== 'NaN' && typeof r[2].qNum === 'number' ? r[2].qNum : 0
                             }));
                         }
 
-                        const tiposVenda = await getDistinct("Tipo Venda");
-                        const tiposVendaRed = await getDistinct("Tipo Venda Reduzido");
-                        const vendaDigital = await getDistinct("Venda Digital?");
-                        const minMaxData = await send("Evaluate", docHandle, ["Min([Data Venda]) & ' até ' & Max([Data Venda])"]);
-
-                        // Horas de hoje com venda
+                        // Horas únicas com venda hoje
                         const hObj = await send("CreateSessionObject", docHandle, [{
                             "qInfo": { "qType": "q_horas_hoje" },
                             "qHyperCubeDef": {
                                 "qDimensions": [{ "qDef": { "qFieldDefs": ["Hora Venda"] } }],
                                 "qMeasures": [
-                                    { "qDef": { "qDef": "Sum({<[Data Venda]={'$(=Date(Max([Data Venda]), \\'DD/MM/YYYY\\'))'}>} [Valor Mercadoria] - [Valor Desconto])" } }
+                                    { "qDef": { "qDef": "Sum({1<[Data Venda]={'$(=Date(Max([Data Venda]), \\'DD/MM/YYYY\\'))'}>} [Venda])" } }
                                 ],
                                 "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 30, "qWidth": 2 }],
                                 "qSuppressZero": true
@@ -100,11 +97,11 @@ async def inspect():
 
                         ws.close();
                         resolve({
-                            measures,
-                            minMaxData: minMaxData.result.qReturn,
-                            tiposVenda,
-                            tiposVendaRed,
-                            vendaDigital,
+                            fields,
+                            maxData: evalMaxData.result.qReturn,
+                            maxHora: evalMaxHora.result.qReturn,
+                            canalField,
+                            canaisHoje,
                             horasHoje
                         });
                     } catch(e) {
@@ -133,25 +130,15 @@ async def inspect():
 
 if __name__ == '__main__':
     r = asyncio.run(inspect())
-    print("\n--- MASTER MEASURES ---")
-    for m in r.get('measures', []):
-        print(f"  📐 {m['title']}: {m['expr']}")
-
-    print(f"\n--- PERÍODO DE DADOS ---")
-    print(f"  MinMaxData: {r.get('minMaxData')}")
-
-    print("\n--- TIPO VENDA ---")
-    for t in r.get('tiposVenda', []):
-        print(f"  - {t['val']:30s} | Total: R$ {t['totalVenda']:12,.2f} | Count: {t['count']}")
-
-    print("\n--- TIPO VENDA REDUZIDO ---")
-    for t in r.get('tiposVendaRed', []):
-        print(f"  - {t['val']:30s} | Total: R$ {t['totalVenda']:12,.2f} | Count: {t['count']}")
-
-    print("\n--- VENDA DIGITAL? ---")
-    for t in r.get('vendaDigital', []):
-        print(f"  - {t['val']:30s} | Total: R$ {t['totalVenda']:12,.2f} | Count: {t['count']}")
-
-    print("\n--- HORAS HOJE COM VENDA ---")
+    print("\n--- APP ACOMPANHAMENTO VENDAS (QLIK CLOUD) ---")
+    print(f"MaxData: {r.get('maxData')} | MaxHora: {r.get('maxHora')}")
+    print(f"Campo de Canal: {r.get('canalField')}")
+    print(f"\nTodos os {len(r.get('fields', []))} campos:")
+    for f in sorted(r.get('fields', [])):
+        print(f"  - {f}")
+    print("\nCanais Hoje (15/09/2026):")
+    for c in r.get('canaisHoje', []):
+        print(f"  🛒 {c['canal']:25s}: R$ {c['venda']:12,.2f} ({c['qtd']} un)")
+    print("\nVendas por Hora Hoje:")
     for h in r.get('horasHoje', []):
         print(f"  ⏰ {h['hora']}h: R$ {h['venda']:12,.2f}")

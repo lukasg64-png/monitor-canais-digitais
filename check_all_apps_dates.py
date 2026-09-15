@@ -6,113 +6,132 @@ QLIK_CLOUD_HOST = "fsj.us.qlikcloud.com"
 STORAGE_STATE = r"c:\Users\lucas.alves6\OneDrive - Farmácias São João\Documentos\ANTIGRAVITI\Acompanhamento Categorias Digital\data\qlik_cloud_storage_state.json"
 
 APPS = [
-    {"name": "Vendas Análise - Analítico", "id": "dcfc3ede-5eab-407c-a9ce-12b546eb5bdf"},
-    {"name": "Acompanhamento Vendas", "id": "bd585cf0-316d-4173-aef1-81f9daa9125c"},
     {"name": "Indicadores de Vendas", "id": "dc8160b3-bafe-4040-a42e-4916ee9c463c"},
+    {"name": "Vendas Análise - Analítico", "id": "dcfc3ede-5eab-407c-a9ce-12b546eb5bdf"},
     {"name": "Vendas Análise - Comparativo", "id": "10fece07-9ab7-415c-89d6-e0a8c395aefe"},
-    {"name": "F10 - Resumo Produto", "id": "532f1821-c7b2-4028-b1b7-621bbbd7cb72"}
+    {"name": "Acompanhamento Vendas", "id": "bd585cf0-316d-4173-aef1-81f9daa9125c"}
 ]
 
-async def check_all():
+async def inspect():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(storage_state=STORAGE_STATE, ignore_https_errors=True)
         page = await context.new_page()
         await page.goto(f"https://{QLIK_CLOUD_HOST}/analytics/home", timeout=60000)
-        await page.wait_for_timeout(4000)
+        await page.wait_for_timeout(3000)
         
-        results = []
-        for app in APPS:
-            app_id = app['id']
-            app_name = app['name']
-            
-            raw_js = f"""async () => {{
-                const appId = "{app_id}";
-                const csrfRes = await fetch('/api/v1/csrf-token');
-                const csrfToken = csrfRes.headers.get('qlik-csrf-token');
-                const wsUrl = `wss://${{window.location.host}}/app/${{encodeURIComponent(appId)}}?qlik-csrf-token=${{csrfToken}}`;
+        raw_js = """async (apps) => {
+            const csrfRes = await fetch('/api/v1/csrf-token');
+            const csrfToken = csrfRes.headers.get('qlik-csrf-token');
 
-                return new Promise((resolve) => {{
+            async function queryApp(appInfo) {
+                const appId = appInfo.id;
+                const wsUrl = `wss://${window.location.host}/app/${encodeURIComponent(appId)}?qlik-csrf-token=${csrfToken}`;
+                return new Promise((resolve) => {
                     const ws = new WebSocket(wsUrl);
                     let msgId = 1;
-                    const pending = {{}};
-
-                    function send(method, handle, params) {{
-                        return new Promise((res, rej) => {{
+                    const pending = {};
+                    function send(method, handle, params) {
+                        return new Promise((res, rej) => {
                             const id = msgId++;
-                            pending[id] = {{ res, rej }};
-                            ws.send(JSON.stringify({{ "jsonrpc": "2.0", "id": id, "method": method, "handle": handle, "params": params }}));
-                        }});
-                    }}
-
-                    ws.onopen = async () => {{
-                        try {{
-                            const openRes = await send("OpenDoc", -1, [appId]);
-                            const docHandle = openRes.result.qReturn.qHandle;
-
-                            // Field list
-                            const flObj = await send("CreateSessionObject", docHandle, [{{
-                                "qInfo": {{ "qType": "FieldList" }},
-                                "qFieldListDef": {{ "qShowSystem": false, "qShowHidden": true }}
-                            }}]);
-                            const flHandle = flObj.result.qReturn.qHandle;
-                            const flLayout = await send("GetLayout", flHandle, []);
-                            const fields = (flLayout.result.qLayout.qFieldList.qItems || []).map(f => f.qName);
-
-                            // Eval max date
-                            let maxDate = null;
-                            for (const dateField of ['Data Venda', 'Data', 'Dt_Venda', 'DataHora', 'Dia']) {{
-                                if (fields.includes(dateField)) {{
-                                    const evalRes = await send("Evaluate", docHandle, [`Date(Max([${{dateField}}]), 'DD/MM/YYYY')`]);
-                                    maxDate = `${{dateField}}: ${{evalRes.result.qReturn}}`;
-                                    break;
-                                }}
-                            }}
-
-                            // Check hora
-                            let horaField = fields.find(f => ['Hora', 'Hora Venda', 'Hora_Venda', 'DataHora', 'HoraMinuto'].includes(f));
-
-                            ws.close();
-                            resolve({{ name: "{app_name}", id: appId, maxDate, horaField, fieldsCount: fields.length, fields }});
-                        }} catch(e) {{
-                            ws.close();
-                            resolve({{ name: "{app_name}", id: appId, error: String(e) }});
-                        }}
-                    }};
-
-                    ws.onmessage = (event) => {{
+                            pending[id] = { res, rej };
+                            ws.send(JSON.stringify({ "jsonrpc": "2.0", "id": id, "method": method, "handle": handle, "params": params }));
+                        });
+                    }
+                    ws.onmessage = (event) => {
                         const msg = JSON.parse(event.data);
-                        if (msg.id && pending[msg.id]) {{
-                            const {{ res, rej }} = pending[msg.id];
+                        if (msg.id && pending[msg.id]) {
+                            const { res, rej } = pending[msg.id];
                             delete pending[msg.id];
                             if (msg.error) rej(msg.error);
                             else res(msg);
-                        }}
-                    }};
+                        }
+                    };
+                    ws.onopen = async () => {
+                        try {
+                            const openRes = await send("OpenDoc", -1, [appId]);
+                            const docHandle = openRes.result.qReturn.qHandle;
 
-                    setTimeout(() => {{ ws.close(); resolve({{ name: "{app_name}", id: appId, error: 'timeout' }}); }}, 20000);
-                }});
-            }}"""
-            try:
-                res = await page.evaluate(raw_js)
-                results.append(res)
-            except Exception as e:
-                results.append({"name": app_name, "id": app_id, "error": str(e)})
+                            const flObj = await send("CreateSessionObject", docHandle, [{
+                                "qInfo": { "qType": "FieldList" },
+                                "qFieldListDef": { "qShowSystem": false, "qShowHidden": false }
+                            }]);
+                            const flLay = await send("GetLayout", flObj.result.qReturn.qHandle, []);
+                            const fields = (flLay.result.qLayout.qFieldList.qItems || []).map(f => f.qName);
 
+                            // Find date, hour, canal fields
+                            const dateFields = fields.filter(f => /data/i.test(f));
+                            const hourFields = fields.filter(f => /hora/i.test(f));
+                            const canalFields = fields.filter(f => /canal|tipo.*venda/i.test(f));
+
+                            let maxDate = null;
+                            if (dateFields.length > 0) {
+                                try {
+                                    const evalD = await send("Evaluate", docHandle, [`Date(Max([${dateFields[0]}]), 'DD/MM/YYYY')`]);
+                                    maxDate = evalD.result.qReturn;
+                                } catch(e){}
+                            }
+
+                            // Distinct values of canal fields
+                            let canalValues = {};
+                            for (const cf of canalFields) {
+                                try {
+                                    const cObj = await send("CreateSessionObject", docHandle, [{
+                                        "qInfo": { "qType": "c_" + cf },
+                                        "qHyperCubeDef": {
+                                            "qDimensions": [{ "qDef": { "qFieldDefs": [cf] } }],
+                                            "qMeasures": [{ "qDef": { "qDef": "Count(1)" } }],
+                                            "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 30, "qWidth": 2 }]
+                                        }
+                                    }]);
+                                    const cLay = await send("GetLayout", cObj.result.qReturn.qHandle, []);
+                                    canalValues[cf] = (cLay.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r[0].qText);
+                                } catch(e){}
+                            }
+
+                            ws.close();
+                            resolve({
+                                name: appInfo.name,
+                                id: appId,
+                                fieldsCount: fields.length,
+                                dateFields,
+                                hourFields,
+                                maxDate,
+                                canalFields,
+                                canalValues
+                            });
+                        } catch(e) {
+                            ws.close();
+                            resolve({ name: appInfo.name, id: appId, error: String(e) });
+                        }
+                    };
+                    setTimeout(() => { ws.close(); resolve({ name: appInfo.name, id: appId, error: 'timeout' }); }, 20000);
+                });
+            }
+
+            const results = [];
+            for (const a of apps) {
+                results.push(await queryApp(a));
+            }
+            return results;
+        }"""
+
+        res = await page.evaluate(raw_js, APPS)
         await browser.close()
-        return results
+        return res
 
 if __name__ == '__main__':
-    res = asyncio.run(check_all())
-    print("\n--- RESUMO DE TODOS OS APPS NO QLIK CLOUD ---")
-    for r in res:
-        print(f"\nApp: {r.get('name')} (ID: {r.get('id')})")
+    results = asyncio.run(inspect())
+    for r in results:
+        print(f"\n==========================================")
+        print(f"APP: {r.get('name')} ({r.get('id')})")
         if 'error' in r:
-            print(f"  ❌ Erro: {r.get('error')}")
-        else:
-            print(f"  📅 MaxDate: {r.get('maxDate')}")
-            print(f"  ⏰ HoraField: {r.get('horaField')}")
-            print(f"  📊 Total Campos: {r.get('fieldsCount')}")
-            # Campos de interesse
-            interesting = [f for f in r.get('fields', []) if any(k in f.lower() for k in ['canal', 'hora', 'minuto', 'tempo', 'online', 'ecommerce'])]
-            print(f"  🔍 Campos Relevantes: {interesting}")
+            print(f"  ❌ Error: {r['error']}")
+            continue
+        print(f"  MaxDate ({r.get('dateFields', [''])[0]}): {r.get('maxDate')}")
+        print(f"  Campos Data: {r.get('dateFields')}")
+        print(f"  Campos Hora: {r.get('hourFields')}")
+        print(f"  Campos Canal/Tipo Venda: {r.get('canalFields')}")
+        print(f"  Valores dos Canais:")
+        for cf, vals in r.get('canalValues', {}).items():
+            print(f"    - {cf}: {vals}")
