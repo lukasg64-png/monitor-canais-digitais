@@ -12,12 +12,12 @@ echo ======================================================================
 echo INICIANDO ATUALIZACAO - MONITOR ONLINE CANAIS DIGITAIS
 echo ======================================================================
 
-echo [1/3] Sincronizando com Qlik Sense Enterprise via WebSocket...
+echo [1/3] Sincronizando com Qlik Cloud SaaS via WebSocket...
 python -u extract_intraday_qlik.py >> "%LOG%" 2>&1
 if errorlevel 1 goto :erro
 
 echo.
-echo [2/3] Processando Inteligencia Intraday (Metas Excel, Curva e Detratores)...
+echo [2/3] Processando Inteligencia Intraday (Metas Excel, Curva, Detratores e Figital)...
 python -u process_intraday_analytics.py >> "%LOG%" 2>&1
 if errorlevel 1 goto :erro
 
@@ -26,7 +26,7 @@ echo [3/3] Publicando no GitHub Pages (Online para Diretoria)...
 git add index.html data/*.json data/*.js data/fechamentos/*.json *.py >nul 2>&1
 git diff --staged --quiet
 if errorlevel 1 (
-    git commit -m "Auto-sync Qlik Sense Intraday (%date% %time%)" >> "%LOG%" 2>&1
+    git commit -m "Auto-sync Qlik Cloud SaaS Intraday com Figital (%date% %time%)" >> "%LOG%" 2>&1
     git push github main --quiet >> "%LOG%" 2>&1
     git push github HEAD:gh-pages --quiet >> "%LOG%" 2>&1
     echo Atualizacoes enviadas para o GitHub Pages com sucesso!
