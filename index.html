@@ -6743,7 +6743,7 @@
           const h = Math.floor(atrasoMin / 60);
           const mn = atrasoMin % 60;
           const tempoStr = h > 0 ? `${h}h${mn}m` : `${mn}min`;
-          corteEl.innerText = `⚠️ CORTE: ${meta.corte_hora || '16:53'} (Há ${tempoStr} • Conecte VPN FSJ)`;
+          corteEl.innerText = `⚠️ CORTE: ${meta.corte_hora || '13:50'} (Há ${tempoStr})`;
           if (corteEl.parentElement) {
             corteEl.parentElement.style.borderColor = 'rgba(255, 149, 0, 0.6)';
             corteEl.parentElement.style.background = 'rgba(255, 149, 0, 0.15)';
@@ -7465,7 +7465,7 @@
             daemonEl.innerText = '🔄 SINCRONIZANDO COM QLIK...';
             daemonEl.style.color = '#0071e3';
           } else if (s.last_status && s.last_status.includes('Erro')) {
-            daemonEl.innerText = '🔴 ERRO QLIK (CONECTE VPN FSJ)';
+            daemonEl.innerText = '🔴 ERRO QLIK CLOUD';
             daemonEl.style.color = '#ff3b30';
           } else {
             const h = s.last_sync ? s.last_sync.substring(11, 16) : 'OK';
