@@ -8012,7 +8012,22 @@
             },
             tooltip: {
               callbacks: {
-                label: (ctx) => `${ctx.dataset.label}: ${fmtBRL(ctx.raw)}`
+                label: (ctx) => {
+                  const idx = ctx.dataIndex;
+                  const item = curveData[idx];
+                  if (item && item.is_current && item.is_hora_parcial) {
+                    if (ctx.datasetIndex === 0) {
+                      const mins = item.minutos_decorridos || 30;
+                      const proj = item.projecao_hora_fechada ? item.projecao_hora_fechada[ch] : ctx.raw;
+                      return `${ctx.dataset.label}: ${fmtBRL(ctx.raw)} (Parcial ${mins}m) • Proj. Fechamento: ${fmtBRL(proj)}`;
+                    } else if (ctx.datasetIndex === 1) {
+                      const metaProp = item.meta_proporcional_hora ? item.meta_proporcional_hora[ch] : ctx.raw;
+                      const pacing = item.pacing_proporcional_hora_pct ? item.pacing_proporcional_hora_pct[ch] : 100;
+                      return `${ctx.dataset.label}: ${fmtBRL(ctx.raw)} (Meta prop.: ${fmtBRL(metaProp)} | Ritmo: ${pacing.toFixed(1)}%)`;
+                    }
+                  }
+                  return `${ctx.dataset.label}: ${fmtBRL(ctx.raw)}`;
+                }
               }
             },
             metaMilestoneLine: { isAccumChart: false, isTopChart: true }
@@ -8381,15 +8396,33 @@
 
       tbody.innerHTML = curve.map(d => {
         let status = '<span style="color: var(--apple-green-text); font-weight: 600;">Realizado</span>';
-        if (d.is_current) status = '<span style="color: var(--apple-blue); font-weight: 700;">🟢 Hora Atual</span>';
-        else if (d.is_future) status = '<span style="color: var(--text-quaternary);">A Realizar</span>';
+        let metaCell = fmtBRL(d.meta_esperada_hora[ch]);
+        let vendaCell = d.is_future ? '-' : fmtBRL(d.venda_hoje[ch]);
+
+        if (d.is_current) {
+          const mins = d.minutos_decorridos || 30;
+          const isParcial = (d.is_hora_parcial !== false && mins < 55);
+          if (isParcial) {
+            status = `<span style="color: #0071e3; font-weight: 700; background: rgba(0,113,227,0.1); padding: 2px 7px; border-radius: 5px;" title="Hora ainda aberta: ${mins} minutos transcorridos">🟡 Aberta (${mins}m)</span>`;
+            const pacingHora = (d.pacing_proporcional_hora_pct && d.pacing_proporcional_hora_pct[ch]) ? d.pacing_proporcional_hora_pct[ch] : 100;
+            const metaProp = (d.meta_proporcional_hora && d.meta_proporcional_hora[ch]) ? d.meta_proporcional_hora[ch] : (d.meta_esperada_hora[ch] * (mins/60));
+            const pacingColor = pacingHora >= 100 ? 'var(--apple-green-text)' : 'var(--apple-orange-text)';
+            metaCell = `<div>${fmtBRL(d.meta_esperada_hora[ch])}</div><div style="font-size: 11px; color: ${pacingColor}; font-weight: 600;" title="Meta esperada para os ${mins} minutos transcorridos">Prop: ${fmtBRL(metaProp)} (${pacingHora.toFixed(0)}%)</div>`;
+            const projHora = (d.projecao_hora_fechada && d.projecao_hora_fechada[ch]) ? d.projecao_hora_fechada[ch] : d.venda_hoje[ch];
+            vendaCell = `<div>${fmtBRL(d.venda_hoje[ch])}</div><div style="font-size: 11px; color: var(--text-tertiary);" title="Projeção linear para 60 min cheios">Proj: ${fmtBRL(projHora)}</div>`;
+          } else {
+            status = '<span style="color: var(--apple-blue); font-weight: 700;">🟢 Hora Atual</span>';
+          }
+        } else if (d.is_future) {
+          status = '<span style="color: var(--text-quaternary);">A Realizar</span>';
+        }
 
         return `
           <tr>
             <td style="font-weight: 700; font-family: var(--font-mono);">${d.hora}</td>
             <td class="num-col" style="color: var(--apple-orange-text);">${(d.weight_pct[ch] || 0).toFixed(1).replace('.', ',')}%</td>
-            <td class="num-col">${fmtBRL(d.meta_esperada_hora[ch])}</td>
-            <td class="num-col" style="font-weight: 700;">${d.is_future ? '-' : fmtBRL(d.venda_hoje[ch])}</td>
+            <td class="num-col">${metaCell}</td>
+            <td class="num-col" style="font-weight: 700;">${vendaCell}</td>
             <td class="num-col" style="color: var(--text-tertiary);">${fmtBRL(d.venda_ontem[ch])}</td>
             <td class="num-col" style="color: var(--text-tertiary);">${fmtBRL(d.venda_d7[ch])}</td>
             <td class="num-col" style="color: var(--apple-blue); font-weight: 700;">${d.is_future ? '-' : fmtBRL(d.accum_hoje[ch])}</td>

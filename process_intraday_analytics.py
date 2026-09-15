@@ -1559,11 +1559,13 @@ def process_analytics():
     max_minute = get_minute_of_day(max_hora_str)
     curr_hour = max_minute // 60
     curr_min = max_minute % 60
+    # Fração de minutos decorridos da hora atual (ex: 20 min = 0.333, 50 min = 0.833)
+    frac_curr_hour = min(1.0, max(0.0, curr_min / 60.0))
     elapsed_hours = max(0.1, max_minute / 60.0)
     remaining_hours = max(0.01, 24.0 - elapsed_hours)
 
     print(f"Horário de corte: {max_data_hora} ({max_minute} min = {curr_hour:02d}:{curr_min:02d}) [{dow_nome}]")
-    print(f"Horas decorridas: {elapsed_hours:.2f}h | Horas restantes: {remaining_hours:.2f}h")
+    print(f"Horas decorridas: {elapsed_hours:.2f}h (Fração da hora {curr_hour:02d}h: {frac_curr_hour*100:.1f}%) | Horas restantes: {remaining_hours:.2f}h")
 
     metas = load_metas(dia_hoje)
     metas_excel = metas
@@ -1595,7 +1597,7 @@ def process_analytics():
         c = norm_canal(r[0])
         if not c:
             continue
-        m = get_minute_of_day(r[1])
+        h_row = int(r[1]) if (isinstance(r[1], int) or str(r[1]).isdigit()) else (get_minute_of_day(r[1]) // 60)
         val = float(r[2] or 0)
         qtd = float(r[3] or 0)
         ontem_full[c] += val
@@ -1608,7 +1610,8 @@ def process_analytics():
             ontem_qtd_full["Total"] += qtd
         ontem_qtd_full["TotalComFigital"] += qtd
 
-        if m <= max_minute:
+        # Horas fechadas anteriores somam 100%; hora atual soma a fração de minutos decorridos
+        if h_row < curr_hour:
             ontem_cut[c] += val
             if c != "Figital":
                 ontem_cut["Total"] += val
@@ -1618,6 +1621,18 @@ def process_analytics():
             if c != "Figital":
                 ontem_qtd_cut["Total"] += qtd
             ontem_qtd_cut["TotalComFigital"] += qtd
+        elif h_row == curr_hour:
+            val_part = val * frac_curr_hour
+            qtd_part = qtd * frac_curr_hour
+            ontem_cut[c] += val_part
+            if c != "Figital":
+                ontem_cut["Total"] += val_part
+            ontem_cut["TotalComFigital"] += val_part
+
+            ontem_qtd_cut[c] += qtd_part
+            if c != "Figital":
+                ontem_qtd_cut["Total"] += qtd_part
+            ontem_qtd_cut["TotalComFigital"] += qtd_part
 
     d7_cut = defaultdict(float)
     d7_full = defaultdict(float)
@@ -1627,7 +1642,7 @@ def process_analytics():
         c = norm_canal(r[0])
         if not c:
             continue
-        m = get_minute_of_day(r[1])
+        h_row = int(r[1]) if (isinstance(r[1], int) or str(r[1]).isdigit()) else (get_minute_of_day(r[1]) // 60)
         val = float(r[2] or 0)
         qtd = float(r[3] or 0)
         d7_full[c] += val
@@ -1640,7 +1655,8 @@ def process_analytics():
             d7_qtd_full["Total"] += qtd
         d7_qtd_full["TotalComFigital"] += qtd
 
-        if m <= max_minute:
+        # Horas fechadas anteriores somam 100%; hora atual soma a fração de minutos decorridos
+        if h_row < curr_hour:
             d7_cut[c] += val
             if c != "Figital":
                 d7_cut["Total"] += val
@@ -1650,6 +1666,18 @@ def process_analytics():
             if c != "Figital":
                 d7_qtd_cut["Total"] += qtd
             d7_qtd_cut["TotalComFigital"] += qtd
+        elif h_row == curr_hour:
+            val_part = val * frac_curr_hour
+            qtd_part = qtd * frac_curr_hour
+            d7_cut[c] += val_part
+            if c != "Figital":
+                d7_cut["Total"] += val_part
+            d7_cut["TotalComFigital"] += val_part
+
+            d7_qtd_cut[c] += qtd_part
+            if c != "Figital":
+                d7_qtd_cut["Total"] += qtd_part
+            d7_qtd_cut["TotalComFigital"] += qtd_part
 
     # 2. Histórico dos últimos 7 dias completos (TOTALMENTE DINÂMICO PARA QUALQUER DIA)
     ano_mes_ref = f"{dt_ref.year}-{dt_ref.month:02d}"
@@ -1768,47 +1796,92 @@ def process_analytics():
     accum_ontem = defaultdict(float)
     accum_proj_base = defaultdict(float)
 
+    # Pré-computa os pesos w_h de todas as 24 horas para uso na interpolação
+    all_w_h = {}
     peso_horario_nobre = 0.0
     for h in range(24):
-        w_h = {}
+        all_w_h[h] = {}
         for ch in CHANNELS_ALL:
             tot_d7 = d7_full[ch] if d7_full[ch] > 0 else 1.0
             tot_ont = ontem_full[ch] if ontem_full[ch] > 0 else 1.0
             w_d7_h = hourly_d7[h][ch] / tot_d7
             w_ont_h = hourly_ontem[h][ch] / tot_ont
-            w_h[ch] = 0.70 * w_d7_h + 0.30 * w_ont_h if (w_d7_h > 0 or w_ont_h > 0) else (1.0 / 24.0)
-
+            all_w_h[h][ch] = 0.70 * w_d7_h + 0.30 * w_ont_h if (w_d7_h > 0 or w_ont_h > 0) else (1.0 / 24.0)
         if h in [18, 19, 20, 21]:
-            peso_horario_nobre += w_h["Total"]
+            peso_horario_nobre += all_w_h[h]["Total"]
+
+    for h in range(24):
+        w_h = all_w_h[h]
+        is_past = (h < curr_hour)
+        is_current = (h == curr_hour)
+        is_future = (h > curr_hour)
 
         row_h = {
             "hora": f"{h:02d}:00",
             "hora_num": h,
-            "is_past": h < curr_hour,
-            "is_current": h == curr_hour,
-            "is_future": h > curr_hour,
+            "is_past": is_past,
+            "is_current": is_current,
+            "is_future": is_future,
+            "minutos_decorridos": curr_min if is_current else (60 if is_past else 0),
+            "fracao_hora": round(frac_curr_hour, 3) if is_current else (1.0 if is_past else 0.0),
+            "is_hora_parcial": is_current and (curr_min < 55),
             "weight_pct": {ch: round(w_h[ch] * 100, 2) for ch in CHANNELS_ALL},
             "venda_hoje": {ch: round(hourly_hoje[h][ch], 2) for ch in CHANNELS_ALL},
             "venda_ontem": {ch: round(hourly_ontem[h][ch], 2) for ch in CHANNELS_ALL},
             "venda_d7": {ch: round(hourly_d7[h][ch], 2) for ch in CHANNELS_ALL},
-            "meta_esperada_hora": {ch: round(metas.get(ch, 0.0) * w_h[ch], 2) for ch in CHANNELS_ALL}
+            "meta_esperada_hora": {ch: round(metas.get(ch, 0.0) * w_h[ch], 2) for ch in CHANNELS_ALL},
+            "meta_proporcional_hora": {
+                ch: round(metas.get(ch, 0.0) * w_h[ch] * (frac_curr_hour if is_current else 1.0), 2)
+                for ch in CHANNELS_ALL
+            },
+            "pacing_proporcional_hora_pct": {
+                ch: round(
+                    (hourly_hoje[h][ch] / (metas.get(ch, 0.0) * w_h[ch] * (frac_curr_hour if is_current else 1.0)) * 100.0),
+                    1
+                ) if (metas.get(ch, 0.0) * w_h[ch] * (frac_curr_hour if is_current else 1.0)) > 0 else 100.0
+                for ch in CHANNELS_ALL
+            },
+            "projecao_hora_fechada": {
+                ch: round(
+                    (hourly_hoje[h][ch] / frac_curr_hour),
+                    2
+                ) if (is_current and frac_curr_hour > 0.05) else hourly_hoje[h][ch]
+                for ch in CHANNELS_ALL
+            }
         }
 
         for ch in CHANNELS_ALL:
             accum_d7[ch] += hourly_d7[h][ch]
             accum_ontem[ch] += hourly_ontem[h][ch]
-            accum_meta_exp[ch] += metas.get(ch, 0.0) * w_h[ch]
-            if h <= curr_hour:
+            if is_past:
+                accum_meta_exp[ch] += metas.get(ch, 0.0) * w_h[ch]
+                accum_hoje[ch] += hourly_hoje[h][ch]
+                accum_proj_base[ch] = accum_hoje[ch]
+            elif is_current:
+                # Hora atual: meta proporcional ao tempo transcorrido (evita falso deficit)
+                accum_meta_exp[ch] += metas.get(ch, 0.0) * w_h[ch] * frac_curr_hour
                 accum_hoje[ch] += hourly_hoje[h][ch]
                 accum_proj_base[ch] = accum_hoje[ch]
             else:
+                # Horas futuras
+                accum_meta_exp[ch] += metas.get(ch, 0.0) * w_h[ch]
                 m_exp_ch = metas.get(ch, 0.0) * curve_weights_cut[ch]
                 pacing_atual = (hoje_cut[ch] / m_exp_ch) if m_exp_ch > 0 else 1.0
                 pacing_atual = max(0.2, min(3.0, pacing_atual))
-                if ch == "Figital":
-                    accum_proj_base[ch] += hourly_ontem[h][ch]
+                
+                # Se for a primeira hora futura logo após a hora aberta, projeta também o restante da hora atual
+                if h == curr_hour + 1:
+                    if ch == "Figital":
+                        restante_aberto = hourly_ontem[curr_hour][ch] * (1.0 - frac_curr_hour)
+                        accum_proj_base[ch] += restante_aberto + hourly_ontem[h][ch]
+                    else:
+                        restante_aberto = metas.get(ch, 0.0) * all_w_h[curr_hour][ch] * (1.0 - frac_curr_hour) * pacing_atual
+                        accum_proj_base[ch] += restante_aberto + (metas.get(ch, 0.0) * w_h[ch] * pacing_atual)
                 else:
-                    accum_proj_base[ch] += metas.get(ch, 0.0) * w_h[ch] * pacing_atual
+                    if ch == "Figital":
+                        accum_proj_base[ch] += hourly_ontem[h][ch]
+                    else:
+                        accum_proj_base[ch] += metas.get(ch, 0.0) * w_h[ch] * pacing_atual
 
         row_h["accum_hoje"] = {ch: round(accum_hoje[ch], 2) for ch in CHANNELS_ALL}
         row_h["accum_d7"] = {ch: round(accum_d7[ch], 2) for ch in CHANNELS_ALL}
