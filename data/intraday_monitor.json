@@ -19,7 +19,7 @@
       "MKP",
       "Figital"
     ],
-    "gerado_em": "2026-09-15 18:20:53"
+    "gerado_em": "2026-09-15 18:51:30"
   },
   "kpis": {
     "Total": {
@@ -261991,7 +261991,7 @@
       "projecao_hora_fechada": {
         "Total": 4114.14,
         "TotalComFigital": 4114.14,
-        "APP": 1567.5,
+        "APP": 1567.5000000000002,
         "Site": 238.67000000000002,
         "MKP": 2307.9700000000003,
         "Figital": 0.0
@@ -262105,7 +262105,7 @@
       "projecao_hora_fechada": {
         "Total": 1726.8099999999997,
         "TotalComFigital": 1726.8099999999997,
-        "APP": 154.79000000000002,
+        "APP": 154.79,
         "Site": 90.72,
         "MKP": 1481.2999999999997,
         "Figital": 0.0
@@ -262217,11 +262217,11 @@
         "Figital": 100.0
       },
       "projecao_hora_fechada": {
-        "Total": 355.56,
-        "TotalComFigital": 355.56,
-        "APP": 73.23,
+        "Total": 355.56000000000006,
+        "TotalComFigital": 355.56000000000006,
+        "APP": 73.22999999999999,
         "Site": 0.0,
-        "MKP": 282.33,
+        "MKP": 282.33000000000004,
         "Figital": 0.0
       },
       "accum_hoje": {
@@ -262335,7 +262335,7 @@
         "TotalComFigital": 632.27,
         "APP": 440.59000000000003,
         "Site": 139.13,
-        "MKP": 52.550000000000004,
+        "MKP": 52.55,
         "Figital": 0.0
       },
       "accum_hoje": {
@@ -262559,9 +262559,9 @@
         "Figital": 100.0
       },
       "projecao_hora_fechada": {
-        "Total": 229.65,
-        "TotalComFigital": 229.65,
-        "APP": 123.96000000000001,
+        "Total": 229.64999999999998,
+        "TotalComFigital": 229.64999999999998,
+        "APP": 123.96,
         "Site": 105.69,
         "MKP": 0.0,
         "Figital": 0.0
@@ -262673,9 +262673,9 @@
         "Figital": 100.0
       },
       "projecao_hora_fechada": {
-        "Total": 4599.869999999999,
-        "TotalComFigital": 4599.869999999999,
-        "APP": 3022.1299999999997,
+        "Total": 4599.87,
+        "TotalComFigital": 4599.87,
+        "APP": 3022.13,
         "Site": 946.03,
         "MKP": 631.71,
         "Figital": 0.0
@@ -262791,7 +262791,7 @@
         "TotalComFigital": 62700.590000000004,
         "APP": 28617.420000000006,
         "Site": 11095.27,
-        "MKP": 12382.650000000003,
+        "MKP": 12382.650000000001,
         "Figital": 10605.25
       },
       "accum_hoje": {
@@ -262903,8 +262903,8 @@
       "projecao_hora_fechada": {
         "Total": 87598.95999999999,
         "TotalComFigital": 106013.84,
-        "APP": 50011.139999999985,
-        "Site": 16043.46,
+        "APP": 50011.13999999999,
+        "Site": 16043.460000000001,
         "MKP": 21544.360000000004,
         "Figital": 18414.879999999997
       },
@@ -263019,8 +263019,8 @@
         "TotalComFigital": 157201.12999999998,
         "APP": 79590.02999999997,
         "Site": 22488.83,
-        "MKP": 30371.089999999997,
-        "Figital": 24751.18
+        "MKP": 30371.089999999993,
+        "Figital": 24751.179999999997
       },
       "accum_hoje": {
         "Total": 284276.44,
@@ -263129,12 +263129,12 @@
         "Figital": 100.0
       },
       "projecao_hora_fechada": {
-        "Total": 109778.81,
-        "TotalComFigital": 161604.49,
-        "APP": 65278.06999999999,
-        "Site": 19404.99,
-        "MKP": 25095.750000000004,
-        "Figital": 51825.68000000001
+        "Total": 109778.80999999997,
+        "TotalComFigital": 161604.48999999996,
+        "APP": 65278.069999999985,
+        "Site": 19404.989999999998,
+        "MKP": 25095.75,
+        "Figital": 51825.68
       },
       "accum_hoje": {
         "Total": 394055.25,
@@ -263243,11 +263243,11 @@
         "Figital": 100.0
       },
       "projecao_hora_fechada": {
-        "Total": 124289.55999999995,
+        "Total": 124289.55999999994,
         "TotalComFigital": 144531.81999999995,
-        "APP": 67578.21999999996,
-        "Site": 19316.620000000003,
-        "MKP": 37394.719999999994,
+        "APP": 67578.21999999997,
+        "Site": 19316.62,
+        "MKP": 37394.71999999998,
         "Figital": 20242.260000000002
       },
       "accum_hoje": {
@@ -263361,8 +263361,8 @@
         "TotalComFigital": 174471.57999999996,
         "APP": 63272.359999999986,
         "Site": 19012.760000000002,
-        "MKP": 38008.799999999974,
-        "Figital": 54177.66000000001
+        "MKP": 38008.79999999997,
+        "Figital": 54177.659999999996
       },
       "accum_hoje": {
         "Total": 638638.73,
@@ -263586,11 +263586,11 @@
       },
       "projecao_hora_fechada": {
         "Total": 149917.70999999988,
-        "TotalComFigital": 180947.65999999986,
+        "TotalComFigital": 180947.6599999999,
         "APP": 84875.13999999996,
-        "Site": 26898.079999999994,
+        "Site": 26898.08,
         "MKP": 38144.48999999996,
-        "Figital": 31029.949999999997
+        "Figital": 31029.95
       },
       "accum_hoje": {
         "Total": 915768.87,
@@ -263704,7 +263704,7 @@
         "APP": 80336.58999999997,
         "Site": 25973.25,
         "MKP": 33261.44999999999,
-        "Figital": 43585.43
+        "Figital": 43585.42999999999
       },
       "accum_hoje": {
         "Total": 1055340.16,
@@ -263813,11 +263813,11 @@
         "Figital": 100.0
       },
       "projecao_hora_fechada": {
-        "Total": 143521.56999999995,
+        "Total": 143521.56999999992,
         "TotalComFigital": 208113.11999999994,
-        "APP": 75338.41999999997,
-        "Site": 31421.420000000002,
-        "MKP": 36761.72999999998,
+        "APP": 75338.41999999995,
+        "Site": 31421.41999999999,
+        "MKP": 36761.729999999974,
         "Figital": 64591.55
       },
       "accum_hoje": {
@@ -264715,7 +264715,7 @@
       "dia_semana": "Segunda-feira",
       "ano_mes": "2026-09",
       "timestamp_congelamento": "14/09/2026 23:59:59",
-      "gerado_em": "15/09/2026 18:20:53"
+      "gerado_em": "15/09/2026 18:51:27"
     },
     "scorecard_canais": {
       "Total": {
@@ -264813,7 +264813,7 @@
         "sku_id": "10046653",
         "nome": "MOUNJARO 5MG 4CAN APLIC LILLY",
         "vda_ontem": 334382.55,
-        "vda_d7": 129989.39000000003,
+        "vda_d7": 129989.39000000001,
         "gap_rs": 204393.16,
         "gap_pct": 157.2,
         "saldo": 56442.0,
@@ -264830,7 +264830,7 @@
       {
         "sku_id": "10046652",
         "nome": "MOUNJARO 2,5MG 4CAN APLIC LILLY",
-        "vda_ontem": 217721.88000000003,
+        "vda_ontem": 217721.88000000006,
         "vda_d7": 96251.62000000001,
         "gap_rs": 121470.26,
         "gap_pct": 126.2,
@@ -264867,7 +264867,7 @@
         "sku_id": "10053130",
         "nome": "OZIVY 1MG 1CAN 3ML EMS",
         "vda_ontem": 51843.75,
-        "vda_d7": 22352.58,
+        "vda_d7": 22352.579999999998,
         "gap_rs": 29491.17,
         "gap_pct": 131.9,
         "saldo": 95453.0,
@@ -264884,7 +264884,7 @@
       {
         "sku_id": "10053816",
         "nome": "SEMAVY 1MG 1CAN 3ML HYPERA PHARMA",
-        "vda_ontem": 19072.06,
+        "vda_ontem": 19072.059999999998,
         "vda_d7": 3795.0,
         "gap_rs": 15277.06,
         "gap_pct": 402.6,
@@ -264902,7 +264902,7 @@
       {
         "sku_id": "10053171",
         "nome": "OZIVY 0,25MG+0,5MG 1CAN 1,5ML EMS",
-        "vda_ontem": 15896.729999999998,
+        "vda_ontem": 15896.73,
         "vda_d7": 1952.2299999999996,
         "gap_rs": 13944.5,
         "gap_pct": 714.3,
@@ -265011,7 +265011,7 @@
         "sku_id": "10049094",
         "nome": "NUSTENDI 180MG/10MG 30CP DAIICHI",
         "vda_ontem": 3534.8599999999997,
-        "vda_d7": 412.04,
+        "vda_d7": 412.03999999999996,
         "gap_rs": 3122.82,
         "gap_pct": 757.9,
         "saldo": 13716.0,
@@ -265046,7 +265046,7 @@
       {
         "sku_id": "10034467",
         "nome": "SLINDA 4MG 72CP+12PLACEBOS EXELTIS",
-        "vda_ontem": 3083.8099999999995,
+        "vda_ontem": 3083.81,
         "vda_d7": 226.49,
         "gap_rs": 2857.32,
         "gap_pct": 1261.6,
@@ -265065,7 +265065,7 @@
         "sku_id": "999697",
         "nome": "EVRA 0,6+6MG 3ADES GEDEON RICHTER",
         "vda_ontem": 3865.2299999999996,
-        "vda_d7": 1271.1100000000001,
+        "vda_d7": 1271.11,
         "gap_rs": 2594.12,
         "gap_pct": 204.1,
         "saldo": 22370.0,
@@ -265082,7 +265082,7 @@
       {
         "sku_id": "10102163",
         "nome": "QLAIRA 26CP+2CP REV BIOLAB",
-        "vda_ontem": 3671.96,
+        "vda_ontem": 3671.9599999999996,
         "vda_d7": 1228.38,
         "gap_rs": 2443.58,
         "gap_pct": 198.9,
@@ -265136,8 +265136,8 @@
       {
         "sku_id": "10041262",
         "nome": "FR HUGGIES ROUPINHA ACOLCHOADA MAX XG 80",
-        "vda_ontem": 6731.660000000001,
-        "vda_d7": 4524.54,
+        "vda_ontem": 6731.66,
+        "vda_d7": 4524.540000000001,
         "gap_rs": 2207.12,
         "gap_pct": 48.8,
         "saldo": 6956.0,
@@ -265208,7 +265208,7 @@
       {
         "sku_id": "10028201",
         "nome": "ADDERA D3 14000UI 4CAP MOLE HYPERMARCAS",
-        "vda_ontem": 1883.9799999999998,
+        "vda_ontem": 1883.9800000000002,
         "vda_d7": 157.76,
         "gap_rs": 1726.22,
         "gap_pct": 1094.2,
@@ -265317,7 +265317,7 @@
         "sku_id": "10106679",
         "nome": "NICORETTE 4MG 30GOMAS ICE MENTA",
         "vda_ontem": 4373.04,
-        "vda_d7": 2932.4000000000005,
+        "vda_d7": 2932.4,
         "gap_rs": 1440.64,
         "gap_pct": 49.1,
         "saldo": 31017.0,
@@ -265352,8 +265352,8 @@
       {
         "sku_id": "10028639",
         "nome": "ABS S LIVRE ADAPT SUAVE C/ABAS 32UN",
-        "vda_ontem": 1625.5199999999998,
-        "vda_d7": 283.05,
+        "vda_ontem": 1625.5200000000002,
+        "vda_d7": 283.04999999999995,
         "gap_rs": 1342.47,
         "gap_pct": 474.3,
         "saldo": 186798.0,
@@ -265370,7 +265370,7 @@
       {
         "sku_id": "10033461",
         "nome": "FR BABYSEC ULTRA HIPER G 60UN",
-        "vda_ontem": 3086.55,
+        "vda_ontem": 3086.5499999999997,
         "vda_d7": 1758.4000000000003,
         "gap_rs": 1328.15,
         "gap_pct": 75.5,
@@ -265424,7 +265424,7 @@
       {
         "sku_id": "10052534",
         "nome": "FR PAMPERS CONFORTSEC BAG MAX XG 86UN",
-        "vda_ontem": 5510.11,
+        "vda_ontem": 5510.110000000001,
         "vda_d7": 4261.16,
         "gap_rs": 1248.95,
         "gap_pct": 29.3,
@@ -265460,7 +265460,7 @@
       {
         "sku_id": "10011933",
         "nome": "ROSUVASTATINA 20MG 30CP REV GEN ALTHAIA",
-        "vda_ontem": 2135.09,
+        "vda_ontem": 2135.0899999999997,
         "vda_d7": 949.13,
         "gap_rs": 1185.96,
         "gap_pct": 125.0,
@@ -265496,7 +265496,7 @@
       {
         "sku_id": "10039431",
         "nome": "MASC CAB DOVE 250G 10EM1 BOND INTENSE REPAIR",
-        "vda_ontem": 1338.2499999999998,
+        "vda_ontem": 1338.25,
         "vda_d7": 155.48,
         "gap_rs": 1182.77,
         "gap_pct": 760.7,
@@ -265514,7 +265514,7 @@
       {
         "sku_id": "10033463",
         "nome": "FR BABYSEC ULTRA HIPER XG 56UN",
-        "vda_ontem": 4300.509999999999,
+        "vda_ontem": 4300.51,
         "vda_d7": 3122.7999999999997,
         "gap_rs": 1177.71,
         "gap_pct": 37.7,
@@ -265532,8 +265532,8 @@
       {
         "sku_id": "100001748",
         "nome": "ELANI CICLO 3MG+30MCG 3X21CP REV LIBBS",
-        "vda_ontem": 3955.500000000001,
-        "vda_d7": 2818.3199999999997,
+        "vda_ontem": 3955.4999999999995,
+        "vda_d7": 2818.32,
         "gap_rs": 1137.18,
         "gap_pct": 40.3,
         "saldo": 17848.0,
@@ -265550,7 +265550,7 @@
       {
         "sku_id": "10005184",
         "nome": "FR PAMPERS PREMIUM CARE BAG XXG 56UN",
-        "vda_ontem": 2281.2000000000003,
+        "vda_ontem": 2281.2,
         "vda_d7": 1169.82,
         "gap_rs": 1111.38,
         "gap_pct": 95.0,
@@ -265586,7 +265586,7 @@
       {
         "sku_id": "10042969",
         "nome": "FR PAMPERS CONFORTSEC JUMBO XXG 112UN",
-        "vda_ontem": 18970.53,
+        "vda_ontem": 18970.530000000002,
         "vda_d7": 17880.980000000003,
         "gap_rs": 1089.55,
         "gap_pct": 6.1,
@@ -265604,8 +265604,8 @@
       {
         "sku_id": "10038004",
         "nome": "KIT GILLETTE VENUS SUAVE P/ AREA INTIMA 4UN +2UN",
-        "vda_ontem": 1436.1299999999999,
-        "vda_d7": 352.84000000000003,
+        "vda_ontem": 1436.13,
+        "vda_d7": 352.84,
         "gap_rs": 1083.29,
         "gap_pct": 307.0,
         "saldo": 11481.0,
@@ -265622,7 +265622,7 @@
       {
         "sku_id": "100022384",
         "nome": "OLEO CORP PAIXAO 100ML TENTADORA",
-        "vda_ontem": 1493.5099999999998,
+        "vda_ontem": 1493.51,
         "vda_d7": 417.71,
         "gap_rs": 1075.8,
         "gap_pct": 257.5,
@@ -265658,8 +265658,8 @@
       {
         "sku_id": "88",
         "nome": "AEROLIN 200DOSES SPRAY GSK",
-        "vda_ontem": 2393.4499999999994,
-        "vda_d7": 1333.9899999999996,
+        "vda_ontem": 2393.45,
+        "vda_d7": 1333.99,
         "gap_rs": 1059.46,
         "gap_pct": 79.4,
         "saldo": 4176408.0,
@@ -265676,7 +265676,7 @@
       {
         "sku_id": "10031250",
         "nome": "DES DOVE AERO 250ML MEN+CARE INVISIBLE DRY LV+ PG-",
-        "vda_ontem": 1087.1999999999998,
+        "vda_ontem": 1087.2,
         "vda_d7": 36.9,
         "gap_rs": 1050.3,
         "gap_pct": 2846.3,
@@ -265712,7 +265712,7 @@
       {
         "sku_id": "100022257",
         "nome": "ADDERA D3 10.000UI 10CAP MOLE FARMASA",
-        "vda_ontem": 1036.2,
+        "vda_ontem": 1036.1999999999998,
         "vda_d7": 0.0,
         "gap_rs": 1036.2,
         "gap_pct": 100.0,
@@ -265802,7 +265802,7 @@
       {
         "sku_id": "100014287",
         "nome": "EZETIMIBA 10MG 30CP REV GEN ALTHAIA",
-        "vda_ontem": 1950.6800000000003,
+        "vda_ontem": 1950.6799999999998,
         "vda_d7": 994.9100000000001,
         "gap_rs": 955.77,
         "gap_pct": 96.1,
@@ -265856,8 +265856,8 @@
       {
         "sku_id": "1003513",
         "nome": "RENU PLUS S/FRICCAO 355ML+120ML BAUSCH",
-        "vda_ontem": 2109.3399999999997,
-        "vda_d7": 1194.9,
+        "vda_ontem": 2109.34,
+        "vda_d7": 1194.8999999999999,
         "gap_rs": 914.44,
         "gap_pct": 76.5,
         "saldo": 35433.0,
@@ -265893,7 +265893,7 @@
         "sku_id": "10046180",
         "nome": "ADEFORTE TURBO 1AMP ADEFORTE+1AMP BIOTINA 3ML GROSS",
         "vda_ontem": 1465.63,
-        "vda_d7": 554.4200000000001,
+        "vda_d7": 554.42,
         "gap_rs": 911.21,
         "gap_pct": 164.4,
         "saldo": 141458.0,
@@ -266018,8 +266018,8 @@
       {
         "sku_id": "10033758",
         "nome": "FR HUGGIES MAXIMA PROT HIPER XG 56UN",
-        "vda_ontem": 2021.15,
-        "vda_d7": 1195.6,
+        "vda_ontem": 2021.1499999999999,
+        "vda_d7": 1195.6000000000001,
         "gap_rs": 825.55,
         "gap_pct": 69.0,
         "saldo": 277007.0,
@@ -266036,7 +266036,7 @@
       {
         "sku_id": "10021937",
         "nome": "PLENANCE EZE 20MG+10MG 30CAP LIBBS",
-        "vda_ontem": 966.37,
+        "vda_ontem": 966.3700000000001,
         "vda_d7": 143.28,
         "gap_rs": 823.09,
         "gap_pct": 574.5,
@@ -266054,7 +266054,7 @@
       {
         "sku_id": "10006791",
         "nome": "ROSUVASTATINA 10MG 30CP GEN CIMED",
-        "vda_ontem": 1478.5699999999997,
+        "vda_ontem": 1478.57,
         "vda_d7": 658.55,
         "gap_rs": 820.02,
         "gap_pct": 124.5,
@@ -266090,8 +266090,8 @@
       {
         "sku_id": "10052533",
         "nome": "FR PAMPERS CONFORTSEC BAG MAX XXG 82UN",
-        "vda_ontem": 4289.410000000001,
-        "vda_d7": 3471.750000000001,
+        "vda_ontem": 4289.41,
+        "vda_d7": 3471.75,
         "gap_rs": 817.66,
         "gap_pct": 23.6,
         "saldo": 281748.0,
@@ -266109,7 +266109,7 @@
         "sku_id": "10028539",
         "nome": "PREGABALINA 75MG 30CAP GEN ALTHAIA (C1)",
         "vda_ontem": 1590.35,
-        "vda_d7": 775.1200000000001,
+        "vda_d7": 775.12,
         "gap_rs": 815.23,
         "gap_pct": 105.2,
         "saldo": 218351.0,
@@ -266163,7 +266163,7 @@
         "sku_id": "10039428",
         "nome": "OLEO CAB DOVE 100ML BIFASICO BOND INTENSE REPAIR",
         "vda_ontem": 886.8699999999999,
-        "vda_d7": 87.66999999999999,
+        "vda_d7": 87.67000000000002,
         "gap_rs": 799.2,
         "gap_pct": 911.6,
         "saldo": 37822.0,
@@ -266180,7 +266180,7 @@
       {
         "sku_id": "100022385",
         "nome": "ENTRESTO 50MG 28CP REV NOVARTIS",
-        "vda_ontem": 798.31,
+        "vda_ontem": 798.3100000000001,
         "vda_d7": 0.0,
         "gap_rs": 798.31,
         "gap_pct": 100.0,
@@ -266198,7 +266198,7 @@
       {
         "sku_id": "100008780",
         "nome": "OESTROGEL PUMP 0,6MG/G GEL 80G BESINS",
-        "vda_ontem": 1100.87,
+        "vda_ontem": 1100.8700000000001,
         "vda_d7": 310.35,
         "gap_rs": 790.52,
         "gap_pct": 254.7,
@@ -266252,7 +266252,7 @@
       {
         "sku_id": "10028081",
         "nome": "ACIDO URSODESOXICOLICO 300MG 30CP GEN RANBAX",
-        "vda_ontem": 780.14,
+        "vda_ontem": 780.1400000000001,
         "vda_d7": 0.0,
         "gap_rs": 780.14,
         "gap_pct": 100.0,
@@ -266270,7 +266270,7 @@
       {
         "sku_id": "10044775",
         "nome": "CR CAB TRESEMME 400G BLINDAGEM ANTIUMIDADE",
-        "vda_ontem": 878.4200000000001,
+        "vda_ontem": 878.4199999999998,
         "vda_d7": 107.1,
         "gap_rs": 771.32,
         "gap_pct": 720.2,
@@ -266306,7 +266306,7 @@
       {
         "sku_id": "10045966",
         "nome": "FR HUGGIES MAXIMA PROT GIGA M 172UN",
-        "vda_ontem": 1337.6600000000003,
+        "vda_ontem": 1337.66,
         "vda_d7": 569.6,
         "gap_rs": 768.06,
         "gap_pct": 134.8,
@@ -266324,7 +266324,7 @@
       {
         "sku_id": "10052121",
         "nome": "WHEY PROTEIN CONCENTRADO DUX 900G CHOCOLATE BRANCO",
-        "vda_ontem": 1704.1,
+        "vda_ontem": 1704.1000000000001,
         "vda_d7": 942.0999999999999,
         "gap_rs": 762.0,
         "gap_pct": 80.9,
@@ -266342,7 +266342,7 @@
       {
         "sku_id": "10031305",
         "nome": "AMMY 4MG 28CP REV MANTECORP",
-        "vda_ontem": 1276.5200000000002,
+        "vda_ontem": 1276.52,
         "vda_d7": 532.32,
         "gap_rs": 744.2,
         "gap_pct": 139.8,
@@ -266360,7 +266360,7 @@
       {
         "sku_id": "10019275",
         "nome": "CARGA GILLETTE FUSION5 4UN",
-        "vda_ontem": 883.29,
+        "vda_ontem": 883.2900000000001,
         "vda_d7": 139.8,
         "gap_rs": 743.49,
         "gap_pct": 531.8,
@@ -266396,7 +266396,7 @@
       {
         "sku_id": "100007645",
         "nome": "YAZ 3+0,02MG 24+4CP REV BAYER",
-        "vda_ontem": 830.4499999999999,
+        "vda_ontem": 830.4499999999998,
         "vda_d7": 91.87,
         "gap_rs": 738.58,
         "gap_pct": 803.9,
@@ -266432,7 +266432,7 @@
       {
         "sku_id": "11347",
         "nome": "UTROGESTAN 100MG 30CAP BESINS",
-        "vda_ontem": 1388.42,
+        "vda_ontem": 1388.4199999999998,
         "vda_d7": 658.77,
         "gap_rs": 729.65,
         "gap_pct": 110.8,
@@ -266504,7 +266504,7 @@
       {
         "sku_id": "5309",
         "nome": "EXPEC 120ML XPE LEGRAND",
-        "vda_ontem": 2957.7399999999993,
+        "vda_ontem": 2957.74,
         "vda_d7": 2258.66,
         "gap_rs": 699.08,
         "gap_pct": 31.0,
@@ -266594,7 +266594,7 @@
       {
         "sku_id": "10040742",
         "nome": "TERZA 250MG/5ML 100ML EUROFARMA",
-        "vda_ontem": 992.6699999999998,
+        "vda_ontem": 992.67,
         "vda_d7": 326.76,
         "gap_rs": 665.91,
         "gap_pct": 203.8,
@@ -266614,8 +266614,8 @@
       {
         "sku_id": "10001064",
         "nome": "FR PAMPERS CONFORTSEC BAG SUPER XXG 56UN",
-        "vda_ontem": 8985.61,
-        "vda_d7": 48122.30999999997,
+        "vda_ontem": 8985.609999999999,
+        "vda_d7": 48122.31,
         "gap_rs": -39136.7,
         "gap_pct": -81.3,
         "saldo": 602767.0,
@@ -266633,7 +266633,7 @@
         "sku_id": "10001144",
         "nome": "FR PAMPERS CONFORTSEC BAG SUPER XG 58UN",
         "vda_ontem": 5740.4800000000005,
-        "vda_d7": 32108.00999999999,
+        "vda_d7": 32108.01000000001,
         "gap_rs": -26367.53,
         "gap_pct": -82.1,
         "saldo": 325861.0,
@@ -266650,8 +266650,8 @@
       {
         "sku_id": "10001143",
         "nome": "FR PAMPERS CONFORTSEC BAG SUPER G 60UN",
-        "vda_ontem": 4919.900000000001,
-        "vda_d7": 27938.669999999995,
+        "vda_ontem": 4919.9,
+        "vda_d7": 27938.670000000006,
         "gap_rs": -23018.77,
         "gap_pct": -82.4,
         "saldo": 512316.0,
@@ -266669,7 +266669,7 @@
         "sku_id": "10025717",
         "nome": "FR PAMPERS CONFORTSEC BAG SUPER P 72UN",
         "vda_ontem": 2974.5,
-        "vda_d7": 13949.75,
+        "vda_d7": 13949.750000000004,
         "gap_rs": -10975.25,
         "gap_pct": -78.7,
         "saldo": 99406.0,
@@ -266686,7 +266686,7 @@
       {
         "sku_id": "10001142",
         "nome": "FR PAMPERS CONFORTSEC BAG SUPER M 70UN",
-        "vda_ontem": 3051.23,
+        "vda_ontem": 3051.2300000000005,
         "vda_d7": 13636.430000000002,
         "gap_rs": -10585.2,
         "gap_pct": -77.6,
@@ -266722,8 +266722,8 @@
       {
         "sku_id": "10038743",
         "nome": "FR PAMPERS CONFORTSEC BAG SUPER XXXG 44U",
-        "vda_ontem": 3801.750000000001,
-        "vda_d7": 12656.979999999998,
+        "vda_ontem": 3801.75,
+        "vda_d7": 12656.980000000001,
         "gap_rs": -8855.23,
         "gap_pct": -70.0,
         "saldo": 48084.0,
@@ -266741,7 +266741,7 @@
         "sku_id": "100015081",
         "nome": "LEITE NINHO 800G 1+PREBIO LATA",
         "vda_ontem": 13518.170000000002,
-        "vda_d7": 21642.03999999999,
+        "vda_d7": 21642.04,
         "gap_rs": -8123.87,
         "gap_pct": -37.5,
         "saldo": 2108122.0,
@@ -266758,8 +266758,8 @@
       {
         "sku_id": "100005474",
         "nome": "NANLAC COMFOR 3 800G NESTLE",
-        "vda_ontem": 2552.81,
-        "vda_d7": 10131.149999999998,
+        "vda_ontem": 2552.8099999999995,
+        "vda_d7": 10131.15,
         "gap_rs": -7578.34,
         "gap_pct": -74.8,
         "saldo": 250654.0,
@@ -266776,8 +266776,8 @@
       {
         "sku_id": "10106687",
         "nome": "APTANUTRI PREMIUM 3 800G DANONE",
-        "vda_ontem": 7327.499999999999,
-        "vda_d7": 11665.230000000001,
+        "vda_ontem": 7327.5,
+        "vda_d7": 11665.23,
         "gap_rs": -4337.73,
         "gap_pct": -37.2,
         "saldo": 211328.0,
@@ -266848,8 +266848,8 @@
       {
         "sku_id": "100000855",
         "nome": "OLEO CAB ELSEVE 100ML EXTRAORDINARIO",
-        "vda_ontem": 1707.8200000000004,
-        "vda_d7": 5557.63,
+        "vda_ontem": 1707.8200000000002,
+        "vda_d7": 5557.630000000001,
         "gap_rs": -3849.81,
         "gap_pct": -69.3,
         "saldo": 120560.0,
@@ -266866,7 +266866,7 @@
       {
         "sku_id": "10020597",
         "nome": "TOALHAS UMED PAMPERS LV4 PG3 ALOE VERA",
-        "vda_ontem": 907.19,
+        "vda_ontem": 907.1899999999999,
         "vda_d7": 4738.619999999999,
         "gap_rs": -3831.43,
         "gap_pct": -80.9,
@@ -266885,7 +266885,7 @@
         "sku_id": "10005027",
         "nome": "LEITE NINHO 800G 3+ PREBIO",
         "vda_ontem": 487.78000000000003,
-        "vda_d7": 3710.4,
+        "vda_d7": 3710.399999999999,
         "gap_rs": -3222.62,
         "gap_pct": -86.9,
         "saldo": 71022.0,
@@ -266902,8 +266902,8 @@
       {
         "sku_id": "10041257",
         "nome": "FR HUGGIES MAXIMA PROT MAX XXG 80UN",
-        "vda_ontem": 12781.640000000001,
-        "vda_d7": 15685.670000000004,
+        "vda_ontem": 12781.640000000003,
+        "vda_d7": 15685.670000000002,
         "gap_rs": -2904.03,
         "gap_pct": -18.5,
         "saldo": 117215.0,
@@ -266939,7 +266939,7 @@
         "sku_id": "10026927",
         "nome": "NANLAC SUPREME 800G NESTLE",
         "vda_ontem": 320.37,
-        "vda_d7": 2943.4,
+        "vda_d7": 2943.3999999999996,
         "gap_rs": -2623.03,
         "gap_pct": -89.1,
         "saldo": 32486.0,
@@ -266975,7 +266975,7 @@
         "sku_id": "10049216",
         "nome": "NESTONUTRI 800G NOVO NESTLE",
         "vda_ontem": 749.88,
-        "vda_d7": 3280.1,
+        "vda_d7": 3280.1000000000004,
         "gap_rs": -2530.22,
         "gap_pct": -77.1,
         "saldo": 137392.0,
@@ -266993,7 +266993,7 @@
         "sku_id": "100014938",
         "nome": "LA ROCHE CICAPLAST BAUME B5 20ML",
         "vda_ontem": 885.1999999999999,
-        "vda_d7": 3272.7999999999993,
+        "vda_d7": 3272.7999999999997,
         "gap_rs": -2387.6,
         "gap_pct": -73.0,
         "saldo": 100843.0,
@@ -267010,8 +267010,8 @@
       {
         "sku_id": "10023627",
         "nome": "APTANUTRI PROFUTURA 3 800G DANONE",
-        "vda_ontem": 2305.85,
-        "vda_d7": 4692.499999999999,
+        "vda_ontem": 2305.8499999999995,
+        "vda_d7": 4692.5,
         "gap_rs": -2386.65,
         "gap_pct": -50.9,
         "saldo": 33065.0,
@@ -267047,7 +267047,7 @@
         "sku_id": "100010322",
         "nome": "NESLAC COMFOR 800GR NESTLE",
         "vda_ontem": 429.28999999999996,
-        "vda_d7": 2681.93,
+        "vda_d7": 2681.9300000000003,
         "gap_rs": -2252.64,
         "gap_pct": -84.0,
         "saldo": 32371.0,
@@ -267100,7 +267100,7 @@
       {
         "sku_id": "10037164",
         "nome": "TOALHAS UMED PAMPERS CUIDADO DE BEBE C/TAMPA LV4 PG3",
-        "vda_ontem": 1171.62,
+        "vda_ontem": 1171.6200000000001,
         "vda_d7": 3231.41,
         "gap_rs": -2059.79,
         "gap_pct": -63.7,
@@ -267136,7 +267136,7 @@
       {
         "sku_id": "10046025",
         "nome": "FR PAMPERS SUPERSEC G 60UN",
-        "vda_ontem": 2352.24,
+        "vda_ontem": 2352.2400000000002,
         "vda_d7": 4245.16,
         "gap_rs": -1892.92,
         "gap_pct": -44.6,
@@ -267155,7 +267155,7 @@
         "sku_id": "10005183",
         "nome": "FR PAMPERS PREMIUM CARE BAG XG 60UN",
         "vda_ontem": 1020.0,
-        "vda_d7": 2891.8900000000003,
+        "vda_d7": 2891.89,
         "gap_rs": -1871.89,
         "gap_pct": -64.7,
         "saldo": 5013.0,
@@ -267173,7 +267173,7 @@
         "sku_id": "10046024",
         "nome": "FR PAMPERS SUPERSEC XXG 50UN",
         "vda_ontem": 2397.89,
-        "vda_d7": 4242.839999999999,
+        "vda_d7": 4242.84,
         "gap_rs": -1844.95,
         "gap_pct": -43.5,
         "saldo": 40076.0,
@@ -267262,7 +267262,7 @@
       {
         "sku_id": "10046027",
         "nome": "FR PAMPERS SUPERSEC XG 56UN",
-        "vda_ontem": 4987.570000000001,
+        "vda_ontem": 4987.57,
         "vda_d7": 6477.449999999999,
         "gap_rs": -1489.88,
         "gap_pct": -23.0,
@@ -267317,7 +267317,7 @@
         "sku_id": "10001098",
         "nome": "TOALHAS UMED HUGGIES 192UN HIDRATACAO",
         "vda_ontem": 231.89000000000001,
-        "vda_d7": 1684.91,
+        "vda_d7": 1684.9099999999999,
         "gap_rs": -1453.02,
         "gap_pct": -86.2,
         "saldo": 65417.0,
@@ -267425,7 +267425,7 @@
         "sku_id": "100017442",
         "nome": "ACICLOVIR 200MG 30CP GEN CIMED",
         "vda_ontem": 908.6,
-        "vda_d7": 2047.68,
+        "vda_d7": 2047.6799999999998,
         "gap_rs": -1139.08,
         "gap_pct": -55.6,
         "saldo": 171922.0,
@@ -267478,7 +267478,7 @@
       {
         "sku_id": "10038744",
         "nome": "FR PAMPERS PREMIUM CARE BAG XXXG 52UN",
-        "vda_ontem": 735.2900000000001,
+        "vda_ontem": 735.29,
         "vda_d7": 1742.8500000000001,
         "gap_rs": -1007.56,
         "gap_pct": -57.8,
@@ -267587,7 +267587,7 @@
         "sku_id": "100001402",
         "nome": "SERVICO DOMICILIO",
         "vda_ontem": 13205.910000000022,
-        "vda_d7": 14130.490000000078,
+        "vda_d7": 14130.490000000027,
         "gap_rs": -924.58,
         "gap_pct": -6.5,
         "saldo": 0.0,
@@ -267622,8 +267622,8 @@
       {
         "sku_id": "10052536",
         "nome": "FR PAMPERS CONFORTSEC BAG MAX M 108UN",
-        "vda_ontem": 804.0899999999999,
-        "vda_d7": 1708.3899999999999,
+        "vda_ontem": 804.09,
+        "vda_d7": 1708.39,
         "gap_rs": -904.3,
         "gap_pct": -52.9,
         "saldo": 31853.0,
@@ -267658,8 +267658,8 @@
       {
         "sku_id": "100014678",
         "nome": "TADALAFILA 5MG 30CP REV GEN EMS",
-        "vda_ontem": 3826.9299999999994,
-        "vda_d7": 4717.86,
+        "vda_ontem": 3826.93,
+        "vda_d7": 4717.859999999999,
         "gap_rs": -890.93,
         "gap_pct": -18.9,
         "saldo": 826269.0,
@@ -267677,7 +267677,7 @@
         "sku_id": "10045950",
         "nome": "FR HUGGIES MAXIMA PROT GIGA XXG 112UN",
         "vda_ontem": 0.0,
-        "vda_d7": 889.8399999999999,
+        "vda_d7": 889.84,
         "gap_rs": -889.84,
         "gap_pct": -100.0,
         "saldo": 2438.0,
@@ -267713,7 +267713,7 @@
         "sku_id": "100019319",
         "nome": "APTAMIL PROFUTURA 2 800G DANONE",
         "vda_ontem": 0.0,
-        "vda_d7": 863.83,
+        "vda_d7": 863.8299999999999,
         "gap_rs": -863.83,
         "gap_pct": -100.0,
         "saldo": 13953.0,
@@ -267730,7 +267730,7 @@
       {
         "sku_id": "10041853",
         "nome": "FR PAMPERS PANTS PREMIUM CARE XXG 90UN",
-        "vda_ontem": 2097.7799999999997,
+        "vda_ontem": 2097.78,
         "vda_d7": 2947.25,
         "gap_rs": -849.47,
         "gap_pct": -28.8,
@@ -267748,8 +267748,8 @@
       {
         "sku_id": "100007100",
         "nome": "QUETIAPINA 25MG 30CP REV GEN EMS (C1)",
-        "vda_ontem": 453.0399999999999,
-        "vda_d7": 1301.66,
+        "vda_ontem": 453.04,
+        "vda_d7": 1301.6599999999999,
         "gap_rs": -848.62,
         "gap_pct": -65.2,
         "saldo": 132163.0,
@@ -267820,8 +267820,8 @@
       {
         "sku_id": "10004400",
         "nome": "DES REXONA AERO 150ML CLINICAL CLASSIC",
-        "vda_ontem": 1495.1200000000003,
-        "vda_d7": 2305.0999999999995,
+        "vda_ontem": 1495.1200000000001,
+        "vda_d7": 2305.1,
         "gap_rs": -809.98,
         "gap_pct": -35.1,
         "saldo": 318066.0,
@@ -267982,7 +267982,7 @@
       {
         "sku_id": "10052539",
         "nome": "FR PAMPERS PANTS AJUSTE TOTAL MAX XG 82U",
-        "vda_ontem": 3270.7700000000004,
+        "vda_ontem": 3270.77,
         "vda_d7": 4007.75,
         "gap_rs": -736.98,
         "gap_pct": -18.4,
@@ -268000,7 +268000,7 @@
       {
         "sku_id": "10040753",
         "nome": "LYBERDIA 30MG 30CAPS EMS (A3)",
-        "vda_ontem": 477.42999999999995,
+        "vda_ontem": 477.43,
         "vda_d7": 1211.9499999999998,
         "gap_rs": -734.52,
         "gap_pct": -60.6,
@@ -268018,8 +268018,8 @@
       {
         "sku_id": "10042659",
         "nome": "CR HID CREAMY CALMING",
-        "vda_ontem": 291.96000000000004,
-        "vda_d7": 1025.9799999999998,
+        "vda_ontem": 291.96,
+        "vda_d7": 1025.98,
         "gap_rs": -734.02,
         "gap_pct": -71.5,
         "saldo": 8643.0,
@@ -268055,7 +268055,7 @@
         "sku_id": "10006851",
         "nome": "SAB LIQ INF DOVE BABY 180ML GLICERINADO REFIL",
         "vda_ontem": 43.7,
-        "vda_d7": 769.5200000000001,
+        "vda_d7": 769.52,
         "gap_rs": -725.82,
         "gap_pct": -94.3,
         "saldo": 7954.0,
@@ -268090,8 +268090,8 @@
       {
         "sku_id": "10000127",
         "nome": "SH CLEAR 400ML 2X1 LV+PG- LIMPEZA DIARIA MEN",
-        "vda_ontem": 396.48999999999995,
-        "vda_d7": 1109.9299999999998,
+        "vda_ontem": 396.49,
+        "vda_d7": 1109.93,
         "gap_rs": -713.44,
         "gap_pct": -64.3,
         "saldo": 154428.0,
@@ -268127,7 +268127,7 @@
         "sku_id": "10004981",
         "nome": "GLYXAMBI 25+5MG 30CP REV BOEHRINGER",
         "vda_ontem": 1299.22,
-        "vda_d7": 1999.2,
+        "vda_d7": 1999.1999999999998,
         "gap_rs": -699.98,
         "gap_pct": -35.0,
         "saldo": 19702.0,
@@ -268145,7 +268145,7 @@
         "sku_id": "10028219",
         "nome": "MONITOR DE PRESSAO HC204 PULSO MULTILASER",
         "vda_ontem": 239.8,
-        "vda_d7": 935.15,
+        "vda_d7": 935.1499999999999,
         "gap_rs": -695.35,
         "gap_pct": -74.4,
         "saldo": 3198.0,
@@ -268162,8 +268162,8 @@
       {
         "sku_id": "10096399",
         "nome": "ALLEGRA PED SUSP 150ML SERIN DOSAD OPELLA",
-        "vda_ontem": 485.94,
-        "vda_d7": 1178.23,
+        "vda_ontem": 485.93999999999994,
+        "vda_d7": 1178.2299999999998,
         "gap_rs": -692.29,
         "gap_pct": -58.8,
         "saldo": 21806.0,
@@ -268234,7 +268234,7 @@
       {
         "sku_id": "10035973",
         "nome": "CIPROFIBRATO 100MG 30CP GEN CIMED",
-        "vda_ontem": 223.53000000000003,
+        "vda_ontem": 223.53,
         "vda_d7": 895.6199999999999,
         "gap_rs": -672.09,
         "gap_pct": -75.0,
@@ -268253,7 +268253,7 @@
         "sku_id": "10087475",
         "nome": "ALPRAZOLAM 2MG 30CP GEN EMS (B1)",
         "vda_ontem": 335.88,
-        "vda_d7": 1007.6399999999999,
+        "vda_d7": 1007.64,
         "gap_rs": -671.76,
         "gap_pct": -66.7,
         "saldo": 25736.0,
@@ -268324,7 +268324,7 @@
       {
         "sku_id": "10051292",
         "nome": "SH ELSEVE 400ML COLAGENO",
-        "vda_ontem": 258.97,
+        "vda_ontem": 258.96999999999997,
         "vda_d7": 867.45,
         "gap_rs": -608.48,
         "gap_pct": -70.1,
@@ -268561,7 +268561,7 @@
         "sku_id": "100001402",
         "nome": "SERVICO DOMICILIO",
         "vda_ontem": 13205.910000000022,
-        "vda_d7": 14130.490000000078,
+        "vda_d7": 14130.490000000027,
         "gap_rs": -924.58,
         "gap_pct": -6.5,
         "saldo": 0.0,
@@ -268813,7 +268813,7 @@
         "sku_id": "10053465",
         "nome": "MECOBALAMINA 1MG 90CP GEN ALTHAIA",
         "vda_ontem": 76.84,
-        "vda_d7": 638.57,
+        "vda_d7": 638.5699999999999,
         "gap_rs": -561.73,
         "gap_pct": -88.0,
         "saldo": 823.0,
@@ -268869,7 +268869,7 @@
         "sku_id": "100015081",
         "nome": "LEITE NINHO 800G 1+PREBIO LATA",
         "vda_ontem": 13518.170000000002,
-        "vda_d7": 21642.03999999999,
+        "vda_d7": 21642.04,
         "gap_rs": -8123.87,
         "gap_pct": -37.5,
         "saldo": 2108122.0,
@@ -268886,8 +268886,8 @@
       {
         "sku_id": "100005474",
         "nome": "NANLAC COMFOR 3 800G NESTLE",
-        "vda_ontem": 2552.81,
-        "vda_d7": 10131.149999999998,
+        "vda_ontem": 2552.8099999999995,
+        "vda_d7": 10131.15,
         "gap_rs": -7578.34,
         "gap_pct": -74.8,
         "saldo": 250654.0,
@@ -268904,8 +268904,8 @@
       {
         "sku_id": "10106687",
         "nome": "APTANUTRI PREMIUM 3 800G DANONE",
-        "vda_ontem": 7327.499999999999,
-        "vda_d7": 11665.230000000001,
+        "vda_ontem": 7327.5,
+        "vda_d7": 11665.23,
         "gap_rs": -4337.73,
         "gap_pct": -37.2,
         "saldo": 211328.0,
@@ -268922,8 +268922,8 @@
       {
         "sku_id": "100000855",
         "nome": "OLEO CAB ELSEVE 100ML EXTRAORDINARIO",
-        "vda_ontem": 1707.8200000000004,
-        "vda_d7": 5557.63,
+        "vda_ontem": 1707.8200000000002,
+        "vda_d7": 5557.630000000001,
         "gap_rs": -3849.81,
         "gap_pct": -69.3,
         "saldo": 120560.0,
@@ -268941,7 +268941,7 @@
         "sku_id": "10005027",
         "nome": "LEITE NINHO 800G 3+ PREBIO",
         "vda_ontem": 487.78000000000003,
-        "vda_d7": 3710.4,
+        "vda_d7": 3710.399999999999,
         "gap_rs": -3222.62,
         "gap_pct": -86.9,
         "saldo": 71022.0,
@@ -268959,7 +268959,7 @@
         "sku_id": "10026927",
         "nome": "NANLAC SUPREME 800G NESTLE",
         "vda_ontem": 320.37,
-        "vda_d7": 2943.4,
+        "vda_d7": 2943.3999999999996,
         "gap_rs": -2623.03,
         "gap_pct": -89.1,
         "saldo": 32486.0,
@@ -268977,7 +268977,7 @@
         "sku_id": "10049216",
         "nome": "NESTONUTRI 800G NOVO NESTLE",
         "vda_ontem": 749.88,
-        "vda_d7": 3280.1,
+        "vda_d7": 3280.1000000000004,
         "gap_rs": -2530.22,
         "gap_pct": -77.1,
         "saldo": 137392.0,
@@ -268994,8 +268994,8 @@
       {
         "sku_id": "10023627",
         "nome": "APTANUTRI PROFUTURA 3 800G DANONE",
-        "vda_ontem": 2305.85,
-        "vda_d7": 4692.499999999999,
+        "vda_ontem": 2305.8499999999995,
+        "vda_d7": 4692.5,
         "gap_rs": -2386.65,
         "gap_pct": -50.9,
         "saldo": 33065.0,
@@ -269013,7 +269013,7 @@
         "sku_id": "100010322",
         "nome": "NESLAC COMFOR 800GR NESTLE",
         "vda_ontem": 429.28999999999996,
-        "vda_d7": 2681.93,
+        "vda_d7": 2681.9300000000003,
         "gap_rs": -2252.64,
         "gap_pct": -84.0,
         "saldo": 32371.0,
@@ -269030,7 +269030,7 @@
       {
         "sku_id": "10046025",
         "nome": "FR PAMPERS SUPERSEC G 60UN",
-        "vda_ontem": 2352.24,
+        "vda_ontem": 2352.2400000000002,
         "vda_d7": 4245.16,
         "gap_rs": -1892.92,
         "gap_pct": -44.6,
@@ -269048,7 +269048,7 @@
       {
         "sku_id": "10046027",
         "nome": "FR PAMPERS SUPERSEC XG 56UN",
-        "vda_ontem": 4987.570000000001,
+        "vda_ontem": 4987.57,
         "vda_d7": 6477.449999999999,
         "gap_rs": -1489.88,
         "gap_pct": -23.0,
@@ -269085,7 +269085,7 @@
         "sku_id": "100017442",
         "nome": "ACICLOVIR 200MG 30CP GEN CIMED",
         "vda_ontem": 908.6,
-        "vda_d7": 2047.68,
+        "vda_d7": 2047.6799999999998,
         "gap_rs": -1139.08,
         "gap_pct": -55.6,
         "saldo": 171922.0,
@@ -269156,8 +269156,8 @@
       {
         "sku_id": "100014678",
         "nome": "TADALAFILA 5MG 30CP REV GEN EMS",
-        "vda_ontem": 3826.9299999999994,
-        "vda_d7": 4717.86,
+        "vda_ontem": 3826.93,
+        "vda_d7": 4717.859999999999,
         "gap_rs": -890.93,
         "gap_pct": -18.9,
         "saldo": 826269.0,
@@ -269175,7 +269175,7 @@
         "sku_id": "100019319",
         "nome": "APTAMIL PROFUTURA 2 800G DANONE",
         "vda_ontem": 0.0,
-        "vda_d7": 863.83,
+        "vda_d7": 863.8299999999999,
         "gap_rs": -863.83,
         "gap_pct": -100.0,
         "saldo": 13953.0,
@@ -269228,8 +269228,8 @@
       {
         "sku_id": "10004400",
         "nome": "DES REXONA AERO 150ML CLINICAL CLASSIC",
-        "vda_ontem": 1495.1200000000003,
-        "vda_d7": 2305.0999999999995,
+        "vda_ontem": 1495.1200000000001,
+        "vda_d7": 2305.1,
         "gap_rs": -809.98,
         "gap_pct": -35.1,
         "saldo": 318066.0,
@@ -428731,35 +428731,6 @@
           "acao_badge": "📉 Ação Comercial"
         },
         {
-          "nome": "GABAPENTINA 300MG 30CAP GEN PRATI (C1)",
-          "hoje": 93.27,
-          "d7_full": 373.08,
-          "d7_exp_corte": 224.49,
-          "gap_d7_rs": -131.22,
-          "gap_d7_pct": -58.5,
-          "ontem_full": 839.43,
-          "ontem_exp_corte": 524.12,
-          "gap_ontem_rs": -430.85,
-          "gap_ontem_pct": -82.2,
-          "status": "Neutro",
-          "sku_id": 100011764,
-          "curva_abc": "A",
-          "opportunity_score_rs": 0.0,
-          "prioridade_reprecificacao": "MONITORAR",
-          "saldo": 8193.0,
-          "un_por_loja": 6.51,
-          "status_estoque": "📉 Demanda Comercial (6.5 un/lj)",
-          "causa_tipo": "DEMANDA_COMERCIAL",
-          "precifica_monitorado": false,
-          "nosso_preco": null,
-          "menor_concorrente_preco": null,
-          "menor_concorrente_rede": null,
-          "spread_pct": null,
-          "preco_status": "SEM_MONITORAMENTO",
-          "acao_recomendada": "Ação Promocional / Destaque Home",
-          "acao_badge": "📉 Ação Comercial"
-        },
-        {
           "nome": "PREDNISOLONA 40MG 7CP GEN EUROFARMA",
           "hoje": 93.27,
           "d7_full": 373.08,
@@ -428785,6 +428756,35 @@
           "menor_concorrente_rede": "precopopular",
           "spread_pct": -3.9,
           "preco_status": "MAIS_BARATO",
+          "acao_recomendada": "Ação Promocional / Destaque Home",
+          "acao_badge": "📉 Ação Comercial"
+        },
+        {
+          "nome": "GABAPENTINA 300MG 30CAP GEN PRATI (C1)",
+          "hoje": 93.27,
+          "d7_full": 373.08,
+          "d7_exp_corte": 224.49,
+          "gap_d7_rs": -131.22,
+          "gap_d7_pct": -58.5,
+          "ontem_full": 839.43,
+          "ontem_exp_corte": 524.12,
+          "gap_ontem_rs": -430.85,
+          "gap_ontem_pct": -82.2,
+          "status": "Neutro",
+          "sku_id": 100011764,
+          "curva_abc": "A",
+          "opportunity_score_rs": 0.0,
+          "prioridade_reprecificacao": "MONITORAR",
+          "saldo": 8193.0,
+          "un_por_loja": 6.51,
+          "status_estoque": "📉 Demanda Comercial (6.5 un/lj)",
+          "causa_tipo": "DEMANDA_COMERCIAL",
+          "precifica_monitorado": false,
+          "nosso_preco": null,
+          "menor_concorrente_preco": null,
+          "menor_concorrente_rede": null,
+          "spread_pct": null,
+          "preco_status": "SEM_MONITORAMENTO",
           "acao_recomendada": "Ação Promocional / Destaque Home",
           "acao_badge": "📉 Ação Comercial"
         },
@@ -456149,7 +456149,7 @@
           "status": "Neutro",
           "sku_id": 100026831,
           "curva_abc": "C",
-          "opportunity_score_rs": 11.98,
+          "opportunity_score_rs": 11.99,
           "prioridade_reprecificacao": "MODERADA",
           "saldo": 82816.0,
           "un_por_loja": 65.78,
