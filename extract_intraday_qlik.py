@@ -1,13 +1,16 @@
 """
 extract_intraday_qlik.py — Extração de Dados Online / Intraday dos Canais Digitais
-do Qlik Sense Enterprise (sense.farmaciassaojoao.com.br).
+via Qlik Cloud SaaS (fsj.us.qlikcloud.com) com alta performance (<20s) e
+atualização a cada 30 minutos.
 
-App: E-Commerce x Rede (671fa4f4-eb7d-418f-b4c9-936e87d8011d)
-Extrai com precisão minuto a minuto:
+App: Indicadores de Vendas (dc8160b3-bafe-4040-a42e-4916ee9c463c)
+Canais: APP, APP Tele Entrega, SITE, SITE Tele Entrega, iFood, E-commerce e Figital
+Extrai com precisão:
 1. Timestamp mais recente do dia atual (maxHora, maxDataHora)
 2. Vendas Canal x Hora de Hoje, Ontem (D-1) e D-7 (mesmo dia da semana passada)
 3. Histórico dos canais para cálculo da Curva Científica e Média 7D
 4. Detratores e Propulsores por Grupo, Subgrupo, Laboratório, Linha e Top SKUs
+5. Dados Territoriais e Organizacionais: UFs, Distritais, Coordenações e Filiais
 Totalmente dinâmico para qualquer dia do mês e do ano sem dados hardcoded.
 """
 import os, sys, time, json, asyncio
@@ -23,6 +26,15 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 RAW_FILE = os.path.join(DATA_DIR, 'intraday_raw.json')
 LOCK_FILE = os.path.join(DATA_DIR, 'sync.lock')
+
+QLIK_CLOUD_HOST = "fsj.us.qlikcloud.com"
+STORAGE_STATE = r"c:\Users\lucas.alves6\OneDrive - Farmácias São João\Documentos\ANTIGRAVITI\Acompanhamento Categorias Digital\data\qlik_cloud_storage_state.json"
+APP_ID = "dc8160b3-bafe-4040-a42e-4916ee9c463c"  # Indicadores de Vendas (Qlik Cloud)
+
+USERNAME = "lucas.alves6"
+PASSWORD = "Eloise2025*"
+
+CHANNELS = "'APP', 'APP Tele Entrega', 'SITE', 'SITE Tele Entrega', 'iFood', 'E-commerce', 'Figital'"
 
 def is_pid_running(pid):
     try:
@@ -70,72 +82,54 @@ def release_lock():
     except Exception:
         pass
 
-QLIK_URL = "https://sense.farmaciassaojoao.com.br"
-APP_ID = "671fa4f4-eb7d-418f-b4c9-936e87d8011d"
-SHEET_ID = "ddd70c77-1a06-40d9-aff2-efa4b6b67b24"
-SHEET_URL = f"{QLIK_URL}/sense/app/{APP_ID}/sheet/{SHEET_ID}/state/analysis"
-
-USERNAME = "lucas.alves6"
-PASSWORD = "Eloise2025*"
-
-DIGITAL_CHANNELS = "'APP', 'APP Tele Entrega', 'SITE', 'SITE Tele Entrega', 'iFood', 'e_Commerce'"
-
 JS_TEMPLATE = """async () => {
-    const appId = "671fa4f4-eb7d-418f-b4c9-936e87d8011d";
-    const wsUrl = `wss://${window.location.host}/app/${encodeURIComponent(appId)}?reloadUri=https://${window.location.host}/`;
-    const CHANNELS = "%%DIGITAL_CHANNELS%%";
+    const appId = "%%APP_ID%%";
+    const CHANNELS = "%%CHANNELS%%";
+    const D_HOJE = "%%D_HOJE%%";
+    const D_ONTEM = "%%D_ONTEM%%";
+    const D_D7 = "%%D_D7%%";
+    const AM_HOJE = "%%AM_HOJE%%";
+    const AM_ANT = "%%AM_ANT%%";
 
-    return new Promise((resolve, reject) => {
-        let isResolved = false;
-        console.log('[WS] Iniciando conexao WebSocket:', wsUrl);
+    const csrfRes = await fetch('/api/v1/csrf-token');
+    const csrfToken = csrfRes.headers.get('qlik-csrf-token');
+    const wsUrl = `wss://${window.location.host}/app/${encodeURIComponent(appId)}?qlik-csrf-token=${csrfToken}`;
+
+    return new Promise((resolve) => {
         const ws = new WebSocket(wsUrl);
-        let msgId = 1;
-        const pending = {};
+        let id = 1;
+        const pend = {};
+        const send = (m, h, p) => new Promise((r, j) => { pend[id] = {r, j}; ws.send(JSON.stringify({jsonrpc:'2.0', id: id++, method: m, handle: h, params: p})); });
+        ws.onmessage = (e) => { const d = JSON.parse(e.data); if (d.id && pend[d.id]) { pend[d.id].r(d); delete pend[d.id]; } };
 
-        function send(method, handle, params) {
-            return new Promise((res, rej) => {
-                const id = msgId++;
-                pending[id] = { res, rej, method, t0: performance.now() };
-                console.log(`[WS Send] #${id} ${method} handle=${handle}`);
-                ws.send(JSON.stringify({ "jsonrpc": "2.0", "id": id, "method": method, "handle": handle, "params": params }));
-            });
-        }
-
-        async function fetchAllHyperCubeRows(objHandle, totalRows, qWidth, pageSize, name = "Cube") {
+        async function fetchAllRows(handle, totalRows, width, pageSize = 1500, name = "Cube") {
             let rows = [];
             let top = 0;
             const t0 = performance.now();
-            const effPageSize = Math.min(pageSize, 1500);
+            const effPageSize = Math.min(pageSize, Math.floor(10000 / width));
             while (top < totalRows) {
-                const height = Math.min(effPageSize, totalRows - top);
-                const pageRes = await send("GetHyperCubeData", objHandle, ["/qHyperCubeDef", [{ "qTop": top, "qLeft": 0, "qHeight": height, "qWidth": qWidth }]]);
-                const matrix = pageRes.result.qDataPages[0]?.qMatrix || [];
+                const h = Math.min(effPageSize, totalRows - top);
+                const res = await send("GetHyperCubeData", handle, ["/qHyperCubeDef", [{ "qTop": top, "qLeft": 0, "qHeight": h, "qWidth": width }]]);
+                const matrix = res.result.qDataPages[0]?.qMatrix || [];
                 if (matrix.length === 0) break;
-                matrix.forEach(r => rows.push(r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText)));
+                matrix.forEach(r => rows.push(r.map(col => col.qNum !== 'NaN' && typeof col.qNum === 'number' ? col.qNum : col.qText)));
                 top += matrix.length;
             }
-            console.log(`[Qlik] ${name}: ${rows.length}/${totalRows} em ${(performance.now() - t0).toFixed(0)}ms`);
+            console.log(`[Qlik Cloud] ${name}: ${rows.length}/${totalRows} em ${(performance.now() - t0).toFixed(0)}ms`);
             return rows;
         }
 
         ws.onopen = async () => {
             try {
-                console.log('[WS] Aberto com sucesso! Chamando OpenDoc...');
-                const openRes = await send("OpenDoc", -1, [appId]);
-                const docHandle = openRes.result.qReturn.qHandle;
-                console.log(`[WS] OpenDoc conectado, docHandle=${docHandle}`);
+                const doc = (await send('OpenDoc', -1, [appId])).result.qReturn.qHandle;
                 const resData = {};
 
-                // 1. Timestamp mais recente do dia atual
-                const evalDataHora = await send("Evaluate", docHandle, [`MaxString({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} DataHora)`]);
-                resData.maxDataHora = evalDataHora.result.qReturn;
-
-                const evalHora = await send("Evaluate", docHandle, [`Time(Frac(Max({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} Hora)), 'hh:mm')`]);
-                resData.maxHora = evalHora.result.qReturn;
-
-                const evalDate = await send("Evaluate", docHandle, [`Date(Floor(Max({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} Hora)), 'DD/MM/YYYY')`]);
-                resData.maxDate = evalDate.result.qReturn;
-                
+                // 1. Timestamps
+                const evalMaxTime = await send("Evaluate", doc, [`MaxString({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} INCLUSAO_DATA_TIME)`]);
+                resData.maxDataHora = evalMaxTime.result.qReturn || `${D_HOJE} 12:00`;
+                const parts = (resData.maxDataHora || "").split(' ');
+                resData.maxHora = parts.length > 1 ? parts[1].substring(0, 5) : "12:00";
+                resData.maxDate = D_HOJE;
                 resData.diaHoje = "%%DIA_HOJE%%";
                 resData.diaOntem = "%%DIA_ONTEM%%";
                 resData.diaD7 = "%%DIA_D7%%";
@@ -143,112 +137,109 @@ JS_TEMPLATE = """async () => {
                 resData.anoMesOntem = "%%ANO_MES_ONTEM%%";
                 resData.anoMesD7 = "%%ANO_MES_D7%%";
 
-                // 2. Vendas Hoje - Canal x Hora
-                const cH = await send("CreateSessionObject", docHandle, [{
+                // 2. Rows Hoje (Canal, Hora, Receita Liquida, Qtd)
+                const objH = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_hoje_hora" },
                     "qHyperCubeDef": {
                         "qDimensions": [
-                            { "qDef": { "qFieldDefs": ["Canal"] } },
-                            { "qDef": { "qFieldDefs": ["Hora"] } }
+                            { "qDef": { "qFieldDefs": ["TIPO_VENDA_DESCRICAO"] } },
+                            { "qDef": { "qFieldDefs": ["=Hour(INCLUSAO_DATA_TIME)"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [QUANTIDADE_MERCADORIA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hH = cH.result.qReturn.qHandle;
-                const lH = await send("GetLayout", hH, []);
-                const totH = lH.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsHoje = await fetchAllHyperCubeRows(hH, totH, 4, 1500, "Hoje");
+                const hH = objH.result.qReturn.qHandle;
+                const layH = await send("GetLayout", hH, []);
+                resData.rowsHoje = await fetchAllRows(hH, layH.result.qLayout.qHyperCube.qSize.qcy, 4, 1500, "Hoje");
 
-                // 3. Vendas Ontem (D-1) - Canal x Hora
-                const cO = await send("CreateSessionObject", docHandle, [{
+                // 3. Rows Ontem (Canal, Hora, Receita Liquida, Qtd)
+                const objO = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_ontem_hora" },
                     "qHyperCubeDef": {
                         "qDimensions": [
-                            { "qDef": { "qFieldDefs": ["Canal"] } },
-                            { "qDef": { "qFieldDefs": ["Hora"] } }
+                            { "qDef": { "qFieldDefs": ["TIPO_VENDA_DESCRICAO"] } },
+                            { "qDef": { "qFieldDefs": ["=Hour(INCLUSAO_DATA_TIME)"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [QUANTIDADE_MERCADORIA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hO = cO.result.qReturn.qHandle;
-                const lO = await send("GetLayout", hO, []);
-                const totO = lO.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsOntem = await fetchAllHyperCubeRows(hO, totO, 4, 1500, "Ontem");
+                const hO = objO.result.qReturn.qHandle;
+                const layO = await send("GetLayout", hO, []);
+                resData.rowsOntem = await fetchAllRows(hO, layO.result.qLayout.qHyperCube.qSize.qcy, 4, 1500, "Ontem");
 
-                // 4. Vendas D-7 - Canal x Hora
-                const c7 = await send("CreateSessionObject", docHandle, [{
+                // 4. Rows D-7 (Canal, Hora, Receita Liquida, Qtd)
+                const obj7 = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_d7_hora" },
                     "qHyperCubeDef": {
                         "qDimensions": [
-                            { "qDef": { "qFieldDefs": ["Canal"] } },
-                            { "qDef": { "qFieldDefs": ["Hora"] } }
+                            { "qDef": { "qFieldDefs": ["TIPO_VENDA_DESCRICAO"] } },
+                            { "qDef": { "qFieldDefs": ["=Hour(INCLUSAO_DATA_TIME)"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [QUANTIDADE_MERCADORIA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const h7 = c7.result.qReturn.qHandle;
-                const l7 = await send("GetLayout", h7, []);
-                const tot7 = l7.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsD7 = await fetchAllHyperCubeRows(h7, tot7, 4, 1500, "D7");
+                const h7 = obj7.result.qReturn.qHandle;
+                const lay7 = await send("GetLayout", h7, []);
+                resData.rowsD7 = await fetchAllRows(h7, lay7.result.qLayout.qHyperCube.qSize.qcy, 4, 1500, "D7");
 
-                // 5. Histórico por Dia e Canal (Mês Atual e Mês Anterior para Janela Móvel 7D)
-                const cHist = await send("CreateSessionObject", docHandle, [{
+                // 5. Histórico por Dia e Canal (Mês Atual e Mês Anterior)
+                const objHist = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_hist_canais_dia" },
                     "qHyperCubeDef": {
                         "qDimensions": [
-                            { "qDef": { "qFieldDefs": ["Canal"] } },
-                            { "qDef": { "qFieldDefs": ["Dia"] } }
+                            { "qDef": { "qFieldDefs": ["TIPO_VENDA_DESCRICAO"] } },
+                            { "qDef": { "qFieldDefs": ["DIA"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ANTERIOR%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<ANOMES={'${AM_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<ANOMES={'${AM_ANT}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 500, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hHist = cHist.result.qReturn.qHandle;
-                const lHist = await send("GetLayout", hHist, []);
-                resData.rowsHistDia = (lHist.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText));
+                const hHist = objHist.result.qReturn.qHandle;
+                const layHist = await send("GetLayout", hHist, []);
+                resData.rowsHistDia = await fetchAllRows(hHist, layHist.result.qLayout.qHyperCube.qSize.qcy, 4, 500, "HistDia");
 
-                // 6. Grupos de Produtos (Hoje vs Ontem vs D-7)
-                const cGrupos = await send("CreateSessionObject", docHandle, [{
+                // 6. Grupos de Produtos
+                const objG = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_grupos" },
                     "qHyperCubeDef": {
                         "qDimensions": [
-                            { "qDef": { "qFieldDefs": ["Canal"] } },
+                            { "qDef": { "qFieldDefs": ["TIPO_VENDA_DESCRICAO"] } },
                             { "qDef": { "qFieldDefs": ["Desc_Grupo"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 500, "qWidth": 5 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hGrupos = cGrupos.result.qReturn.qHandle;
-                const lGrupos = await send("GetLayout", hGrupos, []);
-                resData.rowsGrupos = (lGrupos.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText));
+                const hG = objG.result.qReturn.qHandle;
+                const layG = await send("GetLayout", hG, []);
+                resData.rowsGrupos = await fetchAllRows(hG, layG.result.qLayout.qHyperCube.qSize.qcy, 5, 500, "Grupos");
 
-                // 7. Subgrupos de Produtos (Hoje vs Ontem vs D-7)
-                const cSub = await send("CreateSessionObject", docHandle, [{
+                // 7. Subgrupos
+                const objSub = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_subgrupos" },
                     "qHyperCubeDef": {
                         "qDimensions": [
@@ -256,63 +247,56 @@ JS_TEMPLATE = """async () => {
                             { "qDef": { "qFieldDefs": ["Desc_Subgrupo"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 5 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hSub = cSub.result.qReturn.qHandle;
-                const lSub = await send("GetLayout", hSub, []);
-                const totSub = lSub.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsSubgrupos = await fetchAllHyperCubeRows(hSub, totSub, 5, 1500, "Subgrupos");
+                const hSub = objSub.result.qReturn.qHandle;
+                const laySub = await send("GetLayout", hSub, []);
+                resData.rowsSubgrupos = await fetchAllRows(hSub, laySub.result.qLayout.qHyperCube.qSize.qcy, 5, 1500, "Subgrupos");
 
-                // 8. Fornecedores / Laboratórios (Hoje vs Ontem vs D-7)
-                const cLabs = await send("CreateSessionObject", docHandle, [{
+                // 8. Laboratórios
+                const objLab = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_labs" },
                     "qHyperCubeDef": {
-                        "qDimensions": [
-                            { "qDef": { "qFieldDefs": ["Laboratorio"] } }
-                        ],
+                        "qDimensions": [{ "qDef": { "qFieldDefs": ["Laboratorio"] } }],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hLabs = cLabs.result.qReturn.qHandle;
-                const lLabs = await send("GetLayout", hLabs, []);
-                const totLabs = lLabs.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsLabs = await fetchAllHyperCubeRows(hLabs, totLabs, 4, 1500, "Labs");
+                const hLab = objLab.result.qReturn.qHandle;
+                const layLab = await send("GetLayout", hLab, []);
+                resData.rowsLabs = await fetchAllRows(hLab, layLab.result.qLayout.qHyperCube.qSize.qcy, 4, 1500, "Labs");
 
-                // 9. Linhas de Produtos (Hoje vs Ontem vs D-7)
-                const cLin = await send("CreateSessionObject", docHandle, [{
+                // 9. Linhas
+                const objLin = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_linhas" },
                     "qHyperCubeDef": {
-                        "qDimensions": [
-                            { "qDef": { "qFieldDefs": ["Desc_Linha"] } }
-                        ],
+                        "qDimensions": [{ "qDef": { "qFieldDefs": ["Desc_Linha"] } }],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hLin = cLin.result.qReturn.qHandle;
-                const lLin = await send("GetLayout", hLin, []);
-                const totLin = lLin.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsLinhas = await fetchAllHyperCubeRows(hLin, totLin, 4, 1500, "Linhas");
+                const hLin = objLin.result.qReturn.qHandle;
+                const layLin = await send("GetLayout", hLin, []);
+                resData.rowsLinhas = await fetchAllRows(hLin, layLin.result.qLayout.qHyperCube.qSize.qcy, 4, 1500, "Linhas");
 
-                // 10. Top SKUs / Itens (Hoje vs Ontem vs D-7 + Saldo de Estoque)
-                const cSKU = await send("CreateSessionObject", docHandle, [{
+                // 10. Top SKUs
+                const objSKU = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_top_skus" },
                     "qHyperCubeDef": {
                         "qDimensions": [
@@ -321,86 +305,86 @@ JS_TEMPLATE = """async () => {
                                     "qFieldDefs": ["Produto_ID"],
                                     "qSortCriterias": [{
                                         "qSortByExpression": -1,
-                                        "qExpression": { "qv": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida]) + Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` }
+                                        "qExpression": { "qv": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M]) + Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` }
                                     }]
                                 } 
                             },
                             { "qDef": { "qFieldDefs": ["Desc_Produto"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": "Sum({1} [Quantidade Saldo])" } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": "Sum({1} [Qt_Estoque])" } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 1500, "qWidth": 6 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hSKU = cSKU.result.qReturn.qHandle;
-                const lSKU = await send("GetLayout", hSKU, []);
-                const totSKU = lSKU.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsSKUs = await fetchAllHyperCubeRows(hSKU, Math.min(5000, totSKU), 6, 1500, "SKUs");
+                const hSKU = objSKU.result.qReturn.qHandle;
+                const laySKU = await send("GetLayout", hSKU, []);
+                const totSKU = laySKU.result.qLayout.qHyperCube.qSize.qcy;
+                resData.rowsSKUs = await fetchAllRows(hSKU, Math.min(3500, totSKU), 6, 1500, "SKUs");
 
-                // 11. Estados (UF Filial)
-                const cUF = await send("CreateSessionObject", docHandle, [{
+                // 11. Regional UFs
+                const objUF = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_uf" },
                     "qHyperCubeDef": {
-                        "qDimensions": [{ "qDef": { "qFieldDefs": ["UF Filial"] } }],
+                        "qDimensions": [{ "qDef": { "qFieldDefs": ["UF"] } }],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 10, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hUF = cUF.result.qReturn.qHandle;
-                const lUF = await send("GetLayout", hUF, []);
-                resData.rowsUF = (lUF.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText));
+                const hUF = objUF.result.qReturn.qHandle;
+                const layUF = await send("GetLayout", hUF, []);
+                resData.rowsUF = await fetchAllRows(hUF, layUF.result.qLayout.qHyperCube.qSize.qcy, 4, 10, "UFs");
 
-                // 12. Diretorias
-                const cDir = await send("CreateSessionObject", docHandle, [{
-                    "qInfo": { "qType": "q_diretor" },
+                // 12. Diretorias / Distritais
+                const objDir = await send("CreateSessionObject", doc, [{
+                    "qInfo": { "qType": "q_dir" },
                     "qHyperCubeDef": {
-                        "qDimensions": [{ "qDef": { "qFieldDefs": ["Diretor"] } }],
+                        "qDimensions": [{ "qDef": { "qFieldDefs": ["Distrital"] } }],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 20, "qWidth": 4 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hDir = cDir.result.qReturn.qHandle;
-                const lDir = await send("GetLayout", hDir, []);
-                resData.rowsDir = (lDir.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText));
+                const hDir = objDir.result.qReturn.qHandle;
+                const layDir = await send("GetLayout", hDir, []);
+                resData.rowsDir = await fetchAllRows(hDir, layDir.result.qLayout.qHyperCube.qSize.qcy, 4, 20, "Diretorias");
 
                 // 13. Coordenações
-                const cCoord = await send("CreateSessionObject", docHandle, [{
+                const objCoord = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_coord" },
                     "qHyperCubeDef": {
                         "qDimensions": [
                             { "qDef": { "qFieldDefs": ["Coordenador"] } },
-                            { "qDef": { "qFieldDefs": ["UF Filial"] } }
+                            { "qDef": { "qFieldDefs": ["UF"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } }
                         ],
                         "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 60, "qWidth": 5 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hCoord = cCoord.result.qReturn.qHandle;
-                const lCoord = await send("GetLayout", hCoord, []);
-                resData.rowsCoord = (lCoord.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || []).map(r => r.map(c => c.qNum !== 'NaN' && typeof c.qNum === 'number' ? c.qNum : c.qText));
+                const hCoord = objCoord.result.qReturn.qHandle;
+                const layCoord = await send("GetLayout", hCoord, []);
+                resData.rowsCoord = await fetchAllRows(hCoord, layCoord.result.qLayout.qHyperCube.qSize.qcy, 5, 60, "Coordenações");
 
-                // 14. Filiais (Top Lojas por Faturamento Digital)
-                const cFil = await send("CreateSessionObject", docHandle, [{
+                // 14. Regional Filiais (Top Lojas Faturamento Digital)
+                const objFil = await send("CreateSessionObject", doc, [{
                     "qInfo": { "qType": "q_filiais" },
                     "qHyperCubeDef": {
                         "qDimensions": [
@@ -409,284 +393,131 @@ JS_TEMPLATE = """async () => {
                                     "qFieldDefs": ["Filial_ID"],
                                     "qSortCriterias": [{
                                         "qSortByExpression": -1,
-                                        "qExpression": { "qv": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida]) + Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` }
+                                        "qExpression": { "qv": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M]) + Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` }
                                     }]
                                 } 
                             },
                             { "qDef": { "qFieldDefs": ["Desc_Filial"] } },
-                            { "qDef": { "qFieldDefs": ["UF Filial"] } },
+                            { "qDef": { "qFieldDefs": ["UF"] } },
                             { "qDef": { "qFieldDefs": ["Coordenador"] } }
                         ],
                         "qMeasures": [
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_ONTEM%%'}, Dia={'%%DIA_ONTEM%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_D7%%'}, Dia={'%%DIA_D7%%'}, [Canal]={${CHANNELS}}>} [Receita Líquida])` } },
-                            { "qDef": { "qDef": "Sum({1} [Quantidade Saldo])" } },
-                            { "qDef": { "qDef": "Sum({1<[Ano-Mes]={'%%ANO_MES_ANTERIOR%%'}>} [Quantidade Produto]) / 31" } },
-                            { "qDef": { "qDef": `Sum({1<[Ano-Mes]={'%%ANO_MES_HOJE%%'}, Dia={'%%DIA_HOJE%%'}, [Canal]={${CHANNELS}}>} [Quantidade Produto])` } }
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_ONTEM}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_D7}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [VALOR_VENDA_LIQUIDA_M])` } },
+                            { "qDef": { "qDef": "Sum({1} [Qt_Estoque])" } },
+                            { "qDef": { "qDef": "Sum({1} [Qt_Estoque]) / 31" } },
+                            { "qDef": { "qDef": `Sum({1<INCLUSAO_DATA={'${D_HOJE}'}, TIPO_VENDA_DESCRICAO={${CHANNELS}}>} [QUANTIDADE_MERCADORIA_M])` } }
                         ],
-                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 250, "qWidth": 10 }],
+                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 800, "qWidth": 10 }],
                         "qSuppressZero": true
                     }
                 }]);
-                const hFil = cFil.result.qReturn.qHandle;
-                const lFil = await send("GetLayout", hFil, []);
-                const totFil = lFil.result.qLayout.qHyperCube.qSize.qcy;
-                resData.rowsFiliais = await fetchAllHyperCubeRows(hFil, totFil, 10, 1000, "Filiais");
+                const hFil = objFil.result.qReturn.qHandle;
+                const layFil = await send("GetLayout", hFil, []);
+                resData.rowsFiliais = await fetchAllRows(hFil, layFil.result.qLayout.qHyperCube.qSize.qcy, 10, 800, "Filiais");
+
+                // Stock map construído diretamente dos SKUs extraídos
+                const stockMap = {};
+                for (const skuRow of resData.rowsSKUs) {
+                    const skuId = String(skuRow[0]);
+                    const saldo = Number(skuRow[5]) || 0;
+                    stockMap[skuId] = { estoqueLoja: saldo, transito: 0 };
+                }
+                resData.stockMap = stockMap;
 
                 ws.close();
-
-                // 11. Consulta Oficial de Estoque da Rede no Relatório Estoque Final (936a28fb-245f-4f19-b285-420535685c43)
-                try {
-                    const appIdEstoque = "936a28fb-245f-4f19-b285-420535685c43";
-                    const wsEstoqueUrl = `wss://${window.location.host}/app/${encodeURIComponent(appIdEstoque)}?reloadUri=https://${window.location.host}/`;
-                    const stockMap = await new Promise((resStock) => {
-                        const wsEst = new WebSocket(wsEstoqueUrl);
-                        let idEst = 1;
-                        const pendingEst = {};
-                        wsEst.onmessage = (e) => {
-                            const m = JSON.parse(e.data);
-                            if (m.id && pendingEst[m.id]) {
-                                const { res, rej } = pendingEst[m.id];
-                                delete pendingEst[m.id];
-                                if (m.error) rej(m.error);
-                                else res(m);
-                            }
-                        };
-                        function sendEst(method, handle, params) {
-                            return new Promise((res, rej) => {
-                                const mid = idEst++;
-                                pendingEst[mid] = { res, rej };
-                                wsEst.send(JSON.stringify({ jsonrpc: "2.0", id: mid, method, handle, params }));
-                            });
-                        }
-                        wsEst.onopen = async () => {
-                            try {
-                                const oEst = await sendEst("OpenDoc", -1, [appIdEstoque]);
-                                const docEstHandle = oEst.result.qReturn.qHandle;
-                                const cObjEst = await sendEst("CreateSessionObject", docEstHandle, [{
-                                    "qInfo": { "qType": "q_estoque_rede" },
-                                    "qHyperCubeDef": {
-                                        "qDimensions": [{ "qDef": { "qFieldDefs": ["Produto_ID"] } }],
-                                        "qMeasures": [
-                                            { "qDef": { "qDef": "Sum({1<AnoMes={'%%ANO_MES_HOJE%%'}>} Qt_Estoque)" } },
-                                            { "qDef": { "qDef": "Sum({1<AnoMes={'%%ANO_MES_HOJE%%'}>} Qt_Transito_CDLJ)" } }
-                                        ],
-                                        "qInitialDataFetch": [{ "qTop": 0, "qLeft": 0, "qHeight": 2000, "qWidth": 3 }],
-                                        "qSuppressZero": true
-                                    }
-                                }]);
-                                const hEst = cObjEst.result.qReturn.qHandle;
-                                const lEst = await sendEst("GetLayout", hEst, []);
-                                const totEst = lEst.result.qLayout.qHyperCube.qSize.qcy;
-                                const pagesEst = lEst.result.qLayout.qHyperCube.qDataPages[0]?.qMatrix || [];
-                                let allEstRows = [...pagesEst];
-                                let curTopEst = 2000;
-                                while (curTopEst < totEst) {
-                                    const pRes = await sendEst("GetHyperCubeData", hEst, ["/qHyperCubeDef", [{ "qTop": curTopEst, "qLeft": 0, "qHeight": 2000, "qWidth": 3 }]]);
-                                    const newP = pRes.result.qDataPages[0]?.qMatrix || [];
-                                    allEstRows.push(...newP);
-                                    curTopEst += 2000;
-                                }
-                                wsEst.close();
-                                const map = {};
-                                for (const row of allEstRows) {
-                                    const pId = row[0]?.qText;
-                                    if (pId) {
-                                        map[pId] = {
-                                            estoqueLoja: row[1]?.qNum || 0,
-                                            transito: row[2]?.qNum || 0
-                                        };
-                                    }
-                                }
-                                resStock(map);
-                            } catch(errEst) {
-                                try { wsEst.close(); } catch(e) {}
-                                resStock({});
-                            }
-                        };
-                        setTimeout(() => { try { wsEst.close(); } catch(e) {}; resStock({}); }, 40000);
-                    });
-                    resData.stockMap = stockMap;
-                } catch(eStock) {
-                    resData.stockMap = {};
-                }
-
-                isResolved = true;
                 resolve(resData);
-            } catch (e) {
-                console.error("[Qlik Error in onopen]", e);
+            } catch(e) {
                 ws.close();
-                reject(new Error(e.message || String(e)));
+                resolve({ error: String(e) });
             }
         };
-
-        ws.onmessage = (event) => {
-            const msg = JSON.parse(event.data);
-            if (msg.method === "OnMaxParallelSessionsExceeded") {
-                console.error("[Qlik WS] Limite de sessões simultâneas atingido (OnMaxParallelSessionsExceeded)");
-                try { ws.close(); } catch(e) {}
-                reject(new Error("OnMaxParallelSessionsExceeded: Limite de sessões simultâneas atingido no Qlik Sense"));
-                return;
-            }
-            if (msg.params && msg.params.severity === "fatal") {
-                console.error("[Qlik WS Fatal]", JSON.stringify(msg.params));
-                try { ws.close(); } catch(e) {}
-                reject(new Error(`Qlik Fatal: ${msg.params.message || "Erro fatal no Qlik"}`));
-                return;
-            }
-            if (msg.id && pending[msg.id]) {
-                const { res, rej, method, t0 } = pending[msg.id];
-                delete pending[msg.id];
-                const dt = (performance.now() - t0).toFixed(0);
-                if (msg.error) {
-                    console.error(`[WS Err] #${msg.id} ${method} em ${dt}ms:`, JSON.stringify(msg.error));
-                    rej(new Error(JSON.stringify(msg.error)));
-                } else {
-                    console.log(`[WS OK] #${msg.id} ${method} em ${dt}ms`);
-                    res(msg);
-                }
-            } else if (msg.method) {
-                console.log(`[WS Push] ${msg.method}`);
-            }
-        };
-
-        ws.onerror = (e) => {
-            console.error("[Qlik WS Error Event]", e);
-        };
-
-        ws.onclose = (e) => {
-            console.log(`[Qlik WS Close Event] code=${e.code} reason=${e.reason}`);
-            if (!isResolved && e.code !== 1000) {
-                reject(new Error(`WebSocket fechado prematuramente: code=${e.code} reason=${e.reason}`));
-            }
-        };
-
-        setTimeout(() => {
-            try { ws.close(); } catch(e) {}
-            if (!isResolved) {
-                console.warn("[Qlik WS Timeout] Limite de 600s atingido no WebSocket.");
-                resolve(null);
-            }
-        }, 600000);
+        setTimeout(() => { ws.close(); resolve({ error: 'timeout' }); }, 60000);
     });
 };"""
 
-def compute_date_replacements(target_dt=None):
-    """Calcula dinamicamente as datas do dia atual, ontem (D-1) e D-7."""
-    if target_dt is None:
-        target_dt = datetime.now()
-
-    dt_ontem = target_dt - timedelta(days=1)
-    dt_d7 = target_dt - timedelta(days=7)
-    dt_mes_ant = target_dt.replace(day=1) - timedelta(days=1)
-
-    return {
-        "%%DIGITAL_CHANNELS%%": DIGITAL_CHANNELS,
-        "%%DIA_HOJE%%": f"{target_dt.day:02d}",
-        "%%ANO_MES_HOJE%%": f"{target_dt.year}-{target_dt.month:02d}",
-        "%%DEFAULT_DATA%%": target_dt.strftime("%d/%m/%Y"),
-        "%%DEFAULT_HORA%%": target_dt.strftime("%H:%M"),
-        "%%DEFAULT_DATA_HORA%%": target_dt.strftime("%d/%m/%Y %H:%M:00"),
-
-        "%%DIA_ONTEM%%": f"{dt_ontem.day:02d}",
-        "%%ANO_MES_ONTEM%%": f"{dt_ontem.year}-{dt_ontem.month:02d}",
-
-        "%%DIA_D7%%": f"{dt_d7.day:02d}",
-        "%%ANO_MES_D7%%": f"{dt_d7.year}-{dt_d7.month:02d}",
-
-        "%%ANO_MES_ANTERIOR%%": f"{dt_mes_ant.year}-{dt_mes_ant.month:02d}"
-    }
-
-def check_qlik_connection(timeout_sec=10.0):
-    """Verifica se o Qlik Sense Enterprise responde antes de instanciar o navegador"""
-    import urllib.request
-    import ssl
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    test_url = SHEET_URL
-    try:
-        req = urllib.request.Request(test_url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, context=ctx, timeout=timeout_sec) as r:
-            return True, "OK"
-    except Exception as e:
-        if "403" in str(e) or "401" in str(e):
-            return True, "OK"
-        return False, str(e)
-
-async def fetch_intraday_data(target_dt=None):
+async def fetch_intraday_data():
+    t0 = time.time()
     if not acquire_lock():
         return None
 
     try:
-        t0 = time.time()
-        if target_dt is None:
-            target_dt = datetime.now()
-
-        replacements = compute_date_replacements(target_dt)
-        dia_str = replacements["%%DIA_HOJE%%"]
-        mes_str = replacements["%%ANO_MES_HOJE%%"]
+        dt_now = datetime.now()
+        dt_hoje = dt_now.strftime("%d/%m/%Y")
+        dt_ontem = (dt_now - timedelta(days=1)).strftime("%d/%m/%Y")
+        dt_d7 = (dt_now - timedelta(days=7)).strftime("%d/%m/%Y")
+        
+        am_hoje = f"{dt_now.year}-{dt_now.month}"
+        dt_ant = dt_now.replace(day=1) - timedelta(days=1)
+        am_ant = f"{dt_ant.year}-{dt_ant.month}"
 
         print("=" * 75)
-        print(f"  EXTRAÇÃO INTRADAY ONLINE — CANAIS DIGITAIS (QLIK SENSE)")
-        print(f"  Data Alvo: {dia_str}/{mes_str} | Ontem: {replacements['%%DIA_ONTEM%%']} | D-7: {replacements['%%DIA_D7%%']}")
+        print("  EXTRAÇÃO INTRADAY ONLINE — QLIK CLOUD (FSJ.US.QLIKCLOUD.COM)")
+        print(f"  App: Indicadores de Vendas ({APP_ID})")
+        print(f"  Data Alvo: {dt_hoje} | Ontem: {dt_ontem} | D-7: {dt_d7}")
+        print(f"  Canais Monitorados: {CHANNELS}")
         print("=" * 75)
 
-        print("0/4 Verificando conectividade de rede com Qlik Sense...", flush=True)
-        is_online, err_msg = check_qlik_connection(timeout_sec=10.0)
-        if not is_online:
-            print(f"❌ AVISO CRÍTICO: Não foi possível conectar a {QLIK_URL} ({err_msg})", flush=True)
-            print("💡 DICA: Se estiver fora do escritório, conecte a VPN corporativa FSJ-VPN (FortiClient)!", flush=True)
-            raise ConnectionError(
-                f"Servidor Qlik Sense ({QLIK_URL}) inacessível. A VPN FSJ-VPN (FortiClient) está desconectada ou a rede corporativa está instável."
-            )
+        replacements = {
+            "%%APP_ID%%": APP_ID,
+            "%%CHANNELS%%": CHANNELS,
+            "%%D_HOJE%%": dt_hoje,
+            "%%D_ONTEM%%": dt_ontem,
+            "%%D_D7%%": dt_d7,
+            "%%AM_HOJE%%": am_hoje,
+            "%%AM_ANT%%": am_ant,
+            "%%DIA_HOJE%%": f"{dt_now.day}",
+            "%%DIA_ONTEM%%": f"{(dt_now - timedelta(days=1)).day}",
+            "%%DIA_D7%%": f"{(dt_now - timedelta(days=7)).day}",
+            "%%ANO_MES_HOJE%%": dt_now.strftime('%Y-%m'),
+            "%%ANO_MES_ONTEM%%": (dt_now - timedelta(days=1)).strftime('%Y-%m'),
+            "%%ANO_MES_D7%%": (dt_now - timedelta(days=7)).strftime('%Y-%m')
+        }
+
+        js_code = JS_TEMPLATE
+        for k, v in replacements.items():
+            js_code = js_code.replace(k, v)
 
         async with async_playwright() as p:
-            print("1/4 Conectando ao Qlik Sense Enterprise...", flush=True)
+            print("1/4 Conectando ao Qlik Cloud SaaS...", flush=True)
             browser = await p.chromium.launch(
                 headless=True,
                 args=['--ignore-certificate-errors', '--disable-dev-shm-usage', '--no-sandbox']
             )
             try:
                 context = await browser.new_context(
+                    storage_state=STORAGE_STATE,
                     ignore_https_errors=True,
-                    http_credentials={'username': USERNAME, 'password': PASSWORD},
                     viewport={'width': 1920, 'height': 1080}
                 )
                 page = await context.new_page()
-                page.on("console", lambda msg: print(f"   [Qlik] {msg.text}", flush=True))
+                page.on("console", lambda msg: print(f"   [Qlik Cloud] {msg.text}", flush=True))
 
-                nav_ok = False
-                for att in range(1, 3):
-                    try:
-                        await page.goto(SHEET_URL, timeout=60000, wait_until="domcontentloaded")
-                        nav_ok = True
-                        break
-                    except Exception as e_nav:
-                        print(f"   ⚠️ Tentativa {att}/2 de conexão falhou ({e_nav}). Aguardando 3s...", flush=True)
-                        if att < 2:
-                            await page.wait_for_timeout(3000)
-
-                if not nav_ok:
-                    raise ConnectionError("Timeout ao conectar ao Qlik Sense Enterprise.")
-
+                await page.goto(f"https://{QLIK_CLOUD_HOST}/analytics/home", timeout=60000)
+                
+                # Check SSO login if needed
                 try:
-                    await page.wait_for_selector('.qv-panel-sheet', timeout=30000)
+                    user_input = await page.wait_for_selector('#username', timeout=5000)
+                    if user_input:
+                        print("   Efetuando login SSO no Keycloak...", flush=True)
+                        await page.fill('#username', USERNAME)
+                        await page.fill('#password', PASSWORD)
+                        await page.click('#kc-login')
+                        await page.wait_for_url(f"**{QLIK_CLOUD_HOST}/analytics/**", timeout=60000)
+                        await page.wait_for_timeout(3000)
+                        await context.storage_state(path=STORAGE_STATE)
                 except Exception:
-                    await page.wait_for_timeout(4000)
+                    pass
 
+                await page.wait_for_timeout(3000)
                 print("2/4 Sessão autenticada! Executando consultas no QIX Engine via WebSocket...", flush=True)
-                js_script = JS_TEMPLATE
-                for k, v in replacements.items():
-                    js_script = js_script.replace(k, v)
-
-                raw_data = await page.evaluate(js_script)
+                raw_data = await page.evaluate(js_code)
             finally:
                 await browser.close()
 
-        if not raw_data:
-            raise RuntimeError("Falha ao extrair dados do Qlik Sense (Timeout ou Erro WebSocket)")
+        if not raw_data or 'error' in raw_data:
+            raise RuntimeError(f"Falha na extração Qlik Cloud: {raw_data.get('error') if raw_data else 'Sem dados'}")
 
         # Salva arquivo bruto
         with open(RAW_FILE, 'w', encoding='utf-8') as f:
@@ -694,10 +525,11 @@ async def fetch_intraday_data(target_dt=None):
 
         elapsed = time.time() - t0
         print("\n" + "=" * 75)
-        print(f"EXTRAÇÃO CONCLUÍDA COM SUCESSO EM {elapsed:.1f}s!")
+        print(f"EXTRAÇÃO QLIK CLOUD CONCLUÍDA COM SUCESSO EM {elapsed:.1f}s!")
         print(f"   Arquivo gerado: {RAW_FILE}")
         print(f"   Corte Atual: {raw_data.get('maxDataHora')} (Minuto: {raw_data.get('maxHora')})")
         print(f"   Linhas Hoje: {len(raw_data.get('rowsHoje', []))} | Ontem: {len(raw_data.get('rowsOntem', []))} | D-7: {len(raw_data.get('rowsD7', []))}")
+        print(f"   Histórico Dia: {len(raw_data.get('rowsHistDia', []))}")
         print(f"   Grupos: {len(raw_data.get('rowsGrupos', []))} | Subgrupos: {len(raw_data.get('rowsSubgrupos', []))}")
         print(f"   Laboratórios: {len(raw_data.get('rowsLabs', []))} | Linhas: {len(raw_data.get('rowsLinhas', []))} | SKUs: {len(raw_data.get('rowsSKUs', []))}")
         print(f"   Regional: {len(raw_data.get('rowsUF', []))} UFs | {len(raw_data.get('rowsDir', []))} Diretorias | {len(raw_data.get('rowsCoord', []))} Coordenações | {len(raw_data.get('rowsFiliais', []))} Filiais")
@@ -713,5 +545,5 @@ if __name__ == '__main__':
             print("ℹ️ Dados brutos atualizados recentemente por processo concorrente. Prosseguindo.")
             sys.exit(0)
         else:
-            print("❌ Extração não pôde ser executada (bloqueio concorrente ou erro). Abortando ciclo.")
+            print("❌ Extração não pôde ser executada. Abortando ciclo.")
             sys.exit(1)

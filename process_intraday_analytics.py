@@ -36,7 +36,7 @@ HISTORICO_FECHAMENTOS_FILE = os.path.join(DATA_DIR, "historico_fechamentos.json"
 os.makedirs(FECHAMENTOS_DIR, exist_ok=True)
 
 def norm_canal(c):
-    """Mapeamento estrito dos canais definidos"""
+    """Mapeamento estrito dos canais definidos incluindo Figital"""
     c_str = str(c or "").strip()
     c_upper = c_str.upper()
     # Site
@@ -46,21 +46,32 @@ def norm_canal(c):
     if c_str in ["APP", "APP Tele Entrega"] or c_upper in ["APP", "APP TELE ENTREGA"]:
         return "APP"
     # Marketplace
-    if c_str in ["e_Commerce", "iFood"] or c_upper in ["E_COMMERCE", "IFOOD"]:
+    if c_str in ["e_Commerce", "iFood", "E-commerce"] or c_upper in ["E_COMMERCE", "IFOOD", "E-COMMERCE"]:
         return "MKP"
+    # Figital
+    if c_upper == "FIGITAL":
+        return "Figital"
     return None
 
 def get_minute_of_day(val):
-    """Converte fração numérica do Qlik ou string HH:MM em minuto do dia (0..1439)"""
+    """Converte fração numérica do Qlik, inteiro de hora (0..23) ou string HH:MM em minuto do dia (0..1439)"""
     if isinstance(val, (int, float)):
+        if 0 <= val <= 23 and float(val).is_integer():
+            return int(val) * 60
         frac = val % 1.0
         return int(round(frac * 24.0 * 60.0)) % 1440
-    elif isinstance(val, str) and ":" in val:
-        parts = val.split(":")
-        try:
-            return int(parts[0]) * 60 + int(parts[1])
-        except Exception:
-            return 0
+    elif isinstance(val, str):
+        val_clean = val.strip()
+        if ":" in val_clean:
+            parts = val_clean.split(":")
+            try:
+                return int(parts[0]) * 60 + int(parts[1])
+            except Exception:
+                return 0
+        elif val_clean.isdigit():
+            h = int(val_clean)
+            if 0 <= h <= 23:
+                return h * 60
     return 0
 
 def load_metas(dia_alvo=7):
