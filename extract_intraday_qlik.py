@@ -433,7 +433,7 @@ JS_TEMPLATE = """async () => {
                 resolve({ error: String(e) });
             }
         };
-        setTimeout(() => { ws.close(); resolve({ error: 'timeout' }); }, 60000);
+        setTimeout(() => { ws.close(); resolve({ error: 'timeout (limite de 360s excedido)' }); }, 360000);
     });
 };"""
 
@@ -517,7 +517,15 @@ async def fetch_intraday_data():
                 await browser.close()
 
         if not raw_data or 'error' in raw_data:
-            raise RuntimeError(f"Falha na extração Qlik Cloud: {raw_data.get('error') if raw_data else 'Sem dados'}")
+            err_msg = raw_data.get('error') if raw_data else 'Sem dados'
+            if os.path.exists(RAW_FILE):
+                mtime = os.path.getmtime(RAW_FILE)
+                if datetime.fromtimestamp(mtime).date() == dt_now.date():
+                    print(f"\n⚠️ Qlik Cloud retornou aviso: {err_msg}")
+                    print(f"ℹ️ Utilizando dados brutos existentes em cache de hoje ({datetime.fromtimestamp(mtime).strftime('%H:%M:%S')}) como fallback resiliente.")
+                    with open(RAW_FILE, 'r', encoding='utf-8') as f:
+                        return json.load(f)
+            raise RuntimeError(f"Falha na extração Qlik Cloud: {err_msg}")
 
         # Salva arquivo bruto
         with open(RAW_FILE, 'w', encoding='utf-8') as f:
